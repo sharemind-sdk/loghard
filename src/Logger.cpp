@@ -21,16 +21,16 @@ using std::string;
 using namespace sharemind;
 
 Logger::Logger(const std::string& name) :
-	m_logger (log4cpp::Category::getInstance(name))
+    m_logger (log4cpp::Category::getInstance(name))
 {
 #if defined SHAREMIND_LOGLEVEL_FULLDEBUG
-	m_logger.setPriority(LOGPRIORITY_FULLDEBUG);
+    m_logger.setPriority(LOGPRIORITY_FULLDEBUG);
 #elif defined SHAREMIND_LOGLEVEL_DEBUG
-	m_logger.setPriority(LOGPRIORITY_DEBUG);
+    m_logger.setPriority(LOGPRIORITY_DEBUG);
 #elif defined SHAREMIND_LOGLEVEL_NORMAL
-	m_logger.setPriority(LOGPRIORITY_NORMAL);
+    m_logger.setPriority(LOGPRIORITY_NORMAL);
 #else
-	m_logger.setPriority(log4cpp::Priority::NOTICE);
+    m_logger.setPriority(log4cpp::Priority::NOTICE);
 #endif
 
 }
@@ -89,8 +89,8 @@ void Logger::addOutputStreamAppender(const std::string& appenderName, std::ostre
 }
 
 void Logger::addAppender (log4cpp::Appender& appender) {
-	//first remove it, then readd
-	removeAppender(appender);
+    //first remove it, then readd
+    removeAppender(appender);
 
     log4cpp::Layout *layout = new LogLayout(this);
     appender.setLayout(layout);
@@ -100,64 +100,64 @@ void Logger::addAppender (log4cpp::Appender& appender) {
 
 
 void Logger::logToStream(log4cpp::Priority::Value priority, const std::string &message) {
-	m_logger.getStream(priority) << message;
+    m_logger.getStream(priority) << message;
 }
 
 string Logger::formatDate(time_t timestamp, bool reverse) {
-	ostringstream date;
+    ostringstream date;
 
-	const tm* dest = localtime (&timestamp);
-	if (reverse) {
-		date <<
-			(dest->tm_year + 1900) << "-" <<
-			(dest->tm_mon < 9 ? "0" : "") << (dest->tm_mon + 1) << "-" <<
-			(dest->tm_mday < 10 ? "0" : "") << dest->tm_mday;
-	} else {
-		date <<
-			(dest->tm_mday < 10 ? "0" : "") << dest->tm_mday << "-" <<
-			(dest->tm_mon < 9 ? "0" : "") << (dest->tm_mon + 1) << "-" <<
-			(dest->tm_year + 1900);
-	}
+    const tm* dest = localtime (&timestamp);
+    if (reverse) {
+        date <<
+            (dest->tm_year + 1900) << "-" <<
+            (dest->tm_mon < 9 ? "0" : "") << (dest->tm_mon + 1) << "-" <<
+            (dest->tm_mday < 10 ? "0" : "") << dest->tm_mday;
+    } else {
+        date <<
+            (dest->tm_mday < 10 ? "0" : "") << dest->tm_mday << "-" <<
+            (dest->tm_mon < 9 ? "0" : "") << (dest->tm_mon + 1) << "-" <<
+            (dest->tm_year + 1900);
+    }
 
-	return date.str ();
+    return date.str ();
 }
 
 string Logger::formatTime(time_t timestamp) {
-	ostringstream time;
+    ostringstream time;
 
-	const tm* dest = localtime (&timestamp);
-	time <<
-	(dest->tm_hour < 10 ? "0" : "") << dest->tm_hour << "-" <<
-	(dest->tm_min < 10 ? "0" : "") << dest->tm_min << "-" <<
-	(dest->tm_sec < 10 ? "0" : "") << dest->tm_sec;
+    const tm* dest = localtime (&timestamp);
+    time <<
+    (dest->tm_hour < 10 ? "0" : "") << dest->tm_hour << "-" <<
+    (dest->tm_min < 10 ? "0" : "") << dest->tm_min << "-" <<
+    (dest->tm_sec < 10 ? "0" : "") << dest->tm_sec;
 
-	return time.str ();
+    return time.str ();
 }
 
 bool Logger::openFile(const string& filename, const bool& append, int& fd) {
-	// Check if we have a filename
-	if (filename.length () > 0) {
-		// Try to open the log file
+    // Check if we have a filename
+    if (filename.length () > 0) {
+        // Try to open the log file
 
-		int flags = O_CREAT | O_APPEND | O_WRONLY;
-		if (!append)
-			flags |= O_TRUNC;
+        int flags = O_CREAT | O_APPEND | O_WRONLY;
+        if (!append)
+            flags |= O_TRUNC;
 
-		fd = ::open(filename.c_str(), flags, 00644);
-		if (fd < 0) {
-			WRITE_LOG_ERROR (*this, "[Logger] Can't open logger log file " << filename << "!");
-			return false;
-		}
+        fd = ::open(filename.c_str(), flags, 00644);
+        if (fd < 0) {
+            WRITE_LOG_ERROR (*this, "[Logger] Can't open logger log file " << filename << "!");
+            return false;
+        }
 
-		WRITE_LOG_DEBUG (*this, "[Logger] Opened logger log file " << filename << ".");
+        WRITE_LOG_DEBUG (*this, "[Logger] Opened logger log file " << filename << ".");
 
-		return true;
+        return true;
 
-	} else {
+    } else {
 
-		// We didn't get a filename so spread the information about that.
-		WRITE_LOG_ERROR (*this, "[Logger] Empty log file name!");
-		return false;
-	}
+        // We didn't get a filename so spread the information about that.
+        WRITE_LOG_ERROR (*this, "[Logger] Empty log file name!");
+        return false;
+    }
 }
 

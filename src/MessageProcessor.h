@@ -21,12 +21,12 @@ class MessageProcessor {
 
 public:
 
-	/**
-	 Processes a single string message
+    /**
+     Processes a single string message
 
-	 \param[in] msg A string containing the message
-	 */
-	virtual void processMessage(const std::string& str) = 0;
+     \param[in] msg A string containing the message
+     */
+    virtual void processMessage(const std::string& str) = 0;
 
 private:
 
