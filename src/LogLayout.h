@@ -21,7 +21,8 @@ class Logger;
  **/
 class LogLayout : public log4cpp::Layout {
 
-public:
+public: /* Methods: */
+
     LogLayout(Logger* logger);
 
     virtual ~LogLayout();
@@ -32,13 +33,17 @@ public:
      **/
     virtual std::string format(const log4cpp::LoggingEvent& event);
 
-private:
+private: /* Methods: */
+
     LogLayout();
 
-    // The ownership of m_logger is not ours, do not delete it by accident!
+private: /* Fields: */
+
+    /** \warning The ownership of m_logger is not ours, do not delete it by accident! */
     Logger* m_logger;
-};
 
-} // namespace sharemind
+}; /* class LogLayout { */
 
-#endif // SHAREMINDCOMMON_LOGLAYOUT_H
+} /* namespace sharemind { */
+
+#endif /* SHAREMINDCOMMON_LOGLAYOUT_H */

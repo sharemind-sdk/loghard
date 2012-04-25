@@ -20,7 +20,7 @@ namespace sharemind {
 
 class GenericAppender : public log4cpp::LayoutAppender {
 
-public:
+public: /* Methods: */
 
     inline GenericAppender(const std::string& name, AppenderMessageProcessor *mp) :
         log4cpp::LayoutAppender(name),
@@ -36,16 +36,18 @@ public:
 
     virtual inline void close () {}
 
-protected:
+protected: /* Methods: */
 
     virtual inline void _append(const log4cpp::LoggingEvent& event) {
         m_mp->processMessage( _getLayout().format(event) );
     }
 
+protected: /* Fields: */
+
     AppenderMessageProcessor *m_mp;
 
-};
+}; /* class GenericAppender { */
 
-} // namespace sharemind
+} /* namespace sharemind { */
 
-#endif // SHAREMINDCOMMON_GENERICAPPENDER_H
+#endif /* SHAREMINDCOMMON_GENERICAPPENDER_H */

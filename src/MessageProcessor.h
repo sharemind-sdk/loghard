@@ -32,6 +32,6 @@ private:
 
 };
 
-} // namespace sharemind
+} /* namespace sharemind { */
 
-#endif // SHAREMINDCOMMON_MESSAGEPROCESSOR_H
+#endif /* SHAREMINDCOMMON_MESSAGEPROCESSOR_H */

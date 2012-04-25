@@ -24,7 +24,7 @@ class GenericAppender;
 */
 class AppenderMessageProcessor : public MessageProcessor {
 
-public:
+public: /* Methods: */
 
     AppenderMessageProcessor(const std::string& name);
 
@@ -41,11 +41,12 @@ public:
      */
     virtual void processMessage(const std::string& str) = 0;
 
-private:
+private: /* Fields: */
 
     GenericAppender *m_ga;
-};
 
-} // namespace sharemind
+}; /* class AppenderMessageProcessor { */
 
-#endif // SHAREMINDCOMMON_APPENDERMESSAGEPROCESSOR_H
+} /* namespace sharemind { */
+
+#endif /* SHAREMINDCOMMON_APPENDERMESSAGEPROCESSOR_H */

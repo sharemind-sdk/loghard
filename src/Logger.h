@@ -38,7 +38,7 @@ namespace sharemind {
 #define WRITE_LOG_FULLDEBUG_MINER(message) WRITE_LOG(m_platform.getLogger(), LOGPRIORITY_FULLDEBUG, "", message)
 #define WRITE_LOG_FULLDEBUG_SESSION(message) WRITE_LOG(getPlatform().getLogger(), LOGPRIORITY_FULLDEBUG, "[S" << m_sessionNumber << "] ", message)
 #define WRITE_LOG_FULLDEBUG_VM(message) WRITE_LOG(m_session->getPlatform().getLogger(), LOGPRIORITY_FULLDEBUG, "[S" << m_session->getSessionNumber () << "-VM] ", message)
-//#define WRITE_LOG_FULLDEBUG_PROTOCOL(message) WRITE_LOG(m_vm->getControllerSession()->getPlatform().getLogger(), LOGPRIORITY_FULLDEBUG, "[S" << m_vm->getControllerSession()->getSessionNumber () << "-" << m_protocolName << "] ", message)
+/* #define WRITE_LOG_FULLDEBUG_PROTOCOL(message) WRITE_LOG(m_vm->getControllerSession()->getPlatform().getLogger(), LOGPRIORITY_FULLDEBUG, "[S" << m_vm->getControllerSession()->getSessionNumber () << "-" << m_protocolName << "] ", message) */
 #define WRITE_LOG_FULLDEBUG_CONTROLLER(message) WRITE_LOG(m_logger, LOGPRIORITY_FULLDEBUG, "[Controller] ", message)
 #define WRITE_LOG_FULLDEBUG_NET(message) WRITE_LOG(m_logger, LOGPRIORITY_FULLDEBUG, "[NET] ", message)
 #define WRITE_LOG_FULLDEBUG_DB(message) WRITE_LOG(m_logger, LOGPRIORITY_FULLDEBUG, "[DB] ", message)
@@ -48,7 +48,7 @@ namespace sharemind {
 #define WRITE_LOG_FULLDEBUG_MINER(message)
 #define WRITE_LOG_FULLDEBUG_SESSION(message)
 #define WRITE_LOG_FULLDEBUG_VM(message)
-//#define WRITE_LOG_FULLDEBUG_PROTOCOL(message)
+/* #define WRITE_LOG_FULLDEBUG_PROTOCOL(message) */
 #define WRITE_LOG_FULLDEBUG_CONTROLLER(message)
 #define WRITE_LOG_FULLDEBUG_NET(message)
 #define WRITE_LOG_FULLDEBUG_DB(message)
@@ -59,7 +59,7 @@ namespace sharemind {
 #define WRITE_LOG_DEBUG_MINER(message) WRITE_LOG(m_platform.getLogger(), LOGPRIORITY_DEBUG, "", message)
 #define WRITE_LOG_DEBUG_SESSION(message) WRITE_LOG(getPlatform().getLogger(), LOGPRIORITY_DEBUG, "[S" << m_sessionNumber << "] ", message)
 #define WRITE_LOG_DEBUG_VM(message) WRITE_LOG(m_session->getPlatform().getLogger(), LOGPRIORITY_DEBUG, "[S" << m_session->getSessionNumber () << "-VM] ", message)
-//#define WRITE_LOG_DEBUG_PROTOCOL(message) WRITE_LOG(m_vm->getControllerSession()->getPlatform().getLogger(), LOGPRIORITY_DEBUG, "[S" << m_vm->getControllerSession()->getSessionNumber () << "-" << m_protocolName << "] ", message)
+/* #define WRITE_LOG_DEBUG_PROTOCOL(message) WRITE_LOG(m_vm->getControllerSession()->getPlatform().getLogger(), LOGPRIORITY_DEBUG, "[S" << m_vm->getControllerSession()->getSessionNumber () << "-" << m_protocolName << "] ", message) */
 #define WRITE_LOG_DEBUG_CONTROLLER(message) WRITE_LOG(m_logger, LOGPRIORITY_DEBUG, "[Controller] ", message)
 #define WRITE_LOG_DEBUG_NET(message) WRITE_LOG(m_logger, LOGPRIORITY_DEBUG, "[NET] ", message)
 #define WRITE_LOG_DEBUG_DB(message) WRITE_LOG(m_logger, LOGPRIORITY_DEBUG, "[DB] ", message)
@@ -69,7 +69,7 @@ namespace sharemind {
 #define WRITE_LOG_DEBUG_MINER(message)
 #define WRITE_LOG_DEBUG_SESSION(message)
 #define WRITE_LOG_DEBUG_VM(message)
-//#define WRITE_LOG_DEBUG_PROTOCOL(message)
+/* #define WRITE_LOG_DEBUG_PROTOCOL(message) */
 #define WRITE_LOG_DEBUG_CONTROLLER(message)
 #define WRITE_LOG_DEBUG_NET(message)
 #define WRITE_LOG_DEBUG_DB(message)
@@ -80,7 +80,7 @@ namespace sharemind {
 #define WRITE_LOG_NORMAL_MINER(message) WRITE_LOG(m_platform.getLogger(), LOGPRIORITY_NORMAL, "", message)
 #define WRITE_LOG_NORMAL_SESSION(message) WRITE_LOG(getPlatform().getLogger(), LOGPRIORITY_NORMAL, "[S" << m_sessionNumber << "] ", message)
 #define WRITE_LOG_NORMAL_VM(message) WRITE_LOG(m_session->getPlatform().getLogger(), LOGPRIORITY_NORMAL, "[S" << m_session->getSessionNumber () << "-VM] ", message)
-//#define WRITE_LOG_NORMAL_PROTOCOL(message) WRITE_LOG(m_vm->getControllerSession()->getPlatform().getLogger(), LOGPRIORITY_NORMAL, "[S" << m_vm->getControllerSession()->getSessionNumber () << "-" << m_protocolName << "] ", message)
+/* #define WRITE_LOG_NORMAL_PROTOCOL(message) WRITE_LOG(m_vm->getControllerSession()->getPlatform().getLogger(), LOGPRIORITY_NORMAL, "[S" << m_vm->getControllerSession()->getSessionNumber () << "-" << m_protocolName << "] ", message) */
 #define WRITE_LOG_NORMAL_CONTROLLER(message) WRITE_LOG(m_logger, LOGPRIORITY_NORMAL, "[Controller] ", message)
 #define WRITE_LOG_NORMAL_NET(message) WRITE_LOG(m_logger, LOGPRIORITY_NORMAL, "[NET] ", message)
 #define WRITE_LOG_NORMAL_DB(message) WRITE_LOG(m_logger, LOGPRIORITY_NORMAL, "[DB] ", message)
@@ -90,7 +90,7 @@ namespace sharemind {
 #define WRITE_LOG_NORMAL_MINER(message)
 #define WRITE_LOG_NORMAL_SESSION(message)
 #define WRITE_LOG_NORMAL_VM(message)
-//#define WRITE_LOG_NORMAL_PROTOCOL(message)
+/* #define WRITE_LOG_NORMAL_PROTOCOL(message) */
 #define WRITE_LOG_NORMAL_CONTROLLER(message)
 #define WRITE_LOG_NORMAL_NET(message)
 #define WRITE_LOG_NORMAL_DB(message)
@@ -101,7 +101,7 @@ namespace sharemind {
 #define WRITE_LOG_WARNING_MINER(message) WRITE_LOG(m_platform.getLogger(), LOGPRIORITY_WARNING, "", message)
 #define WRITE_LOG_WARNING_SESSION(message) WRITE_LOG(getPlatform().getLogger(), LOGPRIORITY_WARNING, "[S" << m_sessionNumber << "] ", message)
 #define WRITE_LOG_WARNING_VM(message) WRITE_LOG(m_session->getPlatform().getLogger(), LOGPRIORITY_WARNING, "[S" << m_session->getSessionNumber () << "-VM] ", message)
-//#define WRITE_LOG_WARNING_PROTOCOL(message) WRITE_LOG(m_vm->getControllerSession()->getPlatform().getLogger(), LOGPRIORITY_WARNING, "[S" << m_vm->getControllerSession()->getSessionNumber () << "-" << m_protocolName << "] ", message)
+/* #define WRITE_LOG_WARNING_PROTOCOL(message) WRITE_LOG(m_vm->getControllerSession()->getPlatform().getLogger(), LOGPRIORITY_WARNING, "[S" << m_vm->getControllerSession()->getSessionNumber () << "-" << m_protocolName << "] ", message) */
 #define WRITE_LOG_WARNING_CONTROLLER(message) WRITE_LOG(m_logger, LOGPRIORITY_WARNING, "[Controller] ", message)
 #define WRITE_LOG_WARNING_NET(message) WRITE_LOG(m_logger, LOGPRIORITY_WARNING, "[NET] ", message)
 #define WRITE_LOG_WARNING_DB(message) WRITE_LOG(m_logger, LOGPRIORITY_WARNING, "[DB] ", message)
@@ -110,7 +110,7 @@ namespace sharemind {
 #define WRITE_LOG_WARNING_MINER(message)
 #define WRITE_LOG_WARNING_SESSION(message)
 #define WRITE_LOG_WARNING_VM(message)
-//#define WRITE_LOG_WARNING_PROTOCOL(message)
+/* #define WRITE_LOG_WARNING_PROTOCOL(message) */
 #define WRITE_LOG_WARNING_CONTROLLER(message)
 #define WRITE_LOG_WARNING_NET(message)
 #define WRITE_LOG_WARNING_DB(message)
@@ -120,7 +120,7 @@ namespace sharemind {
 #define WRITE_LOG_ERROR_MINER(message) WRITE_LOG(m_platform.getLogger(), LOGPRIORITY_ERROR, "", message)
 #define WRITE_LOG_ERROR_SESSION(message) WRITE_LOG(getPlatform().getLogger(), LOGPRIORITY_ERROR, "[S" << m_sessionNumber << "] ", message)
 #define WRITE_LOG_ERROR_VM(message) WRITE_LOG(m_session->getPlatform().getLogger(), LOGPRIORITY_ERROR, "[S" << m_session->getSessionNumber () << "-VM] ", message)
-//#define WRITE_LOG_ERROR_PROTOCOL(message) WRITE_LOG(m_vm->getControllerSession()->getPlatform().getLogger(), LOGPRIORITY_ERROR, "[S" << m_vm->getControllerSession()->getSessionNumber () << "-" << m_protocolName << "] ", message)
+/* #define WRITE_LOG_ERROR_PROTOCOL(message) WRITE_LOG(m_vm->getControllerSession()->getPlatform().getLogger(), LOGPRIORITY_ERROR, "[S" << m_vm->getControllerSession()->getSessionNumber () << "-" << m_protocolName << "] ", message) */
 #define WRITE_LOG_ERROR_CONTROLLER(message) WRITE_LOG(m_logger, LOGPRIORITY_ERROR, "[Controller] ", message)
 #define WRITE_LOG_ERROR_NET(message) WRITE_LOG(m_logger, LOGPRIORITY_ERROR, "[NET] ", message)
 #define WRITE_LOG_ERROR_DB(message) WRITE_LOG(m_logger, LOGPRIORITY_ERROR, "[DB] ", message)
@@ -129,7 +129,7 @@ namespace sharemind {
 #define WRITE_LOG_FATAL_MINER(message) WRITE_LOG(m_platform.getLogger(), LOGPRIORITY_FATAL, "", message)
 #define WRITE_LOG_FATAL_SESSION(message) WRITE_LOG(getPlatform().getLogger(), LOGPRIORITY_FATAL, "[S" << m_sessionNumber << "] ", message)
 #define WRITE_LOG_FATAL_VM(message) WRITE_LOG(m_session->getPlatform().getLogger(), LOGPRIORITY_FATAL, "[S" << m_session->getSessionNumber () << "-VM] ", message)
-//#define WRITE_LOG_FATAL_PROTOCOL(message) WRITE_LOG(m_vm->getControllerSession()->getPlatform().getLogger(), LOGPRIORITY_FATAL, "[S" << m_vm->getControllerSession()->getSessionNumber () << "-" << m_protocolName << "] ", message)
+/* #define WRITE_LOG_FATAL_PROTOCOL(message) WRITE_LOG(m_vm->getControllerSession()->getPlatform().getLogger(), LOGPRIORITY_FATAL, "[S" << m_vm->getControllerSession()->getSessionNumber () << "-" << m_protocolName << "] ", message) */
 #define WRITE_LOG_FATAL_CONTROLLER(message) WRITE_LOG(m_logger, LOGPRIORITY_FATAL, "[Controller] ", message)
 #define WRITE_LOG_FATAL_NET(message) WRITE_LOG(m_logger, LOGPRIORITY_FATAL, "[NET] ", message)
 #define WRITE_LOG_FATAL_DB(message) WRITE_LOG(m_logger, LOGPRIORITY_FATAL, "[DB] ", message)
@@ -275,7 +275,7 @@ public:
 
 private:
 
-    //boost::mutex *m_streamMutex;
+    /* boost::mutex *m_streamMutex; */
 
     /**
      The main logger class of the log4cpp library. It does the actual logging.
@@ -295,8 +295,9 @@ private:
      \retval false if opening the file failed
     */
     bool openFile(const std::string& filename, const bool& append, int& fd);
-};
 
-} // namespace sharemind
+}; /* class Logger { */
 
-#endif // SHAREMINDCOMMON_LOGGER_H
+} /* namespace sharemind { */
+
+#endif /* SHAREMINDCOMMON_LOGGER_H */
