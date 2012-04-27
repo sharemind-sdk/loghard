@@ -70,7 +70,7 @@ bool Logger::addRollingFileAppender(const std::string& appenderName,
     log4cpp::Layout *layout = new LogLayout(this);
     appender->setLayout(layout);
 
-    //TODO somehow need to check if the file was successfully opened.
+    // \todo somehow need to check if the file was successfully opened.
     // Use reopen() function of the FileAppender for that?
 
     m_logger.addAppender(appender);
