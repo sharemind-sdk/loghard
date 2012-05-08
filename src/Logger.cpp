@@ -24,11 +24,11 @@ Logger::Logger(const std::string& name) :
     m_logger (log4cpp::Category::getInstance(name))
 {
 #if defined SHAREMIND_LOGLEVEL_FULLDEBUG
-    m_logger.setPriority(LOGPRIORITY_FULLDEBUG);
+    m_logger.setPriority(log4cpp::Priority::DEBUG);
 #elif defined SHAREMIND_LOGLEVEL_DEBUG
-    m_logger.setPriority(LOGPRIORITY_DEBUG);
+    m_logger.setPriority(log4cpp::Priority::DEBUG);
 #elif defined SHAREMIND_LOGLEVEL_NORMAL
-    m_logger.setPriority(LOGPRIORITY_NORMAL);
+    m_logger.setPriority(log4cpp::Priority::INFO);
 #else
     m_logger.setPriority(log4cpp::Priority::NOTICE);
 #endif
