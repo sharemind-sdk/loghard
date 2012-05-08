@@ -98,9 +98,22 @@ void Logger::addAppender (log4cpp::Appender& appender) {
     m_logger.addAppender(appender);
 }
 
+void Logger::logMessage(LogPriority priority, const char * message) {
+    log4cpp::Priority::PriorityLevel level;
+    switch (priority) {
+        case LOGPRIORITY_FATAL:     level = log4cpp::Priority::FATAL; break;
+        case LOGPRIORITY_ERROR:     level = log4cpp::Priority::ERROR; break;
+        case LOGPRIORITY_WARNING:   level = log4cpp::Priority::WARN;  break;
+        case LOGPRIORITY_NORMAL:    level = log4cpp::Priority::INFO;  break;
+        case LOGPRIORITY_DEBUG:     level = log4cpp::Priority::DEBUG; break;
+        case LOGPRIORITY_FULLDEBUG: level = log4cpp::Priority::DEBUG; break;
+    }
 
-void Logger::logToStream(log4cpp::Priority::Value priority, const std::string &message) {
-    m_logger.getStream(priority) << message;
+    m_logger.getStream(level) << message;
+}
+
+void Logger::logMessage(LogPriority priority, const std::string & message) {
+    logMessage(priority, message.c_str());
 }
 
 string Logger::formatDate(time_t timestamp, bool reverse) {

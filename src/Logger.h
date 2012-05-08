@@ -17,21 +17,47 @@
 #include <log4cpp/Category.hh>
 
 
+enum SharemindLogPriority {
+    LOGPRIORITY_FATAL,
+    LOGPRIORITY_ERROR,
+    LOGPRIORITY_WARNING,
+    LOGPRIORITY_NORMAL,
+    LOGPRIORITY_DEBUG,
+    LOGPRIORITY_FULLDEBUG
+};
+
 namespace sharemind {
+
+typedef SharemindLogPriority LogPriority;
+
+class ILogger {
+
+public: /* Methods: */
+
+    /**
+     Logs a message with the specified priority.
+
+     \param[in] priority the priority level.
+     \param[in] message the message to log.
+    */
+    virtual void logMessage(LogPriority priority, const char * message) = 0;
+
+    /**
+     Logs a message with the specified priority.
+
+     \param[in] priority the priority level.
+     \param[in] message the message to log.
+    */
+    virtual void logMessage(LogPriority priority, const std::string & message) = 0;
+
+};
 
 #define WRITE_LOG(logger, priority, prefix, message) \
     do { \
         std::ostringstream oss; \
         oss << prefix << message; \
-        (logger).logToStream((priority),oss.str()); \
+        (logger).logMessage((priority),oss.str()); \
     } while (false)
-
-#define LOGPRIORITY_FATAL      log4cpp::Priority::FATAL
-#define LOGPRIORITY_ERROR      log4cpp::Priority::ERROR
-#define LOGPRIORITY_WARNING    log4cpp::Priority::WARN
-#define LOGPRIORITY_NORMAL     log4cpp::Priority::INFO
-#define LOGPRIORITY_DEBUG      log4cpp::Priority::DEBUG
-#define LOGPRIORITY_FULLDEBUG  log4cpp::Priority::DEBUG
 
 #ifdef SHAREMIND_LOGLEVEL_FULLDEBUG
 #define WRITE_LOG_FULLDEBUG(logger, message) WRITE_LOG(logger, LOGPRIORITY_FULLDEBUG, "", message)
@@ -146,7 +172,7 @@ namespace sharemind {
  If the message is LOG_DEBUG, but the logging level is set to
  LOG_MINIMAL, the message will not be displayed/written to the log.
 */
-class Logger {
+class Logger: public ILogger {
 
 public:
 
@@ -235,13 +261,9 @@ public:
         return m_logger.getStream(priority);
     }
 
-    /**
-     Logs a message with the specified priority.
-
-     \param[in] priority the priority level from the log4cpp::Priority enumeration.
-     \param[in] message the message to log.
-    */
-    void logToStream(log4cpp::Priority::Value priority, const std::string &message);
+    /* Inherited from ILogger: */
+    virtual void logMessage(LogPriority priority, const char * message);
+    virtual void logMessage(LogPriority priority, const std::string & message);
 
     /*inline boost::mutex& getStreamMutex() {
         return *m_streamMutex;
