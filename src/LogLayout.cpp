@@ -12,28 +12,20 @@
 #include "Logger.h"
 #include "LogLayout.h"
 
-using std::ostringstream;
-using namespace sharemind;
 
-LogLayout::LogLayout(Logger* logger)
-    : m_logger (logger)
-{
+namespace sharemind {
+
+std::string LogLayout::format(const log4cpp::LoggingEvent & event) {
+    std::ostringstream oss;
+
+    const std::string & priorityName = log4cpp::Priority::getPriorityName(event.priority);
+
+    oss << Logger::formatTime(event.timeStamp.getSeconds()) << " ";
+    oss.width(log4cpp::Priority::MESSAGE_SIZE);
+    oss.setf(std::ios::left);
+    oss << priorityName << ": " << m_logger.getMessagePrefix() << event.message << std::endl;
+
+    return oss.str();
 }
 
-LogLayout::~LogLayout() {
-}
-
-std::string LogLayout::format(const log4cpp::LoggingEvent& event) {
-    ostringstream message;
-
-    const std::string& priorityName = log4cpp::Priority::getPriorityName(event.priority);
-
-    message << Logger::formatTime (event.timeStamp.getSeconds()) << " ";
-
-    message.width(log4cpp::Priority::MESSAGE_SIZE);
-    message.setf(std::ios::left);
-
-    message << priorityName << ": " << m_logger->getMessagePrefix() << event.message << std::endl;
-
-    return message.str();
-}
+} // namespace sharemind {

@@ -23,24 +23,22 @@ class LogLayout : public log4cpp::Layout {
 
 public: /* Methods: */
 
-    LogLayout(Logger* logger);
-
-    virtual ~LogLayout();
+    inline LogLayout(Logger & logger)
+        : m_logger(logger) {}
 
     /**
      * Formats the LoggingEvent in LogLayout style:<br>
      * "formattedTime priority ndc: message"
      **/
-    virtual std::string format(const log4cpp::LoggingEvent& event);
+    virtual std::string format(const log4cpp::LoggingEvent & event);
 
 private: /* Methods: */
 
-    LogLayout();
+    LogLayout(); // NOT IMPLEMENTED
 
 private: /* Fields: */
 
-    /** \warning The ownership of m_logger is not ours, do not delete it by accident! */
-    Logger* m_logger;
+    Logger & m_logger;
 
 }; /* class LogLayout { */
 

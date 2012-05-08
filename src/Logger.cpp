@@ -47,7 +47,7 @@ bool Logger::addFileAppender(const std::string& appenderName, const std::string&
         return false;
 
     log4cpp::Appender *appender = new log4cpp::FileAppender(appenderName, fd);
-    log4cpp::Layout *layout = new LogLayout(this);
+    log4cpp::Layout * layout = new LogLayout(*this);
     appender->setLayout(layout);
 
     m_logger.addAppender(appender);
@@ -67,7 +67,7 @@ bool Logger::addRollingFileAppender(const std::string& appenderName,
                                                                    maxFileSize,
                                                                    maxBackupFiles,
                                                                    append);
-    log4cpp::Layout *layout = new LogLayout(this);
+    log4cpp::Layout * layout = new LogLayout(*this);
     appender->setLayout(layout);
 
     // \todo somehow need to check if the file was successfully opened.
@@ -82,7 +82,7 @@ void Logger::addOutputStreamAppender(const std::string& appenderName, std::ostre
     removeAppender (appenderName);
 
     log4cpp::Appender *appender = new log4cpp::OstreamAppender("OstreamAppender", &stream);
-    log4cpp::Layout *layout = new LogLayout(this);
+    log4cpp::Layout * layout = new LogLayout(*this);
     appender->setLayout(layout);
 
     m_logger.addAppender(appender);
@@ -92,7 +92,7 @@ void Logger::addAppender (log4cpp::Appender& appender) {
     //first remove it, then readd
     removeAppender(appender);
 
-    log4cpp::Layout *layout = new LogLayout(this);
+    log4cpp::Layout * layout = new LogLayout(*this);
     appender.setLayout(layout);
 
     m_logger.addAppender(appender);
