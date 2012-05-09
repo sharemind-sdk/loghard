@@ -12,45 +12,12 @@
 
 #include <ctime>
 #include <sstream>
-#include <string>
 #include <log4cpp/Appender.hh>
 #include <log4cpp/Category.hh>
+#include "ILogger.h"
 
-
-enum SharemindLogPriority {
-    LOGPRIORITY_FATAL,
-    LOGPRIORITY_ERROR,
-    LOGPRIORITY_WARNING,
-    LOGPRIORITY_NORMAL,
-    LOGPRIORITY_DEBUG,
-    LOGPRIORITY_FULLDEBUG
-};
 
 namespace sharemind {
-
-typedef SharemindLogPriority LogPriority;
-
-class ILogger {
-
-public: /* Methods: */
-
-    /**
-     Logs a message with the specified priority.
-
-     \param[in] priority the priority level.
-     \param[in] message the message to log.
-    */
-    virtual void logMessage(LogPriority priority, const char * message) = 0;
-
-    /**
-     Logs a message with the specified priority.
-
-     \param[in] priority the priority level.
-     \param[in] message the message to log.
-    */
-    virtual void logMessage(LogPriority priority, const std::string & message) = 0;
-
-};
 
 #define WRITE_LOG(logger, priority, prefix, message) \
     do { \
