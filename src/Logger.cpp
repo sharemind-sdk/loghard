@@ -13,12 +13,14 @@
 #include <log4cpp/RollingFileAppender.hh>
 #include <log4cpp/OstreamAppender.hh>
 
+#include "Debug.h"
 #include "Logger.h"
 #include "LogLayout.h"
 
-using std::ostringstream;
-using std::string;
-using namespace sharemind;
+
+namespace { SHAREMIND_DEFINE_PREFIXED_LOGS("[Logger] "); }
+
+namespace sharemind {
 
 Logger::Logger(const std::string& name) :
     m_logger (log4cpp::Category::getInstance(name))
@@ -116,8 +118,8 @@ void Logger::logMessage(LogPriority priority, const std::string & message) {
     logMessage(priority, message.c_str());
 }
 
-string Logger::formatDate(time_t timestamp, bool reverse) {
-    ostringstream date;
+std::string Logger::formatDate(time_t timestamp, bool reverse) {
+    std::ostringstream date;
 
     const tm* dest = localtime (&timestamp);
     if (reverse) {
@@ -135,8 +137,8 @@ string Logger::formatDate(time_t timestamp, bool reverse) {
     return date.str ();
 }
 
-string Logger::formatTime(time_t timestamp) {
-    ostringstream time;
+std::string Logger::formatTime(time_t timestamp) {
+    std::ostringstream time;
 
     const tm* dest = localtime (&timestamp);
     time <<
@@ -147,7 +149,7 @@ string Logger::formatTime(time_t timestamp) {
     return time.str ();
 }
 
-bool Logger::openFile(const string& filename, const bool& append, int& fd) {
+bool Logger::openFile(const std::string & filename, bool append, int & fd) {
     // Check if we have a filename
     if (filename.length () > 0) {
         // Try to open the log file
@@ -158,19 +160,20 @@ bool Logger::openFile(const string& filename, const bool& append, int& fd) {
 
         fd = ::open(filename.c_str(), flags, 00644);
         if (fd < 0) {
-            WRITE_LOG_ERROR (*this, "[Logger] Can't open logger log file " << filename << "!");
+            LogError(*this) << "Can't open logger log file " << filename << "!";
             return false;
         }
 
-        WRITE_LOG_DEBUG (*this, "[Logger] Opened logger log file " << filename << ".");
+        LogDebug(*this) << "Opened logger log file " << filename << ".";
 
         return true;
 
     } else {
 
         // We didn't get a filename so spread the information about that.
-        WRITE_LOG_ERROR (*this, "[Logger] Empty log file name!");
+        LogError(*this) << "Empty log file name!";
         return false;
     }
 }
 
+} // namespace sharemind {
