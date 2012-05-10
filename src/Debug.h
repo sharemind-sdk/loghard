@@ -132,6 +132,10 @@ private: /* Fields: */
         public: /* Methods: */ \
             inline name (sharemind::ILogger & logger) \
                 : sharemind::LogHelper<priority, const char *>(logger, (constPrefix)) {} \
+            inline name (sharemind::ILogger & logger, const char * prefix) \
+                : sharemind::LogHelper<priority, const char *>(logger, prefix) {} \
+            inline name (sharemind::ILogger & logger, const std::string & prefix) \
+                : sharemind::LogHelper<priority, const char *>(logger, prefix.c_str()) {} \
     }
 
 #define SHAREMIND_UNDEFINE_LOG(name) \
