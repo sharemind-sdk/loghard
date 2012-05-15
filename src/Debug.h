@@ -130,9 +130,7 @@ private: /* Fields: */
 #define SHAREMIND_DEFINE_PREFIXED_LOG(name,priority,constPrefix) \
     class name: public sharemind::LogHelper<priority, const char *> { \
         public: /* Methods: */ \
-            inline name (sharemind::ILogger & logger) \
-                : sharemind::LogHelper<priority, const char *>(logger, (constPrefix)) {} \
-            inline name (sharemind::ILogger & logger, const char * prefix) \
+            inline name (sharemind::ILogger & logger, const char * prefix = (constPrefix)) \
                 : sharemind::LogHelper<priority, const char *>(logger, prefix) {} \
             inline name (sharemind::ILogger & logger, const std::string & prefix) \
                 : sharemind::LogHelper<priority, const char *>(logger, prefix.c_str()) {} \
