@@ -146,11 +146,11 @@ public:
      */
     static std::string formatTime(time_t timestamp);
 
-    void setMessagePrefix (std::string prefix) {
+    void setMessagePrefix(const std::string & prefix) {
         m_prefix = prefix;
     }
 
-    std::string getMessagePrefix () {
+    const std::string & getMessagePrefix() const {
         return m_prefix;
     }
 
