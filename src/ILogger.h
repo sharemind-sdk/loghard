@@ -30,6 +30,8 @@ typedef enum SharemindLogPriority_ {
 
 namespace sharemind {
 
+class SmartStringStream;
+
 typedef SharemindLogPriority LogPriority;
 
 class ILogger {
@@ -51,6 +53,14 @@ public: /* Methods: */
      \param[in] message the message to log.
     */
     virtual void logMessage(LogPriority priority, const std::string & message) = 0;
+
+    /**
+     Logs a message with the specified priority.
+
+     \param[in] priority the priority level.
+     \param[in] message the message to log.
+    */
+    virtual void logMessage(LogPriority priority, const SmartStringStream & message) = 0;
 
 }; /* class ILogger { */
 

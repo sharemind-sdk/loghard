@@ -122,6 +122,7 @@ public:
     /* Inherited from ILogger: */
     virtual void logMessage(LogPriority priority, const char * message);
     virtual void logMessage(LogPriority priority, const std::string & message);
+    virtual void logMessage(LogPriority priority, const SmartStringStream & message);
 
     /*inline boost::mutex& getStreamMutex() {
         return *m_streamMutex;

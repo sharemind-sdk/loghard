@@ -11,8 +11,8 @@
 #define SHAREMINDCOMMON_DEBUG_H
 
 #include <cassert>
-#include <sstream>
 #include <string>
+#include "../SmartStringStream.h"
 #include "ILogger.h"
 
 
@@ -39,7 +39,7 @@ public: /* Methods: */
     }
 
     inline ~LogHelper() {
-        m_logger.logMessage(priority, m_stream.str());
+        m_logger.logMessage(priority, m_stream);
     }
 
     template <class T>
@@ -55,7 +55,7 @@ private: /* Methods: */
 
 private: /* Fields: */
 
-    std::ostringstream m_stream;
+    SmartStringStream m_stream;
     ILogger & m_logger;
 
 };
@@ -73,7 +73,7 @@ public: /* Methods: */
     inline ~LogHelper() {
         assert(!(m_string && m_stream));
         if (m_stream) {
-            m_logger.logMessage(priority, m_stream->str());
+            m_logger.logMessage(priority, *m_stream);
             delete m_stream;
         } else if (m_string) {
             m_logger.logMessage(priority, m_string);
@@ -85,7 +85,7 @@ public: /* Methods: */
         if (m_stream) {
             (*m_stream) << v;
         } else if (m_string) {
-            m_stream = new std::ostringstream;
+            m_stream = new SmartStringStream;
             (*m_stream) << m_string << v;
             m_string = NULL;
         } else {
@@ -100,7 +100,7 @@ public: /* Methods: */
         if (m_stream) {
             (*m_stream) << v;
         } else {
-            m_stream = new std::ostringstream;
+            m_stream = new SmartStringStream;
             if (m_string) {
                 (*m_stream) << m_string << v;
                 m_string = NULL;
@@ -120,7 +120,7 @@ private: /* Fields: */
 
     ILogger & m_logger;
     const char * m_string;
-    std::ostringstream * m_stream;
+    SmartStringStream * m_stream;
 
 };
 

@@ -13,12 +13,28 @@
 #include <log4cpp/RollingFileAppender.hh>
 #include <log4cpp/OstreamAppender.hh>
 
+#include "../SmartStringStream.h"
 #include "Debug.h"
 #include "Logger.h"
 #include "LogLayout.h"
 
 
-namespace { SHAREMIND_DEFINE_PREFIXED_LOGS("[Logger] "); }
+namespace {
+
+SHAREMIND_DEFINE_PREFIXED_LOGS("[Logger] ");
+
+inline log4cpp::Priority::PriorityLevel prioToLog4cppPrio(SharemindLogPriority priority) {
+    switch (priority) {
+        case LOGPRIORITY_FATAL:     return log4cpp::Priority::FATAL;
+        case LOGPRIORITY_ERROR:     return log4cpp::Priority::ERROR;
+        case LOGPRIORITY_WARNING:   return log4cpp::Priority::WARN;
+        case LOGPRIORITY_NORMAL:    return log4cpp::Priority::INFO;
+        case LOGPRIORITY_DEBUG:     return log4cpp::Priority::DEBUG;
+        case LOGPRIORITY_FULLDEBUG: return log4cpp::Priority::DEBUG;
+    }
+}
+
+} // anonymous namespace
 
 namespace sharemind {
 
@@ -101,21 +117,15 @@ void Logger::addAppender (log4cpp::Appender& appender) {
 }
 
 void Logger::logMessage(LogPriority priority, const char * message) {
-    log4cpp::Priority::PriorityLevel level;
-    switch (priority) {
-        case LOGPRIORITY_FATAL:     level = log4cpp::Priority::FATAL; break;
-        case LOGPRIORITY_ERROR:     level = log4cpp::Priority::ERROR; break;
-        case LOGPRIORITY_WARNING:   level = log4cpp::Priority::WARN;  break;
-        case LOGPRIORITY_NORMAL:    level = log4cpp::Priority::INFO;  break;
-        case LOGPRIORITY_DEBUG:     level = log4cpp::Priority::DEBUG; break;
-        case LOGPRIORITY_FULLDEBUG: level = log4cpp::Priority::DEBUG; break;
-    }
-
-    m_logger.getStream(level) << message;
+    m_logger.getStream(prioToLog4cppPrio(priority)) << message;
 }
 
 void Logger::logMessage(LogPriority priority, const std::string & message) {
-    logMessage(priority, message.c_str());
+    m_logger.getStream(prioToLog4cppPrio(priority)) << message;
+}
+
+void Logger::logMessage(LogPriority priority, const SmartStringStream & message) {
+    m_logger.getStream(prioToLog4cppPrio(priority)) << message;
 }
 
 std::string Logger::formatDate(time_t timestamp, bool reverse) {
