@@ -7,6 +7,8 @@
  * code is subject to the appropriate license agreement.
  */
 
+#include "Logger.h"
+
 // Date and time manipulation
 #include <ctime>
 #include <log4cpp/FileAppender.hh>
@@ -15,7 +17,6 @@
 
 #include "../SmartStringStream.h"
 #include "Debug.h"
-#include "Logger.h"
 #include "LogLayout.h"
 
 
