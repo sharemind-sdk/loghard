@@ -89,8 +89,10 @@ bool Logger::addRollingFileAppender(const std::string& appenderName,
     log4cpp::Layout * layout = new LogLayout(*this);
     appender->setLayout(layout);
 
-    // \todo somehow need to check if the file was successfully opened.
-    // Use reopen() function of the FileAppender for that?
+    /**
+      \todo somehow need to check if the file was successfully opened. Use
+            reopen() function of the FileAppender for that?
+    */
 
     m_logger.addAppender(appender);
 
@@ -108,7 +110,7 @@ void Logger::addOutputStreamAppender(const std::string& appenderName, std::ostre
 }
 
 void Logger::addAppender (log4cpp::Appender& appender) {
-    //first remove it, then readd
+    // Take care we do not have the same appender added twice:
     removeAppender(appender);
 
     log4cpp::Layout * layout = new LogLayout(*this);
