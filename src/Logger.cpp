@@ -13,7 +13,6 @@
 #include <ctime>
 #include <log4cpp/FileAppender.hh>
 #include <log4cpp/RollingFileAppender.hh>
-#include <log4cpp/OstreamAppender.hh>
 
 #include "../SmartStringStream.h"
 #include "Debug.h"
@@ -102,7 +101,7 @@ bool Logger::addRollingFileAppender(const std::string& appenderName,
 void Logger::addOutputStreamAppender(const std::string& appenderName, std::ostream& stream) {
     removeAppender (appenderName);
 
-    log4cpp::Appender *appender = new log4cpp::OstreamAppender("OstreamAppender", &stream);
+    log4cpp::Appender *appender = new FlushingOstreamAppender("OstreamAppender", &stream);
     log4cpp::Layout * layout = new LogLayout(*this);
     appender->setLayout(layout);
 

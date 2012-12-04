@@ -14,10 +14,30 @@
 #include <sstream>
 #include <log4cpp/Appender.hh>
 #include <log4cpp/Category.hh>
+#include <log4cpp/OstreamAppender.hh>
 #include "ILogger.h"
 
 
 namespace sharemind {
+
+/**
+ * This class reimplements the OstreamAppender so that the stream is flushed each time something is logged.
+ */
+class FlushingOstreamAppender: public log4cpp::OstreamAppender {
+public:
+    FlushingOstreamAppender(const std::string& name, std::ostream* stream)
+        : OstreamAppender(name, stream)
+    {}
+
+protected:
+    virtual void _append(const log4cpp::LoggingEvent& event) {
+        (*_stream) << _getLayout().format(event);
+        (*_stream).flush();
+        if (!_stream->good()) {
+            // XXX help! help!
+        }
+    }
+};
 
 /**
  This class provides logging services for the whole project.
