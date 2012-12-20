@@ -7,6 +7,8 @@
  * code is subject to the appropriate license agreement.
  */
 
+#define SHAREMIND_COMMON_INTERNAL__
+
 #include "AppenderMessageProcessor.h"
 
 #include "GenericAppender.h"

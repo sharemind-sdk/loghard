@@ -10,6 +10,10 @@
 #ifndef SHAREMINDCOMMON_GENERICAPPENDER_H
 #define SHAREMINDCOMMON_GENERICAPPENDER_H
 
+#ifndef SHAREMIND_COMMON_INTERNAL__
+#error including an internal header!
+#endif
+
 #include <log4cpp/Category.hh>
 #include <log4cpp/LayoutAppender.hh>
 #include <log4cpp/SimpleLayout.hh>

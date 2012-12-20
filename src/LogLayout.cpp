@@ -7,10 +7,12 @@
  * code is subject to the appropriate license agreement.
  */
 
-#include <sstream>
+#define SHAREMIND_COMMON_INTERNAL__
 
-#include "Logger.h"
 #include "LogLayout.h"
+
+#include <sstream>
+#include "Logger.h"
 
 
 namespace sharemind {

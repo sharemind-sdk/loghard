@@ -10,6 +10,10 @@
 #ifndef SHAREMINDCOMMON_MESSAGEPROCESSOR_H
 #define SHAREMINDCOMMON_MESSAGEPROCESSOR_H
 
+#ifndef SHAREMIND_COMMON_INTERNAL__
+#error including an internal header!
+#endif
+
 #include <string>
 
 namespace sharemind {

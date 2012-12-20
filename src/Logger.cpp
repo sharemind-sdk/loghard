@@ -7,11 +7,16 @@
  * code is subject to the appropriate license agreement.
  */
 
+#define SHAREMIND_COMMON_INTERNAL__
+
 #include "Logger.h"
 
 // Date and time manipulation
 #include <ctime>
+#include <log4cpp/Appender.hh>
+#include <log4cpp/Category.hh>
 #include <log4cpp/FileAppender.hh>
+#include <log4cpp/OstreamAppender.hh>
 #include <log4cpp/RollingFileAppender.hh>
 
 #include "../SmartStringStream.h"
@@ -37,6 +42,25 @@ inline log4cpp::Priority::PriorityLevel prioToLog4cppPrio(SharemindLogPriority p
 } // anonymous namespace
 
 namespace sharemind {
+
+/**
+ * This class reimplements the OstreamAppender so that the stream is flushed each time something is logged.
+ */
+class FlushingOstreamAppender: public log4cpp::OstreamAppender {
+public:
+    FlushingOstreamAppender(const std::string& name, std::ostream* stream)
+        : OstreamAppender(name, stream)
+    {}
+
+protected:
+    virtual void _append(const log4cpp::LoggingEvent& event) {
+        (*_stream) << _getLayout().format(event);
+        (*_stream).flush();
+        if (!_stream->good()) {
+            // XXX help! help!
+        }
+    }
+};
 
 Logger::Logger(const std::string& name) :
     m_logger (log4cpp::Category::getInstance(name))
@@ -116,6 +140,18 @@ void Logger::addAppender (log4cpp::Appender& appender) {
     appender.setLayout(layout);
 
     m_logger.addAppender(appender);
+}
+
+void Logger::removeAppender(log4cpp::Appender & appender) {
+    m_logger.removeAppender(&appender);
+}
+
+void Logger::removeAppender(const std::string & appenderName) {
+    m_logger.removeAppender(m_logger.getAppender(appenderName));
+}
+
+void Logger::removeAllAppenders() {
+    m_logger.removeAllAppenders();
 }
 
 void Logger::logMessage(LogPriority priority, const char * message) {

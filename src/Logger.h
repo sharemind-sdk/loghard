@@ -12,32 +12,14 @@
 
 #include <ctime>
 #include <sstream>
-#include <log4cpp/Appender.hh>
-#include <log4cpp/Category.hh>
-#include <log4cpp/OstreamAppender.hh>
 #include "ILogger.h"
 
+namespace log4cpp {
+class Appender;
+class Category;
+}
 
 namespace sharemind {
-
-/**
- * This class reimplements the OstreamAppender so that the stream is flushed each time something is logged.
- */
-class FlushingOstreamAppender: public log4cpp::OstreamAppender {
-public:
-    FlushingOstreamAppender(const std::string& name, std::ostream* stream)
-        : OstreamAppender(name, stream)
-    {}
-
-protected:
-    virtual void _append(const log4cpp::LoggingEvent& event) {
-        (*_stream) << _getLayout().format(event);
-        (*_stream).flush();
-        if (!_stream->good()) {
-            // XXX help! help!
-        }
-    }
-};
 
 /**
  This class provides logging services for the whole project.
@@ -109,35 +91,19 @@ public:
 
      \param[in] appender the pointer to a preconstructed appender.
     */
-    inline void removeAppender (log4cpp::Appender& appender)  {
-        m_logger.removeAppender(&appender);
-    }
+    void removeAppender (log4cpp::Appender & appender);
 
     /**
      Removes the specified appender from the Logger by name.
 
      \param[in] appenderName the name of the appender to be removed.
     */
-    inline void removeAppender (const std::string& appenderName) {
-        m_logger.removeAppender(m_logger.getAppender(appenderName));
-    }
+    void removeAppender(const std::string & appenderName);
 
     /**
      Removes all the appenders and closes all opened log files
      */
-    inline void removeAllAppenders() {
-        m_logger.removeAllAppenders();
-    }
-
-    /**
-     Returns a logging stream according to a given priority value.
-
-     \param[in] priority the priority level from the log4cpp::Priority enumeration.
-     \returns a logging stream according to a given priority value.
-    */
-    inline log4cpp::CategoryStream getStream(log4cpp::Priority::Value priority) {
-        return m_logger.getStream(priority);
-    }
+    void removeAllAppenders();
 
     /* Inherited from ILogger: */
     virtual void logMessage(LogPriority priority, const char * message);

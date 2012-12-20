@@ -10,6 +10,10 @@
 #ifndef SHAREMINDCOMMON_LOGLAYOUT_H
 #define SHAREMINDCOMMON_LOGLAYOUT_H
 
+#ifndef SHAREMIND_COMMON_INTERNAL__
+#error including an internal header!
+#endif
+
 #include <log4cpp/Layout.hh>
 
 namespace sharemind {

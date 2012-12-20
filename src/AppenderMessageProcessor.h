@@ -10,6 +10,10 @@
 #ifndef SHAREMINDCOMMON_APPENDERMESSAGEPROCESSOR_H
 #define SHAREMINDCOMMON_APPENDERMESSAGEPROCESSOR_H
 
+#ifndef SHAREMIND_COMMON_INTERNAL__
+#error including an internal header!
+#endif
+
 #include "MessageProcessor.h"
 
 #include <string>
