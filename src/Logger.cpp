@@ -11,7 +11,7 @@
 
 #include "Logger.h"
 
-// Date and time manipulation
+#include <cstdlib>
 #include <ctime>
 #include <log4cpp/Appender.hh>
 #include <log4cpp/Category.hh>
@@ -36,6 +36,7 @@ inline log4cpp::Priority::PriorityLevel prioToLog4cppPrio(SharemindLogPriority p
         case LOGPRIORITY_NORMAL:    return log4cpp::Priority::INFO;
         case LOGPRIORITY_DEBUG:     return log4cpp::Priority::DEBUG;
         case LOGPRIORITY_FULLDEBUG: return log4cpp::Priority::DEBUG;
+        default:                    abort();
     }
 }
 
