@@ -11,10 +11,13 @@
 #define SHAREMINDCOMMON_ILOGGER_H
 
 #ifdef __cplusplus
+#if __cplusplus >= 201103L
+#include <algorithm>
+#endif
 #include <boost/mpl/if.hpp>
 #include <cassert>
+#include <sstream>
 #include <string>
-#include "../SmartStringStream.h"
 
 extern "C" {
 #endif /* #ifdef __cplusplus */
@@ -51,113 +54,129 @@ typedef SharemindLogPriority LogPriority;
 
 class ILogger {
 
-public: /* Types: */
+private: /* Types: */
 
     struct LogNoPrefixType {};
 
     struct NullLogHelper {
-        NullLogHelper(ILogger &) {}
+        inline NullLogHelper(ILogger &) {}
         template <class PrefixType>
-        NullLogHelper(ILogger &, const PrefixType &) {}
+        inline NullLogHelper(ILogger &, const PrefixType &) {}
         template <class T> NullLogHelper & operator<<(const T &) { return *this; }
-    };
-
-    template <class PrefixType, LogPriority priority = LOGPRIORITY_DEBUG>
-    class PrefixedLogHelperBase {
-
-    public: /* Methods: */
-
-        inline PrefixedLogHelperBase(ILogger & logger, const PrefixType & prefix)
-            : m_logger(logger)
-        {
-            m_stream << prefix;
-        }
-
-        inline ~PrefixedLogHelperBase() {
-            m_logger.logMessage(priority, m_stream);
-        }
-
-        template <class T>
-        inline PrefixedLogHelperBase & operator<<(const T & v) {
-            m_stream << v;
-            return *this;
-        }
-
-    private: /* Methods: */
-
-        PrefixedLogHelperBase(const PrefixedLogHelperBase<PrefixType, priority> & copy); // disable
-        PrefixedLogHelperBase & operator=(const PrefixedLogHelperBase<PrefixType, priority> & rhs); // disable
-
-    private: /* Fields: */
-
-        SmartStringStream m_stream;
-        ILogger & m_logger;
-
+        inline void setAsPrefix() const {}
     };
 
     template <LogPriority priority>
     class NoPrefixLogHelperBase {
 
+    private: /* Types: */
+
+        enum Status { NO_LOG, OPERATIONAL, NOT_OPERATIONAL };
+
     public: /* Methods: */
 
         inline NoPrefixLogHelperBase(ILogger & logger)
-            : m_logger(logger)
-            , m_string(NULL)
-            , m_stream(NULL) {}
+            : m_logger(&logger)
+            , m_status(NO_LOG) {}
 
-        inline ~NoPrefixLogHelperBase() {
-            assert(!(m_string && m_stream));
-            if (m_stream) {
-                m_logger.logMessage(priority, *m_stream);
-                delete m_stream;
-            } else if (m_string) {
-                m_logger.logMessage(priority, m_string);
-            }
+        #if __cplusplus >= 201103L
+        NoPrefixLogHelperBase(const NoPrefixLogHelperBase<priority> &) = delete;
+        NoPrefixLogHelperBase<priority> & operator=(const NoPrefixLogHelperBase<priority> &) = delete;
+
+        inline NoPrefixLogHelperBase(NoPrefixLogHelperBase<priority> && move)
+            : /* m_stream(std::move(move.m_stream))
+            , */ m_logger(std::move(move.m_logger))
+            , m_status(std::move(move.m_status))
+        {
+            /// \bug http://gcc.gnu.org/bugzilla/show_bug.cgi?id=54316
+            m_stream << move.m_stream.str();
+            move.m_stream.str("");
+            move.m_stream.clear();
+
+            move.m_status = NOT_OPERATIONAL;
         }
 
-        inline NoPrefixLogHelperBase & operator<<(const char * v) {
-            assert(!(m_string && m_stream));
-            if (m_stream) {
-                (*m_stream) << v;
-            } else if (m_string) {
-                m_stream = new SmartStringStream;
-                (*m_stream) << m_string << v;
-                m_string = NULL;
-            } else {
-                m_string = v;
-            }
-            return *this;
+        inline NoPrefixLogHelperBase<priority> & operator=(NoPrefixLogHelperBase<priority> && move) {
+            /// \bug http://gcc.gnu.org/bugzilla/show_bug.cgi?id=54316
+            // m_stream = std::move(move.m_stream);
+            m_stream << move.m_stream.str();
+            move.m_stream.str("");
+            move.m_stream.clear();
+
+            m_logger = std::move(move.m_logger);
+            m_status = std::move(move.m_status);
+            move.m_status = NOT_OPERATIONAL;
+        }
+        #else
+        /// \todo This is an ugly C++03 hack (use of copy semantics for move)
+        inline NoPrefixLogHelperBase(const NoPrefixLogHelperBase<priority> & move)
+            : m_logger(move.m_logger)
+            , m_status(move.m_status)
+        {
+            m_stream << move.m_stream.str();
+            // Very ugly:
+            NoPrefixLogHelperBase<priority> & m = const_cast<NoPrefixLogHelperBase<priority> &>(move);
+            m.m_stream.str("");
+            m.m_stream.clear();
+            m.m_status = NOT_OPERATIONAL;
+        }
+
+        /// \todo This is an ugly C++03 hack (use of copy semantics for move)
+        inline NoPrefixLogHelperBase<priority> & operator=(const NoPrefixLogHelperBase<priority> & move) {
+            m_stream.str("");
+            m_stream.clear();
+            m_stream << move.m_stream.str();
+            m_logger = move.m_logger;
+            m_status = move.m_status;// Very ugly:
+            NoPrefixLogHelperBase<priority> & m = const_cast<NoPrefixLogHelperBase<priority> &>(move);
+            m.m_stream.str("");
+            m.m_stream.clear();
+            m.m_status = NOT_OPERATIONAL;
+        }
+        #endif
+        inline ~NoPrefixLogHelperBase() {
+            if (m_status == OPERATIONAL)
+                m_logger->logMessage(priority, m_stream.str());
         }
 
         template <class T>
         inline NoPrefixLogHelperBase & operator<<(const T & v) {
-            assert(!(m_string && m_stream));
-            if (m_stream) {
-                (*m_stream) << v;
-            } else {
-                m_stream = new SmartStringStream;
-                if (m_string) {
-                    (*m_stream) << m_string << v;
-                    m_string = NULL;
-                } else {
-                    (*m_stream) << v;
-                }
+            if (m_status != NOT_OPERATIONAL) {
+                m_stream << v;
+                if (m_status == NO_LOG)
+                    m_status = OPERATIONAL;
             }
             return *this;
         }
 
-    private: /* Methods: */
-
-        NoPrefixLogHelperBase(const NoPrefixLogHelperBase<priority> & copy); // disable
-        NoPrefixLogHelperBase & operator=(const NoPrefixLogHelperBase<priority> & rhs); // disable
+        void setAsPrefix() {
+            if (m_status == OPERATIONAL)
+                m_status = NO_LOG;
+        }
 
     private: /* Fields: */
 
-        ILogger & m_logger;
-        const char * m_string;
-        SmartStringStream * m_stream;
+        std::ostringstream m_stream;
+        ILogger * m_logger;
+        Status m_status;
+
+    }; /* class NoPrefixLogHelperBase { */
+
+    template <class PrefixType, LogPriority priority = LOGPRIORITY_DEBUG>
+    class PrefixedLogHelperBase: public NoPrefixLogHelperBase<priority> {
+
+    public: /* Methods: */
+
+        inline PrefixedLogHelperBase(ILogger & logger, const PrefixType & prefix)
+            : NoPrefixLogHelperBase<priority>(logger)
+        {
+            (*this) << prefix;
+            this->setAsPrefix();
+        }
 
     };
+
+public: /* Types: */
 
     template <LogPriority priority = LOGPRIORITY_DEBUG, class PrefixType = LogNoPrefixType>
     class LogHelper
@@ -174,8 +193,63 @@ public: /* Types: */
                                NullLogHelper>::type(logger, prefix) {}
 
     };
+    template <LogPriority priority, class PrefixType> friend class LogHelper;
+
+    template <class ILogger__ = ILogger>
+    class PrefixedWrapper {
+
+    private: /* Types: */
+
+        template <LogPriority priority>
+        struct Helper {
+            typedef typename boost::mpl::if_c<priority <= SHAREMIND_LOGLEVEL_MAXDEBUG,
+                                              ILogger::NoPrefixLogHelperBase<priority>,
+                                              NullLogHelper>::type type;
+        };
+
+    public: /* Types: */
+
+        typedef PrefixedWrapper<PrefixedWrapper<ILogger__> > Wrapped;
+
+    public: /* Methods: */
+
+        PrefixedWrapper(ILogger__ & logger, const std::string & prefix)
+            : m_logger(logger)
+            , m_prefix(prefix) {}
+
+        inline typename Helper<LOGPRIORITY_FATAL>::type fatal();
+        inline typename Helper<LOGPRIORITY_ERROR>::type error();
+        inline typename Helper<LOGPRIORITY_WARNING>::type warning();
+        inline typename Helper<LOGPRIORITY_NORMAL>::type info();
+        inline typename Helper<LOGPRIORITY_DEBUG>::type debug();
+        inline typename Helper<LOGPRIORITY_FULLDEBUG>::type fullDebug();
+
+        inline Wrapped wrap(const std::string & prefix) {
+            return Wrapped(*this, prefix);
+        }
+
+    private: /* Fields: */
+
+        ILogger__ & m_logger;
+        const std::string m_prefix;
+
+    };
+    template <class ILogger__> friend class PrefixedWrapper;
+
+    typedef PrefixedWrapper<ILogger> Wrapped;
 
 public: /* Methods: */
+
+    inline LogHelper<LOGPRIORITY_FATAL> fatal();
+    inline LogHelper<LOGPRIORITY_ERROR> error();
+    inline LogHelper<LOGPRIORITY_WARNING> warning();
+    inline LogHelper<LOGPRIORITY_NORMAL> info();
+    inline LogHelper<LOGPRIORITY_DEBUG> debug();
+    inline LogHelper<LOGPRIORITY_FULLDEBUG> fullDebug();
+
+    inline Wrapped wrap(const std::string & prefix) {
+        return Wrapped(*this, prefix);
+    }
 
     /**
      Logs a message with the specified priority.
@@ -219,6 +293,78 @@ public: /* Methods: */
                            NullLogHelper>::type(logger) {}
 
 };
+
+inline ILogger::LogHelper<LOGPRIORITY_FATAL> ILogger::fatal() {
+    return LogHelper<LOGPRIORITY_FATAL>(*this);
+}
+
+inline ILogger::LogHelper<LOGPRIORITY_ERROR> ILogger::error() {
+    return LogHelper<LOGPRIORITY_ERROR>(*this);
+}
+
+inline ILogger::LogHelper<LOGPRIORITY_WARNING> ILogger::warning() {
+    return LogHelper<LOGPRIORITY_WARNING>(*this);
+}
+
+inline ILogger::LogHelper<LOGPRIORITY_NORMAL> ILogger::info() {
+    return LogHelper<LOGPRIORITY_NORMAL>(*this);
+}
+
+inline ILogger::LogHelper<LOGPRIORITY_DEBUG> ILogger::debug() {
+    return LogHelper<LOGPRIORITY_DEBUG>(*this);
+}
+
+inline ILogger::LogHelper<LOGPRIORITY_FULLDEBUG> ILogger::fullDebug() {
+    return LogHelper<LOGPRIORITY_FULLDEBUG>(*this);
+}
+
+template <class ILogger__>
+inline typename ILogger::PrefixedWrapper<ILogger__>::template Helper<LOGPRIORITY_FATAL>::type ILogger::PrefixedWrapper<ILogger__>::fatal() {
+    typename Helper<LOGPRIORITY_FATAL>::type logger(m_logger.fatal());
+    logger << m_prefix;
+    logger.setAsPrefix();
+    return logger;
+}
+
+template <class ILogger__>
+inline typename ILogger::PrefixedWrapper<ILogger__>::template Helper<LOGPRIORITY_ERROR>::type ILogger::PrefixedWrapper<ILogger__>::error() {
+    typename Helper<LOGPRIORITY_ERROR>::type logger(m_logger.error());
+    logger << m_prefix;
+    logger.setAsPrefix();
+    return logger;
+}
+
+template <class ILogger__>
+inline typename ILogger::PrefixedWrapper<ILogger__>::template Helper<LOGPRIORITY_WARNING>::type ILogger::PrefixedWrapper<ILogger__>::warning() {
+    typename Helper<LOGPRIORITY_WARNING>::type logger(m_logger.warning());
+    logger << m_prefix;
+    logger.setAsPrefix();
+    return logger;
+}
+
+template <class ILogger__>
+inline typename ILogger::PrefixedWrapper<ILogger__>::template Helper<LOGPRIORITY_NORMAL>::type ILogger::PrefixedWrapper<ILogger__>::info() {
+    typename Helper<LOGPRIORITY_NORMAL>::type logger(m_logger.info());
+    logger << m_prefix;
+    logger.setAsPrefix();
+    return logger;
+}
+
+template <class ILogger__>
+inline typename ILogger::PrefixedWrapper<ILogger__>::template Helper<LOGPRIORITY_DEBUG>::type ILogger::PrefixedWrapper<ILogger__>::debug() {
+    typename Helper<LOGPRIORITY_DEBUG>::type logger(m_logger.debug());
+    logger << m_prefix;
+    logger.setAsPrefix();
+    return logger;
+}
+
+template <class ILogger__>
+inline typename ILogger::PrefixedWrapper<ILogger__>::template Helper<LOGPRIORITY_FULLDEBUG>::type ILogger::PrefixedWrapper<ILogger__>::fullDebug() {
+    typename Helper<LOGPRIORITY_FULLDEBUG>::type logger(m_logger.fullDebug());
+    logger << m_prefix;
+    logger.setAsPrefix();
+    return logger;
+}
 
 } /* namespace sharemind { */
 
