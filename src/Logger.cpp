@@ -18,7 +18,7 @@
 #include <log4cpp/FileAppender.hh>
 #include <log4cpp/OstreamAppender.hh>
 #include <log4cpp/RollingFileAppender.hh>
-
+#include "../Abort.h"
 #include "../SmartStringStream.h"
 #include "Debug.h"
 #include "LogLayout.h"
@@ -36,7 +36,8 @@ inline log4cpp::Priority::PriorityLevel prioToLog4cppPrio(SharemindLogPriority p
         case LOGPRIORITY_NORMAL:    return log4cpp::Priority::INFO;
         case LOGPRIORITY_DEBUG:     return log4cpp::Priority::DEBUG;
         case LOGPRIORITY_FULLDEBUG: return log4cpp::Priority::DEBUG;
-        default:                    abort();
+        default:
+            SHAREMIND_ABORT("pTLP: p=%d", static_cast<int>(priority));
     }
 }
 
