@@ -15,11 +15,12 @@
 #include "ILogger.h"
 
 namespace log4cpp {
-class Appender;
 class Category;
 }
 
 namespace sharemind {
+
+class MessageProcessor;
 
 /**
  This class provides logging services for the whole project.
@@ -48,50 +49,48 @@ public:
     /**
      Adds a file appender to the Logger.
 
-     \param[in] appenderName the name for the created appender.
-     \param[in] filename the name for the log file.
-     \param[in] append indicates whether the logs will be appended to the end of the file or not.
-
-     \retval true if opening the file was successful
-     \retval false if opening the file failed
+     \param[in] appenderName The unique name of the created appender.
+     \param[in] filename The name of the output log file.
+     \param[in] append Indicates whether the logs will be appended to the end of the file or not.
+     \returns Whether or not adding the file appender succeeded.
     */
-    bool addFileAppender(const std::string& appenderName, const std::string& filename, bool append);
+    bool addFileAppender(const std::string& appenderName,
+                         const std::string& filename,
+                         bool append);
 
     /**
      Adds a rolling file appender to the Logger.
 
-     \param[in] appenderName the name for the created appender.
-     \param[in] filename the name for the log file.
-     \param[in] append indicates whether the logs will be appended to the end of the file or not.
-     \param[in] maxFileSize the maximum size of a single log file.
-     \param[in] maxBackupFiles the maximum number of backup log files to create before rollover occurs.
-
-     \retval true if opening the file was successful
-     \retval false if opening the file failed (currently no check is done, so false never returned)
+     \param[in] appenderName The unique name of the created appender.
+     \param[in] filename The name for the output log file.
+     \param[in] append Indicates whether the logs will be appended to the end of the file or not.
+     \param[in] maxFileSize The maximum size of a single log file.
+     \param[in] maxBackupFiles The maximum number of backup log files to create before rollover occurs.
+     \returns Whether or not adding the rolling file appender succeeded.
     */
-    bool addRollingFileAppender(const std::string& appenderName, const std::string& filename, bool append, const size_t& maxFileSize, const unsigned int& maxBackupFiles);
+    bool addRollingFileAppender(const std::string& appenderName,
+                                const std::string& filename,
+                                bool append,
+                                const size_t& maxFileSize,
+                                const unsigned int& maxBackupFiles);
 
     /**
-     Adds a output stream appender to the Logger.
+     Adds an output stream appender to the Logger.
 
-     \param[in] appenderName the name for the created appender.
-     \param[in] stream the output stream, where the logs will be sent.
+     \param[in] name The unique name for the created appender.
+     \param[in] stream The output stream, where the logs will be sent.
+     \returns Whether or not adding the stream appender succeeded.
     */
-    void addOutputStreamAppender(const std::string& appenderName, std::ostream& stream);
+    bool addOutputStreamAppender(const std::string& name, std::ostream& stream);
 
     /**
-     Adds a preconstructed appender to the Logger.
+     Adds a custom MessageProcessor based appender to the Logger.
 
-     \param[in] appender the preconstructed appender.
+     \param[in] name The unique name of the created appender.
+     \param[in] processor The processor of the logged messages.
+     \returns Whether or not adding the custom appender succeeded.
     */
-    void addAppender (log4cpp::Appender& appender);
-
-    /**
-     Removes the specified appender from the Logger by pointer.
-
-     \param[in] appender the pointer to a preconstructed appender.
-    */
-    void removeAppender (log4cpp::Appender & appender);
+    bool addCustomAppender (const std::string &name, MessageProcessor &processor);
 
     /**
      Removes the specified appender from the Logger by name.
@@ -110,15 +109,10 @@ public:
     virtual void logMessage(LogPriority priority, const std::string & message);
     virtual void logMessage(LogPriority priority, const SmartStringStream & message);
 
-    /*inline boost::mutex& getStreamMutex() {
-        return *m_streamMutex;
-    }*/
-
     /**
      Returns a formatted date for the given timestamp.
 
      \param[in] timestamp the C timestamp to format
-
      \returns a string which contains the date in the timestamp
      */
     static std::string formatDate(time_t timestamp, bool reverse = false);
@@ -127,7 +121,6 @@ public:
      Returns a formatted time for the given timestamp.
 
      \param[in] timestamp the C timestamp to format
-
      \returns a string which contains the time of day in the timestamp
      */
     static std::string formatTime(time_t timestamp);
@@ -142,26 +135,12 @@ public:
 
 private:
 
-    /* boost::mutex *m_streamMutex; */
-
     /**
      The main logger class of the log4cpp library. It does the actual logging.
      */
     log4cpp::Category& m_logger;
 
     std::string m_prefix;
-
-    /**
-     Opens a file for writing. Used by this class for opening files for the Appenders.
-
-     \param[in] filename the name for the log file.
-     \param[in] append indicates whether the logs will be appended to the end of the file or not.
-     \param[out] fd the file descriptor for the log file.
-
-     \retval true if opening the file was successful
-     \retval false if opening the file failed
-    */
-    bool openFile(const std::string & filename, bool append, int & fd);
 
 }; /* class Logger { */
 

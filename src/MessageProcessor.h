@@ -10,20 +10,16 @@
 #ifndef SHAREMINDCOMMON_MESSAGEPROCESSOR_H
 #define SHAREMINDCOMMON_MESSAGEPROCESSOR_H
 
-#ifndef SHAREMIND_COMMON_INTERNAL__
-#error including an internal header!
-#endif
-
 #include <string>
 
 namespace sharemind {
 
 /**
- This class is an interface for classes that process certain messages
+ An interface for classes that process certain messages
 */
 class MessageProcessor {
 
-public:
+public: /* Methods: */
 
     /**
      Processes a single string message
@@ -31,8 +27,6 @@ public:
      \param[in] msg A string containing the message
      */
     virtual void processMessage(const std::string& str) = 0;
-
-private:
 
 };
 

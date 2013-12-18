@@ -21,7 +21,9 @@
 #include "../Abort.h"
 #include "../SmartStringStream.h"
 #include "Debug.h"
+#include "GenericAppender.h"
 #include "LogLayout.h"
+#include "MessageProcessor.h"
 
 
 namespace {
@@ -39,6 +41,43 @@ inline log4cpp::Priority::PriorityLevel prioToLog4cppPrio(SharemindLogPriority p
         default:
             SHAREMIND_ABORT("pTLP: p=%d", static_cast<int>(priority));
     }
+}
+
+/**
+ Opens a file for writing. Used for opening log files for the Appenders.
+
+ \param[in] logger Used for logging messages
+ \param[in] filename the name for the log file.
+ \param[in] append indicates whether the logs will be appended to the end of the file or not.
+ \param[out] fd the file descriptor for the log file.
+
+ \retval true if opening the file was successful
+ \retval false if opening the file failed
+*/
+bool openFile(sharemind::Logger & logger,
+              const std::string & filename,
+              bool append,
+              int & fd)
+{
+    // Check if we have a filename
+    if (filename.empty()) {
+        LogError(logger) << "Empty log file name!";
+        return false;
+    }
+
+    // Try to open the log file
+    int flags = O_CREAT | O_APPEND | O_WRONLY;
+    if (!append)
+        flags |= O_TRUNC;
+
+    fd = ::open(filename.c_str(), flags, 00644);
+    if (fd < 0) {
+        LogError(logger) << "Cannot open log file " << filename << "!";
+        return false;
+    }
+
+    LogDebug(logger) << "Opened log file " << filename << ".";
+    return true;
 }
 
 } // anonymous namespace
@@ -64,8 +103,8 @@ protected:
     }
 };
 
-Logger::Logger(const std::string& name) :
-    m_logger (log4cpp::Category::getInstance(name))
+Logger::Logger(const std::string& name)
+    : m_logger(log4cpp::Category::getInstance(name))
 {
 #if defined SHAREMIND_LOGLEVEL_FULLDEBUG
     m_logger.setPriority(log4cpp::Priority::DEBUG);
@@ -76,76 +115,132 @@ Logger::Logger(const std::string& name) :
 #else
     m_logger.setPriority(log4cpp::Priority::NOTICE);
 #endif
-
 }
 
 Logger::~Logger() {
     removeAllAppenders();
 }
 
-bool Logger::addFileAppender(const std::string& appenderName, const std::string& filename, bool append) {
+bool Logger::addFileAppender(const std::string& appenderName,
+                             const std::string& filename,
+                             bool append)
+{
     removeAppender (appenderName);
 
     int fd;
-    if (!openFile(filename, append, fd))
+    if (!openFile(*this, filename, append, fd))
         return false;
 
-    log4cpp::Appender *appender = new log4cpp::FileAppender(appenderName, fd);
-    log4cpp::Layout * layout = new LogLayout(*this);
-    appender->setLayout(layout);
-
-    m_logger.addAppender(appender);
+    try {
+        log4cpp::Appender *appender = new log4cpp::FileAppender(appenderName, fd);
+        try {
+            log4cpp::Layout * layout = new LogLayout(*this);
+            try {
+                appender->setLayout(layout);
+                m_logger.addAppender(appender);
+            } catch (...) {
+                delete layout;
+                throw;
+            }
+        } catch (...) {
+            delete appender;
+            throw;
+        }
+    } catch (...) {
+        return false;
+    }
 
     return true;
 }
 
-bool Logger::addRollingFileAppender(const std::string& appenderName,
+bool Logger::addRollingFileAppender(const std::string& name,
                                     const std::string& filename,
                                     bool append,
                                     const size_t& maxFileSize,
-                                    const unsigned int& maxBackupFiles) {
-    removeAppender (appenderName);
+                                    const unsigned int& maxBackupFiles)
+{
+    removeAppender (name);
 
-    log4cpp::Appender *appender = new log4cpp::RollingFileAppender(appenderName,
-                                                                   filename,
-                                                                   maxFileSize,
-                                                                   maxBackupFiles,
-                                                                   append);
-    log4cpp::Layout * layout = new LogLayout(*this);
-    appender->setLayout(layout);
+    try {
+        log4cpp::Appender *appender = new log4cpp::RollingFileAppender(name,
+                                                                       filename,
+                                                                       maxFileSize,
+                                                                       maxBackupFiles,
+                                                                       append);
+        try {
+            log4cpp::Layout * layout = new LogLayout(*this);
+            try {
+                appender->setLayout(layout);
 
-    /**
-      \todo somehow need to check if the file was successfully opened. Use
-            reopen() function of the FileAppender for that?
-    */
+                /**
+                  \todo somehow need to check if the file was successfully opened.
+                        Use reopen() function of the FileAppender for that?
+                */
 
-    m_logger.addAppender(appender);
+                m_logger.addAppender(appender);
+            } catch (...) {
+                delete layout;
+                throw;
+            }
+        } catch (...) {
+            delete appender;
+            throw;
+        }
+    } catch (...) {
+        return false;
+    }
 
     return true;
 }
 
-void Logger::addOutputStreamAppender(const std::string& appenderName, std::ostream& stream) {
-    removeAppender (appenderName);
+bool Logger::addOutputStreamAppender(const std::string& name, std::ostream& stream) {
+    removeAppender (name);
 
-    log4cpp::Appender *appender = new FlushingOstreamAppender("OstreamAppender", &stream);
-    log4cpp::Layout * layout = new LogLayout(*this);
-    appender->setLayout(layout);
+    try {
+        log4cpp::Appender *appender = new FlushingOstreamAppender("OstreamAppender", &stream);
+        try {
+            log4cpp::Layout * layout = new LogLayout(*this);
+            try {
+                appender->setLayout(layout);
+                m_logger.addAppender(appender);
+            } catch (...) {
+                delete layout;
+                throw;
+            }
+        } catch (...) {
+            delete appender;
+            throw;
+        }
+    } catch (...) {
+        return false;
+    }
 
-    m_logger.addAppender(appender);
+    return true;
 }
 
-void Logger::addAppender (log4cpp::Appender& appender) {
-    // Take care we do not have the same appender added twice:
-    removeAppender(appender);
+bool Logger::addCustomAppender (const std::string &name, MessageProcessor &processor) {
+    removeAppender (name);
 
-    log4cpp::Layout * layout = new LogLayout(*this);
-    appender.setLayout(layout);
+    try {
+        log4cpp::Appender *appender = new GenericAppender(name, &processor);
+        try {
+            log4cpp::Layout * layout = new LogLayout(*this);
+            try {
+                appender->setLayout(layout);
+                m_logger.addAppender(appender);
+            } catch (...) {
+                delete layout;
+                throw;
+            }
+        } catch (...) {
+            delete appender;
+            throw;
+        }
+    } catch (...) {
+        return false;
+    }
 
-    m_logger.addAppender(appender);
-}
-
-void Logger::removeAppender(log4cpp::Appender & appender) {
-    m_logger.removeAppender(&appender);
+    return true;
 }
 
 void Logger::removeAppender(const std::string & appenderName) {
@@ -199,31 +294,4 @@ std::string Logger::formatTime(time_t timestamp) {
     return time.str ();
 }
 
-bool Logger::openFile(const std::string & filename, bool append, int & fd) {
-    // Check if we have a filename
-    if (filename.length () > 0) {
-        // Try to open the log file
-
-        int flags = O_CREAT | O_APPEND | O_WRONLY;
-        if (!append)
-            flags |= O_TRUNC;
-
-        fd = ::open(filename.c_str(), flags, 00644);
-        if (fd < 0) {
-            LogError(*this) << "Can't open logger log file " << filename << "!";
-            return false;
-        }
-
-        LogDebug(*this) << "Opened logger log file " << filename << ".";
-
-        return true;
-
-    } else {
-
-        // We didn't get a filename so spread the information about that.
-        LogError(*this) << "Empty log file name!";
-        return false;
-    }
-}
-
-} // namespace sharemind {
+} /* namespace sharemind */
