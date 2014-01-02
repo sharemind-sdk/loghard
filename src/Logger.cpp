@@ -106,14 +106,16 @@ protected:
 Logger::Logger(const std::string& name)
     : m_logger(log4cpp::Category::getInstance(name))
 {
-#if defined SHAREMIND_LOGLEVEL_FULLDEBUG
+#if defined(SHAREMIND_LOGLEVEL_FULLDEBUG) || defined(SHAREMIND_LOGLEVEL_DEBUG)
     m_logger.setPriority(log4cpp::Priority::DEBUG);
-#elif defined SHAREMIND_LOGLEVEL_DEBUG
-    m_logger.setPriority(log4cpp::Priority::DEBUG);
-#elif defined SHAREMIND_LOGLEVEL_NORMAL
+#elif defined(SHAREMIND_LOGLEVEL_NORMAL)
     m_logger.setPriority(log4cpp::Priority::INFO);
+#elif defined(SHAREMIND_LOGLEVEL_WARNING)
+    m_logger.setPriority(log4cpp::Priority::WARN);
+#elif defined(SHAREMIND_LOGLEVEL_ERROR)
+    m_logger.setPriority(log4cpp::Priority::ERROR);
 #else
-    m_logger.setPriority(log4cpp::Priority::NOTICE);
+    m_logger.setPriority(log4cpp::Priority::DEBUG);
 #endif
 }
 
