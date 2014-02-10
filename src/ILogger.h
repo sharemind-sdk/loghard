@@ -11,9 +11,7 @@
 #define SHAREMINDCOMMON_ILOGGER_H
 
 #ifdef __cplusplus
-#if __cplusplus >= 201103L
 #include <algorithm>
-#endif
 #include <boost/mpl/if.hpp>
 #include <cassert>
 #include <sstream>
@@ -81,7 +79,6 @@ private: /* Types: */
             : m_logger(&logger)
             , m_status(NO_LOG) {}
 
-        #if __cplusplus >= 201103L
         NoPrefixLogHelperBase(const NoPrefixLogHelperBase<priority> &) = delete;
         NoPrefixLogHelperBase<priority> & operator=(const NoPrefixLogHelperBase<priority> &) = delete;
 
@@ -109,33 +106,7 @@ private: /* Types: */
             m_status = std::move(move.m_status);
             move.m_status = NOT_OPERATIONAL;
         }
-        #else
-        /// \todo This is an ugly C++03 hack (use of copy semantics for move)
-        inline NoPrefixLogHelperBase(const NoPrefixLogHelperBase<priority> & move)
-            : m_logger(move.m_logger)
-            , m_status(move.m_status)
-        {
-            m_stream << move.m_stream.str();
-            // Very ugly:
-            NoPrefixLogHelperBase<priority> & m = const_cast<NoPrefixLogHelperBase<priority> &>(move);
-            m.m_stream.str("");
-            m.m_stream.clear();
-            m.m_status = NOT_OPERATIONAL;
-        }
 
-        /// \todo This is an ugly C++03 hack (use of copy semantics for move)
-        inline NoPrefixLogHelperBase<priority> & operator=(const NoPrefixLogHelperBase<priority> & move) {
-            m_stream.str("");
-            m_stream.clear();
-            m_stream << move.m_stream.str();
-            m_logger = move.m_logger;
-            m_status = move.m_status;// Very ugly:
-            NoPrefixLogHelperBase<priority> & m = const_cast<NoPrefixLogHelperBase<priority> &>(move);
-            m.m_stream.str("");
-            m.m_stream.clear();
-            m.m_status = NOT_OPERATIONAL;
-        }
-        #endif
         inline ~NoPrefixLogHelperBase() {
             if (m_status == OPERATIONAL)
                 m_logger->logMessage(priority, m_stream.str());
