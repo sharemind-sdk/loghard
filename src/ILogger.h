@@ -16,6 +16,8 @@
 #include <cassert>
 #include <sstream>
 #include <string>
+#include <utility>
+
 
 extern "C" {
 #endif /* #ifdef __cplusplus */
