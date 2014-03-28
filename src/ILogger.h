@@ -279,6 +279,14 @@ public: /* Methods: */
      \param[in] priority the priority level.
      \param[in] message the message to log.
     */
+    virtual void logMessage(LogPriority priority, std::string && message) noexcept = 0;
+
+    /**
+     Logs a message with the specified priority.
+
+     \param[in] priority the priority level.
+     \param[in] message the message to log.
+    */
     virtual void logMessage(LogPriority priority, const SmartStringStream & message) noexcept = 0;
 
 }; /* class ILogger { */

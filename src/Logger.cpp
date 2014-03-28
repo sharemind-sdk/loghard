@@ -267,6 +267,11 @@ void Logger::logMessage(LogPriority priority, const std::string & message) noexc
     m_logger.getStream(prioToLog4cppPrio(priority)) << message;
 }
 
+void Logger::logMessage(LogPriority priority, std::string && message) noexcept {
+    /// \bug Might throw:
+    m_logger.getStream(prioToLog4cppPrio(priority)) << std::move(message);
+}
+
 void Logger::logMessage(LogPriority priority, const SmartStringStream & message) noexcept {
     /// \bug Might throw:
     m_logger.getStream(prioToLog4cppPrio(priority)) << message;

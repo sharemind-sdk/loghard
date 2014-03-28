@@ -110,6 +110,8 @@ public:
     void logMessage(LogPriority priority,
                     const std::string & message) noexcept final override;
     void logMessage(LogPriority priority,
+                    std::string && message) noexcept final override;
+    void logMessage(LogPriority priority,
                     const SmartStringStream & message) noexcept final override;
 
     /**
