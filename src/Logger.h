@@ -44,7 +44,7 @@ public:
     */
     Logger(const std::string& name);
 
-    ~Logger();
+    ~Logger() noexcept;
 
     /**
      Adds a file appender to the Logger.
@@ -102,15 +102,15 @@ public:
     /**
      Removes all the appenders and closes all opened log files
      */
-    void removeAllAppenders();
+    void removeAllAppenders() noexcept;
 
     /* Inherited from ILogger: */
     void logMessage(LogPriority priority,
-                    const char * message) final override;
+                    const char * message) noexcept final override;
     void logMessage(LogPriority priority,
-                    const std::string & message) final override;
+                    const std::string & message) noexcept final override;
     void logMessage(LogPriority priority,
-                    const SmartStringStream & message) final override;
+                    const SmartStringStream & message) noexcept final override;
 
     /**
      Returns a formatted date for the given timestamp.

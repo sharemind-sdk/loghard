@@ -123,7 +123,7 @@ Logger::Logger(const std::string& name)
 #endif
 }
 
-Logger::~Logger() {
+Logger::~Logger() noexcept {
     removeAllAppenders();
 }
 
@@ -253,19 +253,22 @@ void Logger::removeAppender(const std::string & appenderName) {
     m_logger.removeAppender(m_logger.getAppender(appenderName));
 }
 
-void Logger::removeAllAppenders() {
-    m_logger.removeAllAppenders();
+void Logger::removeAllAppenders() noexcept {
+    m_logger.removeAllAppenders(); /// \bug Might throw
 }
 
-void Logger::logMessage(LogPriority priority, const char * message) {
+void Logger::logMessage(LogPriority priority, const char * message) noexcept {
+    /// \bug Might throw:
     m_logger.getStream(prioToLog4cppPrio(priority)) << message;
 }
 
-void Logger::logMessage(LogPriority priority, const std::string & message) {
+void Logger::logMessage(LogPriority priority, const std::string & message) noexcept {
+    /// \bug Might throw:
     m_logger.getStream(prioToLog4cppPrio(priority)) << message;
 }
 
-void Logger::logMessage(LogPriority priority, const SmartStringStream & message) {
+void Logger::logMessage(LogPriority priority, const SmartStringStream & message) noexcept {
+    /// \bug Might throw:
     m_logger.getStream(prioToLog4cppPrio(priority)) << message;
 }
 
