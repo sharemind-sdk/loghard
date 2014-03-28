@@ -31,7 +31,7 @@ public: /* Methods: */
         , m_mp(mp)
     {}
 
-    ~GenericAppender() final override { close(); }
+    ~GenericAppender() noexcept final override { close(); }
 
     inline bool reopen() final override { return true; }
     inline void close() final override {}
