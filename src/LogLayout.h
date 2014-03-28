@@ -34,7 +34,7 @@ public: /* Methods: */
      * Formats the LoggingEvent in LogLayout style:<br>
      * "formattedTime priority ndc: message"
      **/
-    virtual std::string format(const log4cpp::LoggingEvent & event);
+    std::string format(const log4cpp::LoggingEvent & event) final override;
 
 private: /* Methods: */
 

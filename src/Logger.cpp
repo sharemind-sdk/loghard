@@ -87,20 +87,24 @@ namespace sharemind {
 /**
  * This class reimplements the OstreamAppender so that the stream is flushed each time something is logged.
  */
-class FlushingOstreamAppender: public log4cpp::OstreamAppender {
-public:
+class FlushingOstreamAppender final: public log4cpp::OstreamAppender {
+
+public: /* Methods: */
+
     FlushingOstreamAppender(const std::string& name, std::ostream* stream)
         : OstreamAppender(name, stream)
     {}
 
-protected:
-    virtual void _append(const log4cpp::LoggingEvent& event) {
+protected: /* Methods: */
+
+    void _append(const log4cpp::LoggingEvent& event) final override {
         (*_stream) << _getLayout().format(event);
         (*_stream).flush();
         if (!_stream->good()) {
-            // XXX help! help!
+            /// \todo XXX help! help!
         }
     }
+
 };
 
 Logger::Logger(const std::string& name)

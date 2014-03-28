@@ -33,7 +33,7 @@ class MessageProcessor;
  If the message is LOG_DEBUG, but the logging level is set to
  LOG_MINIMAL, the message will not be displayed/written to the log.
 */
-class Logger: public ILogger {
+class Logger final: public ILogger {
 
 public:
 
@@ -44,7 +44,7 @@ public:
     */
     Logger(const std::string& name);
 
-    virtual ~Logger();
+    ~Logger();
 
     /**
      Adds a file appender to the Logger.
@@ -105,9 +105,12 @@ public:
     void removeAllAppenders();
 
     /* Inherited from ILogger: */
-    virtual void logMessage(LogPriority priority, const char * message);
-    virtual void logMessage(LogPriority priority, const std::string & message);
-    virtual void logMessage(LogPriority priority, const SmartStringStream & message);
+    void logMessage(LogPriority priority,
+                    const char * message) final override;
+    void logMessage(LogPriority priority,
+                    const std::string & message) final override;
+    void logMessage(LogPriority priority,
+                    const SmartStringStream & message) final override;
 
     /**
      Returns a formatted date for the given timestamp.

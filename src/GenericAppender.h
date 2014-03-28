@@ -31,14 +31,14 @@ public: /* Methods: */
         , m_mp(mp)
     {}
 
-    virtual ~GenericAppender() { close(); }
+    ~GenericAppender() final override { close(); }
 
-    virtual inline bool reopen () { return true; }
-    virtual inline void close () {}
+    inline bool reopen() final override { return true; }
+    inline void close() final override {}
 
 protected: /* Methods: */
 
-    virtual inline void _append(const log4cpp::LoggingEvent &event) {
+    inline void _append(const log4cpp::LoggingEvent &event) final override {
         m_mp->processMessage( _getLayout().format(event) );
     }
 
