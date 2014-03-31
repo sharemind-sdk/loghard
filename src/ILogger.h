@@ -10,26 +10,14 @@
 #ifndef SHAREMINDCOMMON_ILOGGER_H
 #define SHAREMINDCOMMON_ILOGGER_H
 
-#ifdef __cplusplus
 #include <algorithm>
 #include <boost/mpl/if.hpp>
 #include <cassert>
 #include <sstream>
 #include <string>
 #include <utility>
+#include "LogPriority.h"
 
-
-extern "C" {
-#endif /* #ifdef __cplusplus */
-
-typedef enum SharemindLogPriority_ {
-    LOGPRIORITY_FATAL = 0,
-    LOGPRIORITY_ERROR = 1,
-    LOGPRIORITY_WARNING = 2,
-    LOGPRIORITY_NORMAL = 3,
-    LOGPRIORITY_DEBUG = 4,
-    LOGPRIORITY_FULLDEBUG = 5
-} SharemindLogPriority;
 
 #if defined(SHAREMIND_LOGLEVEL_FULLDEBUG)
 #define SHAREMIND_LOGLEVEL_MAXDEBUG LOGPRIORITY_FULLDEBUG
@@ -45,8 +33,6 @@ typedef enum SharemindLogPriority_ {
 #define SHAREMIND_LOGLEVEL_MAXDEBUG LOGPRIORITY_DEBUG
 #endif
 
-#ifdef __cplusplus
-} /* extern "C" { */
 
 namespace sharemind {
 
@@ -257,6 +243,8 @@ public: /* Methods: */
         return Wrapped(*this, std::forward<PrefixType>(prefix));
     }
 
+protected: /* Methods: */
+
     /**
      Logs a message with the specified priority.
 
@@ -365,7 +353,5 @@ inline typename ILogger::PrefixedWrapper<ILogger__>::template Helper<LOGPRIORITY
 }
 
 } /* namespace sharemind { */
-
-#endif /* #ifdef __cplusplus */
 
 #endif /* SHAREMINDCOMMON_ILOGGER_H */
