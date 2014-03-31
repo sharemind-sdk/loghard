@@ -141,21 +141,17 @@ private: /* Types: */
 
     private: /* Methods: */
 
-        inline NoPrefixLogHelperBase<priority> & appendPrefix() noexcept
+        inline PrefixedLogHelperBase<priority> & appendPrefix() noexcept
         { return *this; }
 
-        template <typename Arg>
-        inline NoPrefixLogHelperBase<priority> & appendPrefix(Arg && arg)
-                noexcept
-        { return (*this) << std::forward<Arg>(arg); }
-
         template <typename Arg, typename ... Args>
-        inline NoPrefixLogHelperBase<priority> & appendPrefix(Arg && arg,
+        inline PrefixedLogHelperBase<priority> & appendPrefix(Arg && arg,
                                                               Args && ... args)
                 noexcept
         {
-            return ((*this) << std::forward<Arg>(arg))
-                    .appendPrefix(std::forward<Args>(args)...);
+            typedef PrefixedLogHelperBase<priority> Self;
+            return static_cast<Self &>((*this) << std::forward<Arg>(arg))
+                       .appendPrefix(std::forward<Args>(args)...);
         }
 
     };
