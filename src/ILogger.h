@@ -180,15 +180,6 @@ public: /* Types: */
     template <class ILogger__ = ILogger>
     class PrefixedWrapper {
 
-    private: /* Types: */
-
-        template <LogPriority priority>
-        struct Helper {
-            typedef typename std::conditional<priority <= SHAREMIND_LOGLEVEL_MAXDEBUG,
-                                              ILogger::NoPrefixLogHelperBase<priority>,
-                                              NullLogHelper>::type type;
-        };
-
     public: /* Types: */
 
         typedef PrefixedWrapper<PrefixedWrapper<ILogger__> > Wrapped;
@@ -201,16 +192,38 @@ public: /* Types: */
             , m_prefix(std::forward<Args>(args)...) /// \bug might throw
         {}
 
-        inline typename Helper<LOGPRIORITY_FATAL>::type fatal() noexcept;
-        inline typename Helper<LOGPRIORITY_ERROR>::type error() noexcept;
-        inline typename Helper<LOGPRIORITY_WARNING>::type warning() noexcept;
-        inline typename Helper<LOGPRIORITY_NORMAL>::type info() noexcept;
-        inline typename Helper<LOGPRIORITY_DEBUG>::type debug() noexcept;
-        inline typename Helper<LOGPRIORITY_FULLDEBUG>::type fullDebug() noexcept;
+        inline LogHelper<LOGPRIORITY_FATAL> fatal() noexcept
+        { return getHelper<LOGPRIORITY_FATAL, &ILogger__::fatal>(); }
+
+        inline LogHelper<LOGPRIORITY_ERROR> error() noexcept
+        { return getHelper<LOGPRIORITY_ERROR, &ILogger__::error>(); }
+
+        inline LogHelper<LOGPRIORITY_WARNING> warning() noexcept
+        { return getHelper<LOGPRIORITY_WARNING, &ILogger__::warning>(); }
+
+        inline LogHelper<LOGPRIORITY_NORMAL> info() noexcept
+        { return getHelper<LOGPRIORITY_NORMAL, &ILogger__::info>(); }
+
+        inline LogHelper<LOGPRIORITY_DEBUG> debug() noexcept
+        { return getHelper<LOGPRIORITY_DEBUG, &ILogger__::debug>(); }
+
+        inline LogHelper<LOGPRIORITY_FULLDEBUG> fullDebug() noexcept
+        { return getHelper<LOGPRIORITY_FULLDEBUG, &ILogger__::fullDebug>(); }
 
         template <typename ... PrefixTypes>
         inline Wrapped wrap(PrefixTypes && ... prefix) noexcept {
             return Wrapped(*this, std::forward<PrefixTypes>(prefix)...);
+        }
+
+    private: /* Methods: */
+
+        template <LogPriority priority,
+                  LogHelper<priority> (ILogger__::*helperGetter)() noexcept>
+        inline LogHelper<priority> getHelper() noexcept {
+            LogHelper<priority> logger((m_logger.*helperGetter)());
+            logger << m_prefix;
+            logger.setAsPrefix();
+            return logger;
         }
 
     private: /* Fields: */
@@ -219,18 +232,28 @@ public: /* Types: */
         const std::string m_prefix;
 
     };
-    template <class ILogger__> friend class PrefixedWrapper;
 
     typedef PrefixedWrapper<ILogger> Wrapped;
 
 public: /* Methods: */
 
-    inline LogHelper<LOGPRIORITY_FATAL> fatal() noexcept;
-    inline LogHelper<LOGPRIORITY_ERROR> error() noexcept;
-    inline LogHelper<LOGPRIORITY_WARNING> warning() noexcept;
-    inline LogHelper<LOGPRIORITY_NORMAL> info() noexcept;
-    inline LogHelper<LOGPRIORITY_DEBUG> debug() noexcept;
-    inline LogHelper<LOGPRIORITY_FULLDEBUG> fullDebug() noexcept;
+    inline LogHelper<LOGPRIORITY_FATAL> fatal() noexcept
+    { return LogHelper<LOGPRIORITY_FATAL>(*this); }
+
+    inline LogHelper<LOGPRIORITY_ERROR> error() noexcept
+    { return LogHelper<LOGPRIORITY_ERROR>(*this); }
+
+    inline LogHelper<LOGPRIORITY_WARNING> warning() noexcept
+    { return LogHelper<LOGPRIORITY_WARNING>(*this); }
+
+    inline LogHelper<LOGPRIORITY_NORMAL> info() noexcept
+    { return LogHelper<LOGPRIORITY_NORMAL>(*this); }
+
+    inline LogHelper<LOGPRIORITY_DEBUG> debug() noexcept
+    { return LogHelper<LOGPRIORITY_DEBUG>(*this); }
+
+    inline LogHelper<LOGPRIORITY_FULLDEBUG> fullDebug() noexcept
+    { return LogHelper<LOGPRIORITY_FULLDEBUG>(*this); }
 
     template <typename ... PrefixTypes>
     inline Wrapped wrap(PrefixTypes && ... prefixes) noexcept {
@@ -272,79 +295,6 @@ protected: /* Methods: */
     virtual void logMessage(LogPriority priority, const SmartStringStream & message) noexcept = 0;
 
 }; /* class ILogger { */
-
-
-inline ILogger::LogHelper<LOGPRIORITY_FATAL> ILogger::fatal() noexcept {
-    return LogHelper<LOGPRIORITY_FATAL>(*this);
-}
-
-inline ILogger::LogHelper<LOGPRIORITY_ERROR> ILogger::error() noexcept {
-    return LogHelper<LOGPRIORITY_ERROR>(*this);
-}
-
-inline ILogger::LogHelper<LOGPRIORITY_WARNING> ILogger::warning() noexcept {
-    return LogHelper<LOGPRIORITY_WARNING>(*this);
-}
-
-inline ILogger::LogHelper<LOGPRIORITY_NORMAL> ILogger::info() noexcept {
-    return LogHelper<LOGPRIORITY_NORMAL>(*this);
-}
-
-inline ILogger::LogHelper<LOGPRIORITY_DEBUG> ILogger::debug() noexcept {
-    return LogHelper<LOGPRIORITY_DEBUG>(*this);
-}
-
-inline ILogger::LogHelper<LOGPRIORITY_FULLDEBUG> ILogger::fullDebug() noexcept {
-    return LogHelper<LOGPRIORITY_FULLDEBUG>(*this);
-}
-
-template <class ILogger__>
-inline typename ILogger::PrefixedWrapper<ILogger__>::template Helper<LOGPRIORITY_FATAL>::type ILogger::PrefixedWrapper<ILogger__>::fatal() noexcept {
-    typename Helper<LOGPRIORITY_FATAL>::type logger(m_logger.fatal());
-    logger << m_prefix;
-    logger.setAsPrefix();
-    return logger;
-}
-
-template <class ILogger__>
-inline typename ILogger::PrefixedWrapper<ILogger__>::template Helper<LOGPRIORITY_ERROR>::type ILogger::PrefixedWrapper<ILogger__>::error() noexcept {
-    typename Helper<LOGPRIORITY_ERROR>::type logger(m_logger.error());
-    logger << m_prefix;
-    logger.setAsPrefix();
-    return logger;
-}
-
-template <class ILogger__>
-inline typename ILogger::PrefixedWrapper<ILogger__>::template Helper<LOGPRIORITY_WARNING>::type ILogger::PrefixedWrapper<ILogger__>::warning() noexcept {
-    typename Helper<LOGPRIORITY_WARNING>::type logger(m_logger.warning());
-    logger << m_prefix;
-    logger.setAsPrefix();
-    return logger;
-}
-
-template <class ILogger__>
-inline typename ILogger::PrefixedWrapper<ILogger__>::template Helper<LOGPRIORITY_NORMAL>::type ILogger::PrefixedWrapper<ILogger__>::info() noexcept {
-    typename Helper<LOGPRIORITY_NORMAL>::type logger(m_logger.info());
-    logger << m_prefix;
-    logger.setAsPrefix();
-    return logger;
-}
-
-template <class ILogger__>
-inline typename ILogger::PrefixedWrapper<ILogger__>::template Helper<LOGPRIORITY_DEBUG>::type ILogger::PrefixedWrapper<ILogger__>::debug() noexcept {
-    typename Helper<LOGPRIORITY_DEBUG>::type logger(m_logger.debug());
-    logger << m_prefix;
-    logger.setAsPrefix();
-    return logger;
-}
-
-template <class ILogger__>
-inline typename ILogger::PrefixedWrapper<ILogger__>::template Helper<LOGPRIORITY_FULLDEBUG>::type ILogger::PrefixedWrapper<ILogger__>::fullDebug() noexcept {
-    typename Helper<LOGPRIORITY_FULLDEBUG>::type logger(m_logger.fullDebug());
-    logger << m_prefix;
-    logger.setAsPrefix();
-    return logger;
-}
 
 } /* namespace sharemind { */
 
