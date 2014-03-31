@@ -176,7 +176,6 @@ public: /* Types: */
         {}
 
     };
-    template <LogPriority priority> friend class LogHelper;
 
     template <class ILogger__ = ILogger>
     class PrefixedWrapper {
