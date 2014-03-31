@@ -45,9 +45,8 @@ class ILogger {
 private: /* Types: */
 
     struct NullLogHelper {
-        inline NullLogHelper(ILogger &) noexcept {}
-        template <class PrefixType>
-        inline NullLogHelper(ILogger &, const PrefixType &) noexcept {}
+        template <typename ... Args>
+        inline NullLogHelper(ILogger &, Args && ...) noexcept {}
         template <class T> NullLogHelper & operator<<(const T &) noexcept
         { return *this; }
         inline void setAsPrefix() const noexcept {}
