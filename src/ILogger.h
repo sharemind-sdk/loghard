@@ -209,9 +209,9 @@ public: /* Types: */
         inline typename Helper<LOGPRIORITY_DEBUG>::type debug() noexcept;
         inline typename Helper<LOGPRIORITY_FULLDEBUG>::type fullDebug() noexcept;
 
-        template <typename PrefixType>
-        inline Wrapped wrap(PrefixType && prefix) noexcept {
-            return Wrapped(*this, std::forward<PrefixType>(prefix));
+        template <typename ... PrefixTypes>
+        inline Wrapped wrap(PrefixTypes && ... prefix) noexcept {
+            return Wrapped(*this, std::forward<PrefixTypes>(prefix)...);
         }
 
     private: /* Fields: */
@@ -233,9 +233,9 @@ public: /* Methods: */
     inline LogHelper<LOGPRIORITY_DEBUG> debug() noexcept;
     inline LogHelper<LOGPRIORITY_FULLDEBUG> fullDebug() noexcept;
 
-    template <typename PrefixType>
-    inline Wrapped wrap(PrefixType && prefix) noexcept {
-        return Wrapped(*this, std::forward<PrefixType>(prefix));
+    template <typename ... PrefixTypes>
+    inline Wrapped wrap(PrefixTypes && ... prefixes) noexcept {
+        return Wrapped(*this, std::forward<PrefixTypes>(prefixes)...);
     }
 
 protected: /* Methods: */
