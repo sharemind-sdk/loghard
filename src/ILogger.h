@@ -221,8 +221,7 @@ public: /* Types: */
                   LogHelper<priority> (ILogger__::*helperGetter)() noexcept>
         inline LogHelper<priority> getHelper() noexcept {
             LogHelper<priority> logger((m_logger.*helperGetter)());
-            logger << m_prefix;
-            logger.setAsPrefix();
+            (logger << m_prefix).setAsPrefix();
             return logger;
         }
 
