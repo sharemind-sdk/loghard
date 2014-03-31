@@ -11,10 +11,10 @@
 #define SHAREMINDCOMMON_ILOGGER_H
 
 #include <algorithm>
-#include <boost/mpl/if.hpp>
 #include <cassert>
 #include <sstream>
 #include <string>
+#include <type_traits>
 #include <utility>
 #include "LogPriority.h"
 
@@ -160,7 +160,7 @@ public: /* Types: */
 
     template <LogPriority priority = LOGPRIORITY_DEBUG>
     class LogHelper
-            : public boost::mpl::if_c<priority <= SHAREMIND_LOGLEVEL_MAXDEBUG,
+            : public std::conditional<priority <= SHAREMIND_LOGLEVEL_MAXDEBUG,
                                       PrefixedLogHelperBase<priority>,
                                       NullLogHelper>::type
     {
@@ -169,7 +169,7 @@ public: /* Types: */
 
         template <typename ... Args>
         inline LogHelper(ILogger & logger, Args && ... args) noexcept
-            : boost::mpl::if_c<priority <= SHAREMIND_LOGLEVEL_MAXDEBUG,
+            : std::conditional<priority <= SHAREMIND_LOGLEVEL_MAXDEBUG,
                                PrefixedLogHelperBase<priority>,
                                NullLogHelper>::type(logger,
                                                     std::forward<Args>(args)...)
@@ -185,7 +185,7 @@ public: /* Types: */
 
         template <LogPriority priority>
         struct Helper {
-            typedef typename boost::mpl::if_c<priority <= SHAREMIND_LOGLEVEL_MAXDEBUG,
+            typedef typename std::conditional<priority <= SHAREMIND_LOGLEVEL_MAXDEBUG,
                                               ILogger::NoPrefixLogHelperBase<priority>,
                                               NullLogHelper>::type type;
         };
