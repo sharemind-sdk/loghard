@@ -29,11 +29,15 @@ namespace sharemind {
 
 #define SHAREMIND_DEFINE_PREFIXED_LOG(name,priority,constPrefix) \
     class name: public sharemind::ILogger::LogHelper<priority> { \
-        public: /* Methods: */ \
-            inline name (sharemind::ILogger & logger, const char * const prefix = (constPrefix)) \
-                : sharemind::ILogger::LogHelper<priority>(logger, prefix) {} \
-            inline name (sharemind::ILogger & logger, const std::string & prefix) \
-                : sharemind::ILogger::LogHelper<priority>(logger, prefix) {} \
+    public: /* Methods: */ \
+        inline name (sharemind::ILogger & logger, \
+                     const char * const prefix = (constPrefix)) \
+            : sharemind::ILogger::LogHelper<priority>(logger, prefix) {} \
+        template <typename ... Args> \
+        inline name (sharemind::ILogger & logger, Args && ... args) \
+            : sharemind::ILogger::LogHelper<priority>( \
+                  logger, \
+                  std::forward<Args>(args)...) {} \
     }
 
 #define SHAREMIND_DEFINE_PREFIXED_LOGS(constPrefix) \
