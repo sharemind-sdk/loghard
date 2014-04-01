@@ -24,8 +24,8 @@ typedef enum SharemindLogPriority_ {
 } SharemindLogPriority;
 
 #ifdef __cplusplus
-namespace sharemind { typedef SharemindLogPriority LogPriority; }
 } /* extern "C" { */
+namespace sharemind { typedef SharemindLogPriority LogPriority; }
 #endif
 
 #endif /* SHAREMINDCOMMON_LOGPRIORITY_H */
