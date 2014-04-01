@@ -38,8 +38,6 @@ namespace sharemind {
 
 class SmartStringStream;
 
-typedef SharemindLogPriority LogPriority;
-
 class ILogger {
 
 private: /* Types: */
