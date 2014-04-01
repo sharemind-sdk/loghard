@@ -47,7 +47,7 @@ private: /* Types: */
     struct NullLogHelper {
         template <typename ... Args>
         inline NullLogHelper(ILogger &, Args && ...) noexcept {}
-        template <class T> NullLogHelper & operator<<(const T &) noexcept
+        template <class T> inline NullLogHelper & operator<<(const T &) noexcept
         { return *this; }
         inline void setAsPrefix() const noexcept {}
     };
@@ -113,7 +113,7 @@ private: /* Types: */
             return *this;
         }
 
-        void setAsPrefix() noexcept {
+        inline void setAsPrefix() noexcept {
             if (m_status == OPERATIONAL)
                 m_status = NO_LOG;
         }
@@ -187,7 +187,7 @@ public: /* Types: */
     public: /* Methods: */
 
         template <typename ... Args>
-        PrefixedWrapper(ILogger__ & logger, Args && ... args) noexcept
+        inline PrefixedWrapper(ILogger__ & logger, Args && ... args) noexcept
             : m_logger(logger)
             , m_prefix(std::forward<Args>(args)...) /// \bug might throw
         {}
