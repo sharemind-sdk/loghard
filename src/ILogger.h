@@ -17,6 +17,7 @@
 #include <type_traits>
 #include <utility>
 #include "LogPriority.h"
+#include "../GccPR57887.h"
 
 
 #if defined(SHAREMIND_LOGLEVEL_FULLDEBUG)
@@ -61,7 +62,7 @@ private: /* Types: */
 
         inline NoPrefixLogHelperBase(ILogger & logger) noexcept
             : m_logger(&logger)
-            , m_status(NO_LOG) {}
+            SHAREMIND_GCCPR57887_PART1(, m_status(NO_LOG)) {}
 
         NoPrefixLogHelperBase(const NoPrefixLogHelperBase<priority> &) = delete;
         NoPrefixLogHelperBase<priority> & operator=(
@@ -120,7 +121,7 @@ private: /* Types: */
 
         std::ostringstream m_stream;
         ILogger * m_logger;
-        Status m_status;
+        Status m_status SHAREMIND_GCCPR57887_PART2(= NO_LOG);
 
     }; /* class NoPrefixLogHelperBase { */
 
