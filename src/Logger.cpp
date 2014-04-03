@@ -249,7 +249,8 @@ bool Logger::addCustomAppender (const std::string &name, MessageProcessor &proce
     return true;
 }
 
-void Logger::removeAppender(const std::string & appenderName) {
+void Logger::removeAppender(const std::string & appenderName) noexcept {
+    /// \bug Might throw:
     m_logger.removeAppender(m_logger.getAppender(appenderName));
 }
 

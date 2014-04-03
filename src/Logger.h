@@ -97,7 +97,7 @@ public:
 
      \param[in] appenderName the name of the appender to be removed.
     */
-    void removeAppender(const std::string & appenderName);
+    void removeAppender(const std::string & appenderName) noexcept;
 
     /**
      Removes all the appenders and closes all opened log files
