@@ -132,13 +132,10 @@ public:
      */
     static std::string formatTime(time_t timestamp);
 
-    void setMessagePrefix(const std::string & prefix) {
-        m_prefix = prefix;
-    }
+    template <typename T>
+    void setMessagePrefix(T && prefix) { m_prefix = prefix; }
 
-    const std::string & getMessagePrefix() const noexcept {
-        return m_prefix;
-    }
+    const std::string & getMessagePrefix() const noexcept { return m_prefix; }
 
 private:
 
