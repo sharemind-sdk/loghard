@@ -278,35 +278,35 @@ void Logger::logMessage(LogPriority priority, const SmartStringStream & message)
     m_logger.getStream(prioToLog4cppPrio(priority)) << message;
 }
 
-std::string Logger::formatDate(time_t timestamp, bool reverse) {
-    std::ostringstream date;
-
-    const tm* dest = localtime (&timestamp);
-    if (reverse) {
-        date <<
-            (dest->tm_year + 1900) << "-" <<
-            (dest->tm_mon < 9 ? "0" : "") << (dest->tm_mon + 1) << "-" <<
-            (dest->tm_mday < 10 ? "0" : "") << dest->tm_mday;
-    } else {
-        date <<
-            (dest->tm_mday < 10 ? "0" : "") << dest->tm_mday << "-" <<
-            (dest->tm_mon < 9 ? "0" : "") << (dest->tm_mon + 1) << "-" <<
-            (dest->tm_year + 1900);
-    }
-
-    return date.str ();
+std::string Logger::formatDate(const time_t timestamp, const bool reverse) {
+    tm theTime;
+    if (!localtime_r(&timestamp, &theTime))
+        return std::string();
+    return formatDate(theTime, reverse);
 }
 
-std::string Logger::formatTime(time_t timestamp) {
-    std::ostringstream time;
+std::string Logger::formatDate(const tm & timestamp, const bool reverse) {
+    constexpr size_t maxSizeOfDateStr = sizeof("DD-MM-YYYY");
+    char dateStr[maxSizeOfDateStr] = "";
+    const char * const format = reverse ? "%Y-%m-%d" : "%d-%m-%Y";
+    if (strftime(dateStr, maxSizeOfDateStr, format, &timestamp) <= 0u)
+        return std::string();
+    return dateStr;
+}
 
-    const tm* dest = localtime (&timestamp);
-    time <<
-    (dest->tm_hour < 10 ? "0" : "") << dest->tm_hour << "-" <<
-    (dest->tm_min < 10 ? "0" : "") << dest->tm_min << "-" <<
-    (dest->tm_sec < 10 ? "0" : "") << dest->tm_sec;
+std::string Logger::formatTime(const time_t timestamp) {
+    tm theTime;
+    if (!localtime_r(&timestamp, &theTime))
+        return std::string();
+    return formatTime(theTime);
+}
 
-    return time.str ();
+std::string Logger::formatTime(const tm & timestamp) {
+    constexpr size_t maxSizeOfTimeStr = sizeof("HH-MM-SS");
+    char timeStr[maxSizeOfTimeStr] = "";
+    if (strftime(timeStr, maxSizeOfTimeStr, "%H-%M-%S", &timestamp) <= 0u)
+        return std::string();
+    return timeStr;
 }
 
 } /* namespace sharemind */

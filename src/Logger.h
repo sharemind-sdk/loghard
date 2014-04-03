@@ -117,20 +117,36 @@ public:
                     const SmartStringStream & message) noexcept final override;
 
     /**
-     Returns a formatted date for the given timestamp.
-
-     \param[in] timestamp the C timestamp to format
-     \returns a string which contains the date in the timestamp
+     \param[in] timestamp the timestamp to format.
+     \param[in] reverse If true, use "YYYY-MM-DD" instead of "DD-MM-YYYY" as
+                        format.
+     \returns a string which contains the date in the timestamp, empty string on
+              error.
      */
-    static std::string formatDate(time_t timestamp, bool reverse = false);
+    static std::string formatDate(const time_t timestamp,
+                                  const bool reverse = false);
 
     /**
-     Returns a formatted time for the given timestamp.
-
-     \param[in] timestamp the C timestamp to format
-     \returns a string which contains the time of day in the timestamp
+     \param[in] timestamp the timestamp to format.
+     \returns a string which contains the date in the timestamp, empty string on
+              error.
      */
-    static std::string formatTime(time_t timestamp);
+    static std::string formatDate(const tm & timestamp,
+                                  const bool reverse = false);
+
+    /**
+     \param[in] timestamp the timestamp to format.
+     \returns a string in "HH-MM-SS" format which contains the time of day in
+              the given timestamp, or empty string on error.
+     */
+    static std::string formatTime(const time_t timestamp);
+
+    /**
+     \param[in] timestamp the timestamp to format.
+     \returns a string in "HH-MM-SS" format which contains the time of day in
+              the given timestamp, or empty string on error.
+     */
+    static std::string formatTime(const tm & timestamp);
 
     template <typename T>
     void setMessagePrefix(T && prefix) { m_prefix = prefix; }
