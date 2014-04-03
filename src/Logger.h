@@ -54,9 +54,9 @@ public:
      \param[in] append Indicates whether the logs will be appended to the end of the file or not.
      \returns Whether or not adding the file appender succeeded.
     */
-    bool addFileAppender(const std::string& appenderName,
-                         const std::string& filename,
-                         bool append);
+    bool addFileAppender(const std::string & appenderName,
+                         const std::string & filename,
+                         bool append) noexcept;
 
     /**
      Adds a rolling file appender to the Logger.
@@ -68,11 +68,11 @@ public:
      \param[in] maxBackupFiles The maximum number of backup log files to create before rollover occurs.
      \returns Whether or not adding the rolling file appender succeeded.
     */
-    bool addRollingFileAppender(const std::string& appenderName,
-                                const std::string& filename,
+    bool addRollingFileAppender(const std::string & appenderName,
+                                const std::string & filename,
                                 bool append,
-                                const size_t& maxFileSize,
-                                const unsigned int& maxBackupFiles);
+                                const size_t maxFileSize,
+                                const unsigned int maxBackupFiles) noexcept;
 
     /**
      Adds an output stream appender to the Logger.
@@ -81,7 +81,8 @@ public:
      \param[in] stream The output stream, where the logs will be sent.
      \returns Whether or not adding the stream appender succeeded.
     */
-    bool addOutputStreamAppender(const std::string& name, std::ostream& stream);
+    bool addOutputStreamAppender(const std::string & name,
+                                 std::ostream & stream) noexcept;
 
     /**
      Adds a custom MessageProcessor based appender to the Logger.
@@ -90,7 +91,8 @@ public:
      \param[in] processor The processor of the logged messages.
      \returns Whether or not adding the custom appender succeeded.
     */
-    bool addCustomAppender (const std::string &name, MessageProcessor &processor);
+    bool addCustomAppender (const std::string & name,
+                            MessageProcessor & processor) noexcept;
 
     /**
      Removes the specified appender from the Logger by name.
@@ -134,7 +136,7 @@ public:
         m_prefix = prefix;
     }
 
-    const std::string & getMessagePrefix() const {
+    const std::string & getMessagePrefix() const noexcept {
         return m_prefix;
     }
 

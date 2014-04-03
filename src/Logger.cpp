@@ -127,17 +127,17 @@ Logger::~Logger() noexcept {
     removeAllAppenders();
 }
 
-bool Logger::addFileAppender(const std::string& appenderName,
-                             const std::string& filename,
-                             bool append)
+bool Logger::addFileAppender(const std::string & appenderName,
+                             const std::string & filename,
+                             bool append) noexcept
 {
-    removeAppender (appenderName);
-
-    int fd;
-    if (!openFile(*this, filename, append, fd))
-        return false;
-
     try {
+        removeAppender (appenderName);
+
+        int fd;
+        if (!openFile(*this, filename, append, fd))
+            return false;
+
         log4cpp::Appender *appender = new log4cpp::FileAppender(appenderName, fd);
         try {
             log4cpp::Layout * layout = new LogLayout(*this);
@@ -155,19 +155,18 @@ bool Logger::addFileAppender(const std::string& appenderName,
     } catch (...) {
         return false;
     }
-
     return true;
 }
 
-bool Logger::addRollingFileAppender(const std::string& name,
-                                    const std::string& filename,
+bool Logger::addRollingFileAppender(const std::string & name,
+                                    const std::string & filename,
                                     bool append,
-                                    const size_t& maxFileSize,
-                                    const unsigned int& maxBackupFiles)
+                                    const size_t maxFileSize,
+                                    const unsigned int maxBackupFiles) noexcept
 {
-    removeAppender (name);
-
     try {
+        removeAppender (name);
+
         log4cpp::Appender *appender = new log4cpp::RollingFileAppender(name,
                                                                        filename,
                                                                        maxFileSize,
@@ -195,14 +194,15 @@ bool Logger::addRollingFileAppender(const std::string& name,
     } catch (...) {
         return false;
     }
-
     return true;
 }
 
-bool Logger::addOutputStreamAppender(const std::string& name, std::ostream& stream) {
-    removeAppender (name);
-
+bool Logger::addOutputStreamAppender(const std::string & name,
+                                     std::ostream & stream) noexcept
+{
     try {
+        removeAppender (name);
+
         log4cpp::Appender *appender = new FlushingOstreamAppender("OstreamAppender", &stream);
         try {
             log4cpp::Layout * layout = new LogLayout(*this);
@@ -220,14 +220,15 @@ bool Logger::addOutputStreamAppender(const std::string& name, std::ostream& stre
     } catch (...) {
         return false;
     }
-
     return true;
 }
 
-bool Logger::addCustomAppender (const std::string &name, MessageProcessor &processor) {
-    removeAppender (name);
-
+bool Logger::addCustomAppender(const std::string & name,
+                               MessageProcessor & processor) noexcept
+{
     try {
+        removeAppender (name);
+
         log4cpp::Appender *appender = new GenericAppender(name, &processor);
         try {
             log4cpp::Layout * layout = new LogLayout(*this);
@@ -245,7 +246,6 @@ bool Logger::addCustomAppender (const std::string &name, MessageProcessor &proce
     } catch (...) {
         return false;
     }
-
     return true;
 }
 
