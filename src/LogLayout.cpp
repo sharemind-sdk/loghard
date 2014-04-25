@@ -25,7 +25,7 @@ std::string LogLayout::format(const log4cpp::LoggingEvent & event) {
     oss << Logger::formatTime(event.timeStamp.getSeconds()) << " ";
     oss.width(log4cpp::Priority::MESSAGE_SIZE);
     oss.setf(std::ios::left);
-    oss << priorityName << ": " << m_logger.getMessagePrefix() << event.message << std::endl;
+    oss << priorityName << ": " << m_logger.m_prefix << event.message << std::endl;
 
     return oss.str();
 }

@@ -21,6 +21,7 @@ class Category;
 
 namespace sharemind {
 
+class LogLayout;
 class MessageProcessor;
 
 /**
@@ -35,6 +36,15 @@ class MessageProcessor;
  LOG_MINIMAL, the message will not be displayed/written to the log.
 */
 class Logger final: public ILogger {
+
+    /**
+      The LogLayout class (used indirectly via the logMessage() methods (and
+      perhaps other methods as well) needs access to m_prefix but can't use
+      getMessagePrefix() because m_mutex is already locked. Therefore the
+      LogLayout class is specified as a friend class instead of using a
+      recursive mutex for m_mutex.
+    */
+    friend class LogLayout;
 
 public:
 
