@@ -136,9 +136,9 @@ bool Logger::addFileAppender(const std::string & appenderName,
         if (!openFile(*this, filename, append, fd))
             return false;
 
-        log4cpp::Appender *appender = new log4cpp::FileAppender(appenderName, fd);
+        log4cpp::Appender * const appender = new log4cpp::FileAppender(appenderName, fd);
         try {
-            log4cpp::Layout * layout = new LogLayout(*this);
+            log4cpp::Layout * const layout = new LogLayout(*this);
             try {
                 appender->setLayout(layout);
                 m_logger.addAppender(appender);
@@ -163,13 +163,14 @@ bool Logger::addRollingFileAppender(const std::string & name,
                                     const unsigned int maxBackupFiles) noexcept
 {
     try {
-        log4cpp::Appender *appender = new log4cpp::RollingFileAppender(name,
-                                                                       filename,
-                                                                       maxFileSize,
-                                                                       maxBackupFiles,
-                                                                       append);
+        log4cpp::Appender * const appender =
+                new log4cpp::RollingFileAppender(name,
+                                                 filename,
+                                                 maxFileSize,
+                                                 maxBackupFiles,
+                                                 append);
         try {
-            log4cpp::Layout * layout = new LogLayout(*this);
+            log4cpp::Layout * const layout = new LogLayout(*this);
             try {
                 appender->setLayout(layout);
 
@@ -197,9 +198,9 @@ bool Logger::addOutputStreamAppender(const std::string & name,
                                      std::ostream & stream) noexcept
 {
     try {
-        log4cpp::Appender *appender = new FlushingOstreamAppender("OstreamAppender", &stream);
+        log4cpp::Appender * const appender = new FlushingOstreamAppender("OstreamAppender", &stream);
         try {
-            log4cpp::Layout * layout = new LogLayout(*this);
+            log4cpp::Layout * const layout = new LogLayout(*this);
             try {
                 appender->setLayout(layout);
                 m_logger.addAppender(appender);
@@ -221,9 +222,9 @@ bool Logger::addCustomAppender(const std::string & name,
                                MessageProcessor & processor) noexcept
 {
     try {
-        log4cpp::Appender *appender = new GenericAppender(name, &processor);
+        log4cpp::Appender * const appender = new GenericAppender(name, &processor);
         try {
-            log4cpp::Layout * layout = new LogLayout(*this);
+            log4cpp::Layout * const layout = new LogLayout(*this);
             try {
                 appender->setLayout(layout);
                 m_logger.addAppender(appender);
