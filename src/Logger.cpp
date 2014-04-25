@@ -124,7 +124,7 @@ Logger::Logger(const std::string& name)
 }
 
 Logger::~Logger() noexcept {
-    removeAllAppenders();
+    m_logger.removeAllAppenders(); /// \bug Might throw
 }
 
 bool Logger::addFileAppender(const std::string & appenderName,
@@ -141,6 +141,7 @@ bool Logger::addFileAppender(const std::string & appenderName,
             log4cpp::Layout * const layout = new LogLayout(*this);
             try {
                 appender->setLayout(layout);
+                std::lock_guard<std::mutex> guard(m_mutex);
                 m_logger.addAppender(appender);
             } catch (...) {
                 delete layout;
@@ -174,11 +175,11 @@ bool Logger::addRollingFileAppender(const std::string & name,
             try {
                 appender->setLayout(layout);
 
+                std::lock_guard<std::mutex> guard(m_mutex);
                 /**
                   \todo somehow need to check if the file was successfully opened.
                         Use reopen() function of the FileAppender for that?
                 */
-
                 m_logger.addAppender(appender);
             } catch (...) {
                 delete layout;
@@ -203,6 +204,7 @@ bool Logger::addOutputStreamAppender(const std::string & name,
             log4cpp::Layout * const layout = new LogLayout(*this);
             try {
                 appender->setLayout(layout);
+                std::lock_guard<std::mutex> guard(m_mutex);
                 m_logger.addAppender(appender);
             } catch (...) {
                 delete layout;
@@ -227,6 +229,7 @@ bool Logger::addCustomAppender(const std::string & name,
             log4cpp::Layout * const layout = new LogLayout(*this);
             try {
                 appender->setLayout(layout);
+                std::lock_guard<std::mutex> guard(m_mutex);
                 m_logger.addAppender(appender);
             } catch (...) {
                 delete layout;
@@ -243,30 +246,36 @@ bool Logger::addCustomAppender(const std::string & name,
 }
 
 void Logger::removeAppender(const std::string & appenderName) noexcept {
+    std::lock_guard<std::mutex> guard(m_mutex);
     /// \bug Might throw:
     m_logger.removeAppender(m_logger.getAppender(appenderName));
 }
 
 void Logger::removeAllAppenders() noexcept {
+    std::lock_guard<std::mutex> guard(m_mutex);
     m_logger.removeAllAppenders(); /// \bug Might throw
 }
 
 void Logger::logMessage(LogPriority priority, const char * message) noexcept {
+    std::lock_guard<std::mutex> guard(m_mutex);
     /// \bug Might throw:
     m_logger.getStream(prioToLog4cppPrio(priority)) << message;
 }
 
 void Logger::logMessage(LogPriority priority, const std::string & message) noexcept {
+    std::lock_guard<std::mutex> guard(m_mutex);
     /// \bug Might throw:
     m_logger.getStream(prioToLog4cppPrio(priority)) << message;
 }
 
 void Logger::logMessage(LogPriority priority, std::string && message) noexcept {
+    std::lock_guard<std::mutex> guard(m_mutex);
     /// \bug Might throw:
     m_logger.getStream(prioToLog4cppPrio(priority)) << std::move(message);
 }
 
 void Logger::logMessage(LogPriority priority, const SmartStringStream & message) noexcept {
+    std::lock_guard<std::mutex> guard(m_mutex);
     /// \bug Might throw:
     m_logger.getStream(prioToLog4cppPrio(priority)) << message;
 }

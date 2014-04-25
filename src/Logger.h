@@ -11,6 +11,7 @@
 #define SHAREMINDCOMMON_LOGGER_H
 
 #include <ctime>
+#include <mutex>
 #include <sstream>
 #include "ILogger.h"
 
@@ -149,11 +150,19 @@ public:
     static std::string formatTime(const tm & timestamp);
 
     template <typename T>
-    void setMessagePrefix(T && prefix) { m_prefix = prefix; }
+    void setMessagePrefix(T && prefix) {
+        std::lock_guard<std::mutex> guard(m_mutex);
+        m_prefix = prefix;
+    }
 
-    const std::string & getMessagePrefix() const noexcept { return m_prefix; }
+    const std::string & getMessagePrefix() const noexcept {
+        std::lock_guard<std::mutex> guard(m_mutex);
+        return m_prefix;
+    }
 
-private:
+private: /* Fields: */
+
+    mutable std::mutex m_mutex;
 
     /**
      The main logger class of the log4cpp library. It does the actual logging.
