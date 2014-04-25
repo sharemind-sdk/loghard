@@ -132,8 +132,6 @@ bool Logger::addFileAppender(const std::string & appenderName,
                              bool append) noexcept
 {
     try {
-        removeAppender (appenderName);
-
         int fd;
         if (!openFile(*this, filename, append, fd))
             return false;
@@ -165,8 +163,6 @@ bool Logger::addRollingFileAppender(const std::string & name,
                                     const unsigned int maxBackupFiles) noexcept
 {
     try {
-        removeAppender (name);
-
         log4cpp::Appender *appender = new log4cpp::RollingFileAppender(name,
                                                                        filename,
                                                                        maxFileSize,
@@ -201,8 +197,6 @@ bool Logger::addOutputStreamAppender(const std::string & name,
                                      std::ostream & stream) noexcept
 {
     try {
-        removeAppender (name);
-
         log4cpp::Appender *appender = new FlushingOstreamAppender("OstreamAppender", &stream);
         try {
             log4cpp::Layout * layout = new LogLayout(*this);
@@ -227,8 +221,6 @@ bool Logger::addCustomAppender(const std::string & name,
                                MessageProcessor & processor) noexcept
 {
     try {
-        removeAppender (name);
-
         log4cpp::Appender *appender = new GenericAppender(name, &processor);
         try {
             log4cpp::Layout * layout = new LogLayout(*this);
