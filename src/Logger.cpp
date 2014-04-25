@@ -198,7 +198,7 @@ bool Logger::addOutputStreamAppender(const std::string & name,
                                      std::ostream & stream) noexcept
 {
     try {
-        log4cpp::Appender * const appender = new FlushingOstreamAppender("OstreamAppender", &stream);
+        log4cpp::Appender * const appender = new FlushingOstreamAppender(name, &stream);
         try {
             log4cpp::Layout * const layout = new LogLayout(*this);
             try {
