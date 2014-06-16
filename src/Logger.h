@@ -10,10 +10,12 @@
 #ifndef SHAREMINDCOMMON_LOGGER_H
 #define SHAREMINDCOMMON_LOGGER_H
 
+#include "ILogger.h"
+
 #include <ctime>
 #include <mutex>
 #include <sstream>
-#include "ILogger.h"
+
 
 namespace log4cpp {
 class Category;
