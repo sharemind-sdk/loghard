@@ -17,7 +17,6 @@
 #include <type_traits>
 #include <utility>
 #include "LogPriority.h"
-#include "../GccPR57887.h"
 
 
 #if defined(SHAREMIND_LOGLEVEL_FULLDEBUG)
@@ -61,8 +60,7 @@ private: /* Types: */
     public: /* Methods: */
 
         inline NoPrefixLogHelperBase(ILogger & logger) noexcept
-            : m_logger(&logger)
-            SHAREMIND_GCCPR57887_PART1(, m_status(NO_LOG)) {}
+            : m_logger(&logger) {}
 
         NoPrefixLogHelperBase(const NoPrefixLogHelperBase<priority> &) = delete;
         NoPrefixLogHelperBase<priority> & operator=(
@@ -71,15 +69,16 @@ private: /* Types: */
         inline NoPrefixLogHelperBase(NoPrefixLogHelperBase<priority> && move)
                 noexcept
             : /* m_stream(std::move(move.m_stream))
-            , */ m_logger(std::move(move.m_logger))
-            , m_status(std::move(move.m_status))
+            , */ m_logger(move.m_logger)
+            , m_operational(move.m_operational)
+            , m_haveData(move.m_haveData)
         {
             /// \bug http://gcc.gnu.org/bugzilla/show_bug.cgi?id=54316
             m_stream << move.m_stream.str();
             move.m_stream.str("");
             move.m_stream.clear();
 
-            move.m_status = NOT_OPERATIONAL;
+            move.m_operational = false;
         }
 
         inline NoPrefixLogHelperBase<priority> & operator=(
@@ -91,37 +90,34 @@ private: /* Types: */
             move.m_stream.str("");
             move.m_stream.clear();
 
-            m_logger = std::move(move.m_logger);
-            m_status = std::move(move.m_status);
-            move.m_status = NOT_OPERATIONAL;
+            m_logger = move.m_logger;
+            m_operational = move.m_operational;
+            m_haveData = move.m_haveData;
+            move.m_operational = false;
         }
 
         inline ~NoPrefixLogHelperBase() noexcept {
-            if (m_status == OPERATIONAL)
+            if (m_operational && m_haveData)
                 m_logger->logMessage(priority,
                                      m_stream.str()); /// \bug might throw
         }
 
         template <class T>
         inline NoPrefixLogHelperBase & operator<<(T && v) noexcept {
-            if (m_status != NOT_OPERATIONAL) {
-                m_stream << std::forward<T>(v); /// \bug might throw
-                if (m_status == NO_LOG)
-                    m_status = OPERATIONAL;
-            }
+            assert(m_operational);
+            m_stream << std::forward<T>(v); /// \bug might throw
+            m_haveData = true;
             return *this;
         }
 
-        inline void setAsPrefix() noexcept {
-            if (m_status == OPERATIONAL)
-                m_status = NO_LOG;
-        }
+        inline void setAsPrefix() noexcept { m_haveData = false; }
 
     private: /* Fields: */
 
         std::ostringstream m_stream;
         ILogger * m_logger;
-        Status m_status SHAREMIND_GCCPR57887_PART2(= NO_LOG);
+        bool m_operational = true;
+        bool m_haveData = false;
 
     }; /* class NoPrefixLogHelperBase { */
 
