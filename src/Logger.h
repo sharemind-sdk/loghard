@@ -15,6 +15,7 @@
 #include <ctime>
 #include <mutex>
 #include <sstream>
+#include "../Concat.h"
 
 
 namespace log4cpp {
@@ -161,8 +162,9 @@ public:
      */
     static std::string formatTime(const tm & timestamp);
 
-    template <typename T>
-    void setMessagePrefix(T && prefix) {
+    template <typename ... Ps>
+    void setMessagePrefix(Ps && ... prefixes) {
+        const std::string prefix(concat(std::forward<Ps>(prefixes)...));
         std::lock_guard<std::mutex> guard(m_mutex);
         m_prefix = prefix;
     }
