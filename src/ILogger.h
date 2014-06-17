@@ -41,12 +41,19 @@ class ILogger {
 
 private: /* Types: */
 
-    struct NullLogHelperBase {
-        inline NullLogHelperBase(ILogger &) noexcept {}
-        inline NullLogHelperBase(ILogger &, const std::string &) noexcept {}
+    class NullLogHelperBase {
+
+    public : /* Methods: */
+
         template <class T>
         inline NullLogHelperBase & operator<<(const T &) noexcept
         { return *this; }
+
+    protected: /* Methods: */
+
+        template <typename Prefix>
+        inline NullLogHelperBase(ILogger &, Prefix &&) noexcept {}
+
     };
 
     template <LogPriority priority>
@@ -57,15 +64,6 @@ private: /* Types: */
         enum Status { NO_LOG, OPERATIONAL, NOT_OPERATIONAL };
 
     public: /* Methods: */
-
-        inline LogHelperBase(ILogger & logger) noexcept
-            : m_logger(&logger)
-        {}
-
-        inline LogHelperBase(ILogger & logger,
-                             const std::string & prefix) noexcept
-            : m_logger(&logger)
-        { m_stream << prefix; }
 
         LogHelperBase(const LogHelperBase<priority> &) = delete;
         LogHelperBase<priority> & operator=(
@@ -115,6 +113,13 @@ private: /* Types: */
             return *this;
         }
 
+    protected: /* Methods: */
+
+        template <typename Prefix>
+        inline LogHelperBase(ILogger & logger, Prefix && prefix) noexcept
+            : m_logger(&logger)
+        { m_stream << prefix; } /// \bug might throw
+
     private: /* Fields: */
 
         std::ostringstream m_stream;
@@ -126,6 +131,8 @@ private: /* Types: */
 
 public: /* Types: */
 
+    class PrefixedWrapper;
+
     template <LogPriority priority = LOGPRIORITY_DEBUG>
     class LogHelper
             : public std::conditional<priority <= SHAREMIND_LOGLEVEL_MAXDEBUG,
@@ -133,18 +140,19 @@ public: /* Types: */
                                       NullLogHelperBase>::type
     {
 
-    public: /* Methods: */
+        friend class ILogger;
+        friend class PrefixedWrapper;
 
-        inline LogHelper(ILogger & logger) noexcept
+    private: /* Methods: */
+
+        template <typename Prefix = char>
+        inline LogHelper(ILogger & logger,
+                         Prefix && prefix = Prefix(' ')) noexcept
             : std::conditional<priority <= SHAREMIND_LOGLEVEL_MAXDEBUG,
                                LogHelperBase<priority>,
-                               NullLogHelperBase>::type(logger)
-        {}
-
-        inline LogHelper(ILogger & logger, const std::string & prefix) noexcept
-            : std::conditional<priority <= SHAREMIND_LOGLEVEL_MAXDEBUG,
-                               LogHelperBase<priority>,
-                               NullLogHelperBase>::type(logger, prefix)
+                               NullLogHelperBase>::type(
+                                   logger,
+                                   std::forward<Prefix>(prefix))
         {}
 
     };
@@ -156,6 +164,12 @@ public: /* Types: */
         typedef PrefixedWrapper Wrapped;
 
     public: /* Methods: */
+
+        inline PrefixedWrapper(ILogger & logger)
+                noexcept
+            : m_iLogger(logger)
+            , m_prefix(1, ' ')
+        {}
 
         template <typename Arg, typename ... Args>
         inline PrefixedWrapper(ILogger & logger, Arg && arg, Args && ... args)

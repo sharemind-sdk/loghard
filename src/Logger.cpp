@@ -134,15 +134,15 @@ bool Logger::addFileAppender(const std::string & appenderName,
 
         log4cpp::Appender * const appender = new log4cpp::FileAppender(appenderName, fd);
         try {
-            log4cpp::Layout * const layout = new LogLayout(*this);
+            LogLayout * const layout = new LogLayout;
             try {
                 appender->setLayout(layout);
-                std::lock_guard<std::mutex> guard(m_mutex);
-                m_logger.addAppender(appender);
             } catch (...) {
                 delete layout;
                 throw;
             }
+            std::lock_guard<std::mutex> guard(m_mutex);
+            m_logger.addAppender(appender);
         } catch (...) {
             delete appender;
             throw;
@@ -167,20 +167,21 @@ bool Logger::addRollingFileAppender(const std::string & name,
                                                  maxBackupFiles,
                                                  append);
         try {
-            log4cpp::Layout * const layout = new LogLayout(*this);
+            LogLayout * const layout = new LogLayout;
             try {
                 appender->setLayout(layout);
-
-                std::lock_guard<std::mutex> guard(m_mutex);
-                /**
-                  \todo somehow need to check if the file was successfully opened.
-                        Use reopen() function of the FileAppender for that?
-                */
-                m_logger.addAppender(appender);
             } catch (...) {
                 delete layout;
                 throw;
             }
+
+            std::lock_guard<std::mutex> guard(m_mutex);
+            /**
+              \todo somehow need to check if the file was successfully
+                    opened. Use reopen() function of the FileAppender for
+                    that?
+            */
+            m_logger.addAppender(appender);
         } catch (...) {
             delete appender;
             throw;
@@ -197,15 +198,15 @@ bool Logger::addOutputStreamAppender(const std::string & name,
     try {
         log4cpp::Appender * const appender = new FlushingOstreamAppender(name, &stream);
         try {
-            log4cpp::Layout * const layout = new LogLayout(*this);
+            LogLayout * const layout = new LogLayout;
             try {
                 appender->setLayout(layout);
-                std::lock_guard<std::mutex> guard(m_mutex);
-                m_logger.addAppender(appender);
             } catch (...) {
                 delete layout;
                 throw;
             }
+            std::lock_guard<std::mutex> guard(m_mutex);
+            m_logger.addAppender(appender);
         } catch (...) {
             delete appender;
             throw;
@@ -222,15 +223,15 @@ bool Logger::addCustomAppender(const std::string & name,
     try {
         log4cpp::Appender * const appender = new GenericAppender(name, &processor);
         try {
-            log4cpp::Layout * const layout = new LogLayout(*this);
+            LogLayout * const layout = new LogLayout;
             try {
                 appender->setLayout(layout);
-                std::lock_guard<std::mutex> guard(m_mutex);
-                m_logger.addAppender(appender);
             } catch (...) {
                 delete layout;
                 throw;
             }
+            std::lock_guard<std::mutex> guard(m_mutex);
+            m_logger.addAppender(appender);
         } catch (...) {
             delete appender;
             throw;

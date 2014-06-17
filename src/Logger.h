@@ -14,8 +14,7 @@
 
 #include <ctime>
 #include <mutex>
-#include <sstream>
-#include "../Concat.h"
+#include <ostream>
 
 
 namespace log4cpp {
@@ -160,28 +159,15 @@ public:
      */
     static std::string formatTime(const tm & timestamp);
 
-    template <typename ... Ps>
-    void setMessagePrefix(Ps && ... prefixes) {
-        const std::string prefix(concat(std::forward<Ps>(prefixes)...));
-        std::lock_guard<std::mutex> guard(m_mutex);
-        m_prefix = prefix;
-    }
-
-    const std::string & getMessagePrefix() const noexcept {
-        std::lock_guard<std::mutex> guard(m_mutex);
-        return m_prefix;
-    }
-
 private: /* Fields: */
+
 
     mutable std::mutex m_mutex;
 
     /**
      The main logger class of the log4cpp library. It does the actual logging.
      */
-    log4cpp::Category& m_logger;
-
-    std::string m_prefix;
+    log4cpp::Category & m_logger;
 
 }; /* class Logger { */
 
