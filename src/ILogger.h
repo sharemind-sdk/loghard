@@ -97,6 +97,7 @@ private: /* Types: */
             m_operational = move.m_operational;
             m_haveData = move.m_haveData;
             move.m_operational = false;
+            return *this;
         }
 
         inline ~LogHelperBase() noexcept {
