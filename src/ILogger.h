@@ -179,7 +179,7 @@ public: /* Types: */
                               std::forward<Args>(args)..., ' '))
         {}
 
-        ILogger & iLogger() const noexcept { return m_iLogger; }
+        ILogger & base() const noexcept { return m_iLogger; }
 
         inline LogHelper<LOGPRIORITY_FATAL> fatal() noexcept
         { return {m_iLogger, m_prefix}; }
@@ -214,6 +214,9 @@ public: /* Types: */
     typedef PrefixedWrapper Wrapped;
 
 public: /* Methods: */
+
+    ILogger & base() noexcept { return *this; }
+    const ILogger & base() const noexcept { return *this; }
 
     inline LogHelper<LOGPRIORITY_FATAL> fatal() noexcept { return *this; }
     inline LogHelper<LOGPRIORITY_ERROR> error() noexcept { return *this; }
