@@ -19,15 +19,12 @@
 #include <log4cpp/OstreamAppender.hh>
 #include <log4cpp/RollingFileAppender.hh>
 #include "../Abort.h"
-#include "Debug.h"
 #include "GenericAppender.h"
 #include "LogLayout.h"
 #include "MessageProcessor.h"
 
 
 namespace {
-
-SHAREMIND_DEFINE_PREFIXED_LOGS("[Logger] ");
 
 inline log4cpp::Priority::PriorityLevel prioToLog4cppPrio(SharemindLogPriority priority) {
     switch (priority) {
@@ -60,7 +57,7 @@ bool openFile(sharemind::Logger & logger,
 {
     // Check if we have a filename
     if (filename.empty()) {
-        LogError(logger) << "Empty log file name!";
+        logger.error() << "Empty log file name!";
         return false;
     }
 
@@ -71,11 +68,11 @@ bool openFile(sharemind::Logger & logger,
 
     fd = ::open(filename.c_str(), flags, 00644);
     if (fd < 0) {
-        LogError(logger) << "Cannot open log file " << filename << "!";
+        logger.error() << "Cannot open log file " << filename << "!";
         return false;
     }
 
-    LogDebug(logger) << "Opened log file " << filename << ".";
+    logger.debug() << "Opened log file " << filename << ".";
     return true;
 }
 
