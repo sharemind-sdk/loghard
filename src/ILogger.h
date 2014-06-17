@@ -46,7 +46,7 @@ private: /* Types: */
     public : /* Methods: */
 
         template <class T>
-        inline NullLogHelperBase & operator<<(const T &) noexcept
+        inline NullLogHelperBase & operator<<(T &&) noexcept
         { return *this; }
 
     protected: /* Methods: */
