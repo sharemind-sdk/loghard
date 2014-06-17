@@ -19,7 +19,6 @@
 #include <log4cpp/OstreamAppender.hh>
 #include <log4cpp/RollingFileAppender.hh>
 #include "../Abort.h"
-#include "../SmartStringStream.h"
 #include "Debug.h"
 #include "GenericAppender.h"
 #include "LogLayout.h"
@@ -272,12 +271,6 @@ void Logger::logMessage(LogPriority priority, std::string && message) noexcept {
     std::lock_guard<std::mutex> guard(m_mutex);
     /// \bug Might throw:
     m_logger.getStream(prioToLog4cppPrio(priority)) << std::move(message);
-}
-
-void Logger::logMessage(LogPriority priority, const SmartStringStream & message) noexcept {
-    std::lock_guard<std::mutex> guard(m_mutex);
-    /// \bug Might throw:
-    m_logger.getStream(prioToLog4cppPrio(priority)) << message;
 }
 
 std::string Logger::formatDate(const time_t timestamp, const bool reverse) {
