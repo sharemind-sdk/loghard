@@ -11,20 +11,61 @@
 
 #include "Logger.h"
 
+#include <cassert>
 #include <cstdlib>
 #include <ctime>
+#include <iomanip>
 #include <log4cpp/Appender.hh>
 #include <log4cpp/Category.hh>
 #include <log4cpp/FileAppender.hh>
+#include <log4cpp/Layout.hh>
 #include <log4cpp/OstreamAppender.hh>
 #include <log4cpp/RollingFileAppender.hh>
 #include "../Abort.h"
+#include "../Concat.h"
 #include "GenericAppender.h"
-#include "LogLayout.h"
 #include "MessageProcessor.h"
 
 
 namespace {
+
+/**
+ * LogLayout is a fixed format log4cpp::Layout implementation for Sharemind.
+ **/
+class LogLayout: public log4cpp::Layout {
+
+public: /* Methods: */
+
+    /**
+     * Formats the LoggingEvent in LogLayout style:<br>
+     * "formattedTime priority ndc: message"
+     **/
+    std::string format(const log4cpp::LoggingEvent & event) final override {
+        const time_t eventTime = event.timeStamp.getSeconds();
+        constexpr const size_t bufSize = sizeof("HH:MM:SS ");
+        char timeStampBuf[bufSize];
+        tm eventTimeTm;
+        const char * timeStampBufferToPrint;
+        if (!localtime_r(&eventTime, &eventTimeTm)) {
+            timeStampBufferToPrint = "--:--:-- ";
+        } else {
+            #ifndef NDEBUG
+            const size_t r =
+            #endif
+                    strftime(timeStampBuf, bufSize, "%H:%M:%S ", &eventTimeTm);
+            assert(r);
+            timeStampBufferToPrint = timeStampBuf;
+        }
+        return sharemind::concat(
+                    timeStampBufferToPrint,
+                    std::setw(log4cpp::Priority::MESSAGE_SIZE),
+                    std::setiosflags(std::ios::left),
+                    log4cpp::Priority::getPriorityName(event.priority),
+                    event.message,
+                    sharemind::concat_endl);
+    }
+
+}; /* class LogLayout { */
 
 inline log4cpp::Priority::PriorityLevel prioToLog4cppPrio(SharemindLogPriority priority) {
     switch (priority) {
@@ -269,36 +310,6 @@ void Logger::logMessage(LogPriority priority, std::string && message) noexcept {
     std::lock_guard<std::mutex> guard(m_mutex);
     /// \bug Might throw:
     m_logger.getStream(prioToLog4cppPrio(priority)) << std::move(message);
-}
-
-std::string Logger::formatDate(const time_t timestamp) {
-    tm theTime;
-    if (!localtime_r(&timestamp, &theTime))
-        return std::string();
-    return formatDate(theTime);
-}
-
-std::string Logger::formatDate(const tm & timestamp) {
-    constexpr size_t maxSizeOfDateStr = sizeof("DD-MM-YYYY");
-    char dateStr[maxSizeOfDateStr] = "";
-    if (strftime(dateStr, maxSizeOfDateStr, "%Y-%m-%d", &timestamp) <= 0u)
-        return std::string();
-    return dateStr;
-}
-
-std::string Logger::formatTime(const time_t timestamp) {
-    tm theTime;
-    if (!localtime_r(&timestamp, &theTime))
-        return std::string();
-    return formatTime(theTime);
-}
-
-std::string Logger::formatTime(const tm & timestamp) {
-    constexpr size_t maxSizeOfTimeStr = sizeof("HH-MM-SS");
-    char timeStr[maxSizeOfTimeStr] = "";
-    if (strftime(timeStr, maxSizeOfTimeStr, "%H-%M-%S", &timestamp) <= 0u)
-        return std::string();
-    return timeStr;
 }
 
 } /* namespace sharemind */
