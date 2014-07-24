@@ -271,18 +271,17 @@ void Logger::logMessage(LogPriority priority, std::string && message) noexcept {
     m_logger.getStream(prioToLog4cppPrio(priority)) << std::move(message);
 }
 
-std::string Logger::formatDate(const time_t timestamp, const bool reverse) {
+std::string Logger::formatDate(const time_t timestamp) {
     tm theTime;
     if (!localtime_r(&timestamp, &theTime))
         return std::string();
-    return formatDate(theTime, reverse);
+    return formatDate(theTime);
 }
 
-std::string Logger::formatDate(const tm & timestamp, const bool reverse) {
+std::string Logger::formatDate(const tm & timestamp) {
     constexpr size_t maxSizeOfDateStr = sizeof("DD-MM-YYYY");
     char dateStr[maxSizeOfDateStr] = "";
-    const char * const format = reverse ? "%Y-%m-%d" : "%d-%m-%Y";
-    if (strftime(dateStr, maxSizeOfDateStr, format, &timestamp) <= 0u)
+    if (strftime(dateStr, maxSizeOfDateStr, "%Y-%m-%d", &timestamp) <= 0u)
         return std::string();
     return dateStr;
 }

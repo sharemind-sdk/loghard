@@ -129,21 +129,17 @@ public:
 
     /**
      \param[in] timestamp the timestamp to format.
-     \param[in] reverse If true, use "YYYY-MM-DD" instead of "DD-MM-YYYY" as
-                        format.
      \returns a string which contains the date in the timestamp, empty string on
               error.
      */
-    static std::string formatDate(const time_t timestamp,
-                                  const bool reverse = false);
+    static std::string formatDate(const time_t timestamp);
 
     /**
      \param[in] timestamp the timestamp to format.
      \returns a string which contains the date in the timestamp, empty string on
               error.
      */
-    static std::string formatDate(const tm & timestamp,
-                                  const bool reverse = false);
+    static std::string formatDate(const tm & timestamp);
 
     /**
      \param[in] timestamp the timestamp to format.
