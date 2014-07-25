@@ -96,11 +96,7 @@ bool openFile(sharemind::Logger & logger,
               bool append,
               int & fd)
 {
-    // Check if we have a filename
-    if (filename.empty()) {
-        logger.error() << "Empty log file name!";
-        return false;
-    }
+    assert(!filename.empty());
 
     // Try to open the log file
     int flags = O_CREAT | O_APPEND | O_WRONLY;
