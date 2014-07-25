@@ -12,7 +12,6 @@
 
 #include "ILogger.h"
 
-#include <ctime>
 #include <mutex>
 #include <ostream>
 
@@ -22,8 +21,6 @@ class Category;
 }
 
 namespace sharemind {
-
-class MessageProcessor;
 
 /**
  This class provides logging services for the whole project.
@@ -86,16 +83,6 @@ public:
     */
     bool addOutputStreamAppender(const std::string & name,
                                  std::ostream & stream) noexcept;
-
-    /**
-     Adds a custom MessageProcessor based appender to the Logger.
-
-     \param[in] name The unique name of the created appender.
-     \param[in] processor The processor of the logged messages.
-     \returns Whether or not adding the custom appender succeeded.
-    */
-    bool addCustomAppender (const std::string & name,
-                            MessageProcessor & processor) noexcept;
 
     /**
      Removes the specified appender from the Logger by name.

@@ -19,12 +19,12 @@
 #include <log4cpp/Category.hh>
 #include <log4cpp/FileAppender.hh>
 #include <log4cpp/Layout.hh>
+#include <log4cpp/LayoutAppender.hh>
 #include <log4cpp/OstreamAppender.hh>
 #include <log4cpp/RollingFileAppender.hh>
+// #include <log4cpp/SimpleLayout.hh>
 #include "../Abort.h"
 #include "../Concat.h"
-#include "GenericAppender.h"
-#include "MessageProcessor.h"
 
 
 namespace {
@@ -238,31 +238,6 @@ bool Logger::addOutputStreamAppender(const std::string & name,
 {
     try {
         log4cpp::Appender * const appender = new FlushingOstreamAppender(name, &stream);
-        try {
-            LogLayout * const layout = new LogLayout;
-            try {
-                appender->setLayout(layout);
-            } catch (...) {
-                delete layout;
-                throw;
-            }
-            std::lock_guard<std::mutex> guard(m_mutex);
-            m_logger.addAppender(appender);
-        } catch (...) {
-            delete appender;
-            throw;
-        }
-    } catch (...) {
-        return false;
-    }
-    return true;
-}
-
-bool Logger::addCustomAppender(const std::string & name,
-                               MessageProcessor & processor) noexcept
-{
-    try {
-        log4cpp::Appender * const appender = new GenericAppender(name, &processor);
         try {
             LogLayout * const layout = new LogLayout;
             try {
