@@ -61,7 +61,9 @@ private: /* Types: */
 
     private: /* Types: */
 
-        enum Status { NO_LOG, OPERATIONAL, NOT_OPERATIONAL };
+        using InnerStream = std::ostringstream;
+        static_assert(std::is_nothrow_destructible<InnerStream>::value,
+                      "std::ostringstream::~ostringstream not noexcept");
 
     public: /* Methods: */
 
@@ -69,48 +71,59 @@ private: /* Types: */
         LogHelperBase<priority> & operator=(
                 const LogHelperBase<priority> &) = delete;
 
-        inline LogHelperBase(LogHelperBase<priority> && move)
-                noexcept
-            : /* m_stream(std::move(move.m_stream))
-            , */ m_logger(move.m_logger)
-            , m_operational(move.m_operational)
-            , m_haveData(move.m_haveData)
-        {
-            /// \bug http://gcc.gnu.org/bugzilla/show_bug.cgi?id=54316
-            m_stream << move.m_stream.str();
-            move.m_stream.str("");
-            move.m_stream.clear();
-
-            move.m_operational = false;
+        inline LogHelperBase(LogHelperBase<priority> && move) noexcept {
+            if (move.m_operational) {
+                try {
+                    /// \todo http://gcc.gnu.org/bugzilla/show_bug.cgi?id=54316
+                    // new (&m_stream) InnerStream(std::move(move.m_stream));
+                    new (&m_stream) InnerStream();
+                    try {
+                        m_stream << move.m_stream.str();
+                        m_logger = move.m_logger;
+                        m_haveData = move.m_haveData;
+                        m_operational = true;
+                    } catch (...) {
+                        m_stream.~InnerStream();
+                        throw;
+                    }
+                } catch (...) {
+                    m_operational = false;
+                }
+                move.m_operational = false;
+                move.m_stream.~InnerStream();
+            } else {
+                m_operational = false;
+            }
         }
 
         inline LogHelperBase<priority> & operator=(
                 LogHelperBase<priority> && move) noexcept
         {
-            /// \bug http://gcc.gnu.org/bugzilla/show_bug.cgi?id=54316
-            // m_stream = std::move(move.m_stream);
-            m_stream << move.m_stream.str();
-            move.m_stream.str("");
-            move.m_stream.clear();
-
-            m_logger = move.m_logger;
-            m_operational = move.m_operational;
-            m_haveData = move.m_haveData;
-            move.m_operational = false;
+            if (m_operational)
+                m_stream.~InnerStream();
+            new (this) LogHelperBase<priority>(std::move(move));
             return *this;
         }
 
         inline ~LogHelperBase() noexcept {
-            if (m_operational && m_haveData)
-                m_logger->logMessage(priority,
-                                     m_stream.str()); /// \bug might throw
+            if (m_operational) {
+                if (m_haveData)
+                    m_logger->logMessage(priority, m_stream.str());
+                m_stream.~InnerStream();
+            }
         }
 
         template <class T>
         inline LogHelperBase & operator<<(T && v) noexcept {
-            assert(m_operational);
-            m_stream << std::forward<T>(v); /// \bug might throw
-            m_haveData = true;
+            if (m_operational) {
+                try {
+                    m_stream << std::forward<T>(v);
+                    m_haveData = true;
+                } catch (...) {
+                    m_stream.~InnerStream();
+                    m_operational = false;
+                }
+            }
             return *this;
         }
 
@@ -119,14 +132,31 @@ private: /* Types: */
         template <typename Prefix>
         inline LogHelperBase(ILogger & logger, Prefix && prefix) noexcept
             : m_logger(&logger)
-        { m_stream << prefix; } /// \bug might throw
+        {
+            try {
+                new (&m_stream) InnerStream();
+                try {
+                    m_stream << prefix;
+                    m_haveData = false;
+                    m_operational = true;
+                } catch (...) {
+                    m_stream.~InnerStream();
+                    throw;
+                }
+            } catch (...) {
+                m_operational = false;
+            }
+        }
 
     private: /* Fields: */
 
-        std::ostringstream m_stream;
+        union {
+            char m_unused;
+            InnerStream m_stream;
+        };
         ILogger * m_logger;
-        bool m_operational = true;
-        bool m_haveData = false;
+        bool m_haveData;
+        bool m_operational;
 
     }; /* class LogHelperBase { */
 
