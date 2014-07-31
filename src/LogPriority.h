@@ -14,18 +14,31 @@
 extern "C" {
 #endif /* #ifdef __cplusplus */
 
+/// \todo Use syslog levels
 typedef enum SharemindLogPriority_ {
-    LOGPRIORITY_FATAL = 0,
-    LOGPRIORITY_ERROR = 1,
-    LOGPRIORITY_WARNING = 2,
-    LOGPRIORITY_NORMAL = 3,
-    LOGPRIORITY_DEBUG = 4,
-    LOGPRIORITY_FULLDEBUG = 5
+    SHAREMIND_LOGPRIORITY_FATAL = 0,
+    SHAREMIND_LOGPRIORITY_ERROR = 1,
+    SHAREMIND_LOGPRIORITY_WARNING = 2,
+    SHAREMIND_LOGPRIORITY_NORMAL = 3,
+    SHAREMIND_LOGPRIORITY_DEBUG = 4,
+    SHAREMIND_LOGPRIORITY_FULLDEBUG = 5
 } SharemindLogPriority;
 
 #ifdef __cplusplus
 } /* extern "C" { */
-namespace sharemind { typedef SharemindLogPriority LogPriority; }
+
+namespace sharemind {
+/// \todo Use syslog levels
+enum class LogPriority {
+    Fatal = SHAREMIND_LOGPRIORITY_FATAL,
+    Error = SHAREMIND_LOGPRIORITY_ERROR,
+    Warning = SHAREMIND_LOGPRIORITY_WARNING,
+    Normal = SHAREMIND_LOGPRIORITY_NORMAL,
+    Debug = SHAREMIND_LOGPRIORITY_DEBUG,
+    FullDebug = SHAREMIND_LOGPRIORITY_FULLDEBUG
+};
+}
+
 #endif
 
 #endif /* SHAREMINDCOMMON_LOGPRIORITY_H */
