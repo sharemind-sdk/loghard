@@ -48,16 +48,18 @@ public: /* Types: */
 
     class NullLogHelperBase {
 
+        template <LogPriority> friend class LogHelper;
+
     public : /* Methods: */
 
         template <class T>
         inline NullLogHelperBase & operator<<(T &&) noexcept
         { return *this; }
 
-    protected: /* Methods: */
+    private: /* Methods: */
 
         template <typename Prefix>
-        inline NullLogHelperBase(const LogBackend &, const Prefix &&) noexcept
+        inline NullLogHelperBase(const LogBackend &, Prefix &&) noexcept
         {}
 
     }; /* class NullLogHelperBase { */
