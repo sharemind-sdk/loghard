@@ -180,6 +180,7 @@ public: /* Types: */
             const char * const messageStr = message.c_str();
             Fluffy::QueueingMutex::Guard guard(mutex);
             fprintf(file, "%s %s %s\n", timeStr, priorityStr, messageStr);
+            fflush(file);
         }
 
     private: /* Fields: */
