@@ -178,7 +178,7 @@ public: /* Types: */
             const char * const priorityStr =
                     priorityStringRightPadded(priority);
             const char * const messageStr = message.c_str();
-            Fluffy::QueueingMutex::Guard guard(mutex);
+            const Fluffy::QueueingMutex::Guard guard(mutex);
             fprintf(file, "%s %s %s\n", timeStr, priorityStr, messageStr);
             fflush(file);
         }
