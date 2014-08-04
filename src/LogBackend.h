@@ -126,21 +126,10 @@ public: /* Types: */
             openlog(m_ident.c_str(), m_logopt, m_facility);
         }
 
-        inline void log(timeval time,
+        inline void log(timeval,
                         const LogPriority priority,
                         const std::string & message) noexcept override
-        {
-            constexpr const size_t bufSize = sizeof("HH:MM:SS");
-            char timeStampBuf[bufSize];
-            syslog(syslogPriority(priority),
-                   "%s %s",
-                   timeStamp(timeStampBuf,
-                             bufSize,
-                             "%H:%M:%S",
-                             time,
-                             "--:--:--"),
-                   message.c_str());
-        }
+        { syslog(syslogPriority(priority), "%s", message.c_str()); }
 
         static int syslogPriority(const LogPriority priority) noexcept {
             switch (priority) {
