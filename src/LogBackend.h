@@ -129,19 +129,19 @@ public: /* Types: */
         inline void log(timeval,
                         const LogPriority priority,
                         const std::string & message) noexcept override
-        { syslog(syslogPriority(priority), "%s", message.c_str()); }
-
-        static int syslogPriority(const LogPriority priority) noexcept {
+        {
+            int p;
             switch (priority) {
-                case LogPriority::Fatal:     return LOG_EMERG;
-                case LogPriority::Error:     return LOG_ERR;
-                case LogPriority::Warning:   return LOG_WARNING;
-                case LogPriority::Normal:    return LOG_INFO;
-                case LogPriority::Debug:     return LOG_DEBUG;
-                case LogPriority::FullDebug: return LOG_DEBUG;
+                case LogPriority::Fatal:     p = LOG_EMERG;   break;
+                case LogPriority::Error:     p = LOG_ERR;     break;
+                case LogPriority::Warning:   p = LOG_WARNING; break;
+                case LogPriority::Normal:    p = LOG_INFO;    break;
+                case LogPriority::Debug:     p = LOG_DEBUG;   break;
+                case LogPriority::FullDebug: p = LOG_DEBUG;   break;
                 default:
                     SHAREMIND_ABORT("SAsP: p=%d", static_cast<int>(priority));
             }
+            syslog(p, "%s", message.c_str());
         }
 
         const std::string m_ident;
