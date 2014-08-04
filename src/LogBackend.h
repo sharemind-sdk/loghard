@@ -11,6 +11,7 @@
 #define SHAREMINDCOMMON_LOGBACKEND_H
 
 #include <cassert>
+#include <fluffy/Exception.h>
 #include <fluffy/QueueingMutex.h>
 #include <fluffy/QueueingRwMutex.h>
 #include <set>
@@ -32,11 +33,16 @@ class LogBackend {
 
 public: /* Types: */
 
+    class Appender;
+    typedef std::set<Appender *> Appenders;
+
     class Appender {
 
     public: /* Methods: */
 
         virtual ~Appender() noexcept {}
+
+        virtual void activate(const Appenders & appenders) { (void) appenders; }
 
         virtual void log(timeval time,
                          LogPriority priority,
@@ -94,7 +100,31 @@ public: /* Types: */
 
     class SyslogAppender: public Appender {
 
+    public: /* Types: */
+
+        FLUFFY_DEFINE_EXCEPTION_SUBCLASS(std::exception, Exception);
+        FLUFFY_DEFINE_EXCEPTION_SUBCLASS_CONST_MSG(
+                Exception,
+                MultipleSyslogAppenderException,
+                "Multiple Syslog appenders not allowed!");
+
     public: /* Methods: */
+
+        inline SyslogAppender(const std::string & ident,
+                              const int logopt,
+                              const int facility)
+            : m_ident(ident)
+            , m_logopt(logopt)
+            , m_facility(facility) {}
+
+        inline ~SyslogAppender() noexcept override { closelog(); }
+
+        void activate(const Appenders & appenders) override {
+            for (Appender * const a : appenders)
+                if (a != this && dynamic_cast<SyslogAppender *>(a) != nullptr)
+                    throw MultipleSyslogAppenderException();
+            openlog(m_ident.c_str(), m_logopt, m_facility);
+        }
 
         inline void log(timeval time,
                         const LogPriority priority,
@@ -124,6 +154,10 @@ public: /* Types: */
                     SHAREMIND_ABORT("SAsP: p=%d", static_cast<int>(priority));
             }
         }
+
+        const std::string m_ident;
+        const int m_logopt;
+        const int m_facility;
 
     }; /* class SyslogAppender { */
 
@@ -213,6 +247,16 @@ public: /* Methods: */
     }
 
     /**
+      \brief Adds an SyslogAppender to the Logger.
+      \param[in] args Arguments to the SyslogAppender constructor.
+    */
+    template <typename ... Args>
+    inline SyslogAppender & addSyslogAppender(Args && ... args) {
+        return addAppender__<SyslogAppender,
+                             Args...>(std::forward<Args>(args)...);
+    }
+
+    /**
       \brief Adds a FileAppender to the Logger.
       \param[in] args Arguments to the FileAppender constructor.
     */
@@ -236,6 +280,12 @@ public: /* Methods: */
         assert(appender);
         const Fluffy::QueueingRwMutex::UniqueGuard uniqueGuard(m_mutex);
         m_appenders.insert(appender);
+        try {
+            appender->activate(m_appenders);
+        } catch (...) {
+            m_appenders.erase(appender);
+            throw;
+        }
     }
 
 private: /* Methods: */
@@ -263,7 +313,7 @@ private: /* Methods: */
 private: /* Fields: */
 
     mutable Fluffy::QueueingRwMutex m_mutex;
-    std::set<Appender *> m_appenders;
+    Appenders m_appenders;
 
 }; /* class LogBackend { */
 
