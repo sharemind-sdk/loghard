@@ -198,9 +198,9 @@ public: /* Types: */
 
     private: /* Methods: */
 
-        template <typename Prefix = char>
+        template <typename Prefix>
         inline LogHelper(LogBackend & backend,
-                         Prefix && prefix = Prefix(' ')) noexcept
+                         Prefix && prefix) noexcept
             : std::conditional<priority <= SHAREMIND_LOGLEVEL_MAXDEBUG,
                                LogHelperBase<priority>,
                                NullLogHelperBase>::type(
@@ -217,7 +217,6 @@ public: /* Methods: */
     inline Logger(LogBackend & backend)
             noexcept
         : m_backend(backend)
-        , m_prefix(1, ' ')
     {}
 
     template <typename Arg, typename ... Args>
@@ -234,11 +233,23 @@ public: /* Methods: */
         , m_prefix(logger.m_prefix)
     {}
 
-    template <typename ... Args>
-    inline Logger(const Logger & logger, Args && ... args) noexcept
+    template <typename Arg, typename ... Args>
+    inline Logger(const Logger & logger, Arg && arg, Args && ... args) noexcept
         : m_backend(logger.m_backend)
-        , m_prefix(concat(trimLastChar(logger.m_prefix),
-                          std::forward<Args>(args)..., ' '))
+        , m_prefix(logger.m_prefix.empty()
+                   ? concat(std::forward<Arg>(arg),
+                            std::forward<Args>(args)...,
+                            ' ')
+                   : (*(logger.m_prefix.crbegin()) != ' ')
+                     ? concat(logger.m_prefix,
+                              std::forward<Arg>(arg),
+                              std::forward<Args>(args)...,
+                              ' ')
+                     : concat(std::string(logger.m_prefix.cbegin(),
+                                          logger.m_prefix.cend() - 1),
+                              std::forward<Arg>(arg),
+                              std::forward<Args>(args)...,
+                              ' '))
     {}
 
     LogBackend & backend() const noexcept { return m_backend; }
@@ -260,11 +271,6 @@ public: /* Methods: */
 
     inline LogHelper<LogPriority::FullDebug> fullDebug() const noexcept
     { return {m_backend, m_prefix}; }
-
-private: /* Methods: */
-
-    static inline std::string trimLastChar(const std::string & s)
-    { return std::string(s.cbegin(), s.cend() - 1); }
 
 private: /* Fields: */
 
