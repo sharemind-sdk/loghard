@@ -46,7 +46,7 @@ public: /* Types: */
 
         virtual void log(timeval time,
                          LogPriority priority,
-                         const std::string & message) noexcept = 0;
+                         const char * message) noexcept = 0;
 
         inline static const char * priorityString(const LogPriority priority)
                 noexcept
@@ -128,7 +128,7 @@ public: /* Types: */
 
         inline void log(timeval,
                         const LogPriority priority,
-                        const std::string & message) noexcept override
+                        const char * message) noexcept override
         {
             int p;
             switch (priority) {
@@ -141,7 +141,7 @@ public: /* Types: */
                 default:
                     SHAREMIND_ABORT("SAsP: p=%d", static_cast<int>(priority));
             }
-            syslog(p, "%s", message.c_str());
+            syslog(p, "%s", message);
         }
 
         const std::string m_ident;
@@ -158,13 +158,13 @@ public: /* Types: */
 
         inline void log(timeval time,
                         const LogPriority priority,
-                        const std::string & message) noexcept override
+                        const char * message) noexcept override
         { logToFile(m_file, time, priority, message, m_mutex); }
 
         static inline void logToFile(FILE * file,
                                      timeval time,
                                      const LogPriority priority,
-                                     const std::string & message,
+                                     const char * const message,
                                      Fluffy::QueueingMutex & mutex) noexcept
         {
 
@@ -177,9 +177,8 @@ public: /* Types: */
                                                    "--:--:--");
             const char * const priorityStr =
                     priorityStringRightPadded(priority);
-            const char * const messageStr = message.c_str();
             const Fluffy::QueueingMutex::Guard guard(mutex);
-            fprintf(file, "%s %s %s\n", timeStr, priorityStr, messageStr);
+            fprintf(file, "%s %s %s\n", timeStr, priorityStr, message);
             fflush(file);
         }
 
@@ -211,7 +210,7 @@ public: /* Types: */
 
         inline void log(timeval time,
                         const LogPriority priority,
-                        const std::string & message) noexcept override
+                        const char * message) noexcept override
         { CFileAppender::logToFile(m_file, time, priority, message, m_mutex); }
 
         inline static const char * openModeString(const OpenMode openMode)
@@ -280,11 +279,11 @@ public: /* Methods: */
 
 private: /* Methods: */
 
-    template <LogPriority priority, class Message>
-    inline void doLog(const timeval time, Message && s) {
+    template <LogPriority priority>
+    inline void doLog(const timeval time, const char * const message) {
         const Fluffy::QueueingRwMutex::SharedGuard sharedGuard(m_mutex);
         for (Appender * const appender : m_appenders)
-            appender->log(time, priority, std::forward<Message>(s));
+            appender->log(time, priority, message);
     }
 
     template <typename AppenderType, typename ... Args>

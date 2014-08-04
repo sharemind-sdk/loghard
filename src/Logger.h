@@ -15,8 +15,8 @@
 #include <sys/time.h>
 #include <type_traits>
 #include <utility>
+#include "../Abort.h"
 #include "../Concat.h"
-#include "../GccIsNothrowDestructible.h"
 #include "../GccVersion.h"
 #include "LogBackend.h"
 #include "LogPriority.h"
@@ -40,9 +40,33 @@
 
 namespace sharemind {
 
+namespace Detail {
+namespace Logger {
+
+static constexpr const size_t MAX_MESSAGE_SIZE = 1024u;
+static_assert(MAX_MESSAGE_SIZE >= 1u, "Invalid MAX_MESSAGE_SIZE");
+static constexpr const size_t STACK_BUFFER_SIZE = MAX_MESSAGE_SIZE + 4u;
+static_assert(STACK_BUFFER_SIZE > MAX_MESSAGE_SIZE, "Overflow");
+
+#if !defined(SHAREMIND_GCC_VERSION) || SHAREMIND_GCC_VERSION >= 40800
+extern thread_local timeval tl_time;
+extern thread_local LogBackend * tl_backend;
+extern thread_local size_t tl_offset;
+extern thread_local char tl_message[STACK_BUFFER_SIZE];
+#endif
+
+} /* namespace Logger { */
+} /* namespace Detail { */
+
 class Logger {
 
 public: /* Types: */
+
+    template <typename T> struct Hex {
+        static_assert(std::is_arithmetic<T>::value, "T is not arithmetic!");
+        static_assert(std::is_unsigned<T>::value, "T is not unsigned!");
+        T const value;
+    };
 
     template <LogPriority> class LogHelper;
 
@@ -58,9 +82,8 @@ public: /* Types: */
 
     private: /* Methods: */
 
-        template <typename Prefix>
-        inline NullLogHelperBase(const LogBackend &, Prefix &&) noexcept
-        {}
+        inline NullLogHelperBase(const LogBackend &,
+                                 const char * const) noexcept {}
 
     }; /* class NullLogHelperBase { */
 
@@ -69,121 +92,203 @@ public: /* Types: */
 
         template <LogPriority> friend class LogHelper;
 
-    private: /* Types: */
-
-        using InnerStream = std::ostringstream;
-        #if !defined(SHAREMIND_GCC_VERSION) || (SHAREMIND_GCC_VERSION >= 40800)
-        #ifndef SHAREMIND_SILENCE_WORKAROUND_WARNINGS
-        #warning Disabling std::ostringstream::~ostringstream noexcept check \
-                 for g++ older than < 4.8. Define \
-                 SHAREMIND_SILENCE_WORKAROUND_WARNINGS to silence.
-        #endif
-        static_assert(std::is_nothrow_destructible<InnerStream>::value,
-                      "std::ostringstream::~ostringstream not noexcept");
-        #endif
-
     public: /* Methods: */
 
         LogHelperBase(const LogHelperBase<priority> &) = delete;
-        LogHelperBase<priority> & operator=(
-                const LogHelperBase<priority> &) = delete;
+        LogHelperBase<priority> & operator=(const LogHelperBase<priority> &) =
+                delete;
 
-        inline LogHelperBase(LogHelperBase<priority> && move) noexcept {
-            if (move.m_operational) {
-                try {
-                    /// \todo http://gcc.gnu.org/bugzilla/show_bug.cgi?id=54316
-                    // new (&m_stream) InnerStream(std::move(move.m_stream));
-                    new (&m_stream) InnerStream();
-                    try {
-                        m_stream << move.m_stream.str();
-                        m_time = std::move(move.m_time);
-                        m_backend = std::move(move.m_backend);
-                        m_haveData = std::move(move.m_haveData);
-                        m_operational = true;
-                    } catch (...) {
-                        m_stream.~InnerStream();
-                        throw;
-                    }
-                } catch (...) {
-                    //if (move.m_haveData)
-                    //    m_logger->dropMessage(priority);
-                    m_operational = false;
-                }
-                move.m_operational = false;
-                move.m_stream.~InnerStream();
-            } else {
-                m_operational = false;
-            }
+        inline LogHelperBase(LogHelperBase<priority> && move) noexcept
+            : m_operational(move.m_operational)
+            #if defined(SHAREMIND_GCC_VERSION) && SHAREMIND_GCC_VERSION < 40800
+            , tl_time(std::move(move.tl_time))
+            , tl_backend(move.tl_backend)
+            , tl_offset(move.tl_offset)
+            #endif
+        {
+            move.m_operational = false;
+            #if defined(SHAREMIND_GCC_VERSION) && SHAREMIND_GCC_VERSION < 40800
+            using namespace Detail::Logger;
+            memcpy(tl_message, move.tl_message, STACK_BUFFER_SIZE);
+            #endif
         }
 
         inline LogHelperBase<priority> & operator=(
-                LogHelperBase<priority> && move) noexcept
+                const LogHelperBase<priority> && move)
         {
-            if (m_operational)
-                m_stream.~InnerStream();
-            new (this) LogHelperBase<priority>(std::move(move));
-            return *this;
+            m_operational = move.m_operational;
+            move.m_operational = false;
+            #if defined(SHAREMIND_GCC_VERSION) && SHAREMIND_GCC_VERSION < 40800
+            tl_time = std::move(move.tl_time);
+            tl_backend = move.tl_backend;
+            tl_offset = move.tl_offset;
+            using namespace Detail::Logger;
+            memcpy(tl_message, move.tl_message, STACK_BUFFER_SIZE);
+            #endif
         }
 
         inline ~LogHelperBase() noexcept {
-            if (m_operational) {
-                if (m_haveData)
-                    m_backend->doLog<priority>(std::move(m_time),
-                                              m_stream.str());
-                m_stream.~InnerStream();
-            }
+            if (!m_operational)
+                return;
+            using namespace Detail::Logger;
+            assert(tl_offset <= STACK_BUFFER_SIZE);
+            assert(tl_offset < STACK_BUFFER_SIZE
+                   || tl_message[STACK_BUFFER_SIZE - 1u] == '\0');
+            if (tl_offset < STACK_BUFFER_SIZE)
+                tl_message[tl_offset] = '\0';
+            assert(tl_backend);
+            tl_backend->doLog<priority>(std::move(tl_time), tl_message);
         }
 
-        template <class T>
-        inline LogHelperBase & operator<<(T && v) noexcept {
-            if (m_operational) {
-                try {
-                    m_stream << std::forward<T>(v);
-                    m_haveData = true;
-                } catch (...) {
-                    m_stream.~InnerStream();
-                    //m_logger->dropMessage(priority);
-                    m_operational = false;
-                }
+        inline LogHelperBase & operator<<(const char v) noexcept {
+            assert(m_operational);
+            using namespace Detail::Logger;
+            if (tl_offset <= MAX_MESSAGE_SIZE) {
+                if (tl_offset == MAX_MESSAGE_SIZE)
+                    return elide();
+                tl_message[tl_offset] = v;
+                tl_offset++;
             }
             return *this;
         }
 
+        inline LogHelperBase & operator<<(const bool v) noexcept
+        { return this->operator<<(v ? '1' : '0'); }
+
+#define SHAREMINDCOMMON_LOGGER_LHB_OP(valueType,valueGetter,formatString) \
+    inline LogHelperBase & operator<<(valueType const v) noexcept { \
+        assert(m_operational); \
+        using namespace Detail::Logger; \
+        if (tl_offset > MAX_MESSAGE_SIZE) { \
+            assert(tl_offset == STACK_BUFFER_SIZE); \
+            return *this; \
+        } \
+        const size_t spaceLeft = MAX_MESSAGE_SIZE - tl_offset; \
+        if (!spaceLeft) \
+            return elide(); \
+        const int r = snprintf(&tl_message[tl_offset], \
+                               spaceLeft, \
+                               (formatString), \
+                               v valueGetter); \
+        if (r < 0) \
+            SHAREMIND_ABORT("LLHBo"); \
+        if (static_cast<size_t>(r) > spaceLeft) { \
+            tl_offset = MAX_MESSAGE_SIZE; \
+            return elide(); \
+        } \
+        tl_offset += r; \
+        return *this; \
+    }
+
+        SHAREMINDCOMMON_LOGGER_LHB_OP(signed char,, "%hhd")
+        SHAREMINDCOMMON_LOGGER_LHB_OP(unsigned char,, "%hhu")
+        SHAREMINDCOMMON_LOGGER_LHB_OP(short,, "%hd")
+        SHAREMINDCOMMON_LOGGER_LHB_OP(unsigned short,, "%hu")
+        SHAREMINDCOMMON_LOGGER_LHB_OP(int,, "%d")
+        SHAREMINDCOMMON_LOGGER_LHB_OP(unsigned int,, "%u")
+        SHAREMINDCOMMON_LOGGER_LHB_OP(long,, "%ld")
+        SHAREMINDCOMMON_LOGGER_LHB_OP(unsigned long,, "%lu")
+        SHAREMINDCOMMON_LOGGER_LHB_OP(long long,, "%lld")
+        SHAREMINDCOMMON_LOGGER_LHB_OP(unsigned long long,, "%llu")
+
+        SHAREMINDCOMMON_LOGGER_LHB_OP(Logger::Hex<unsigned char>,
+                                      .value,
+                                      "%hhx")
+        SHAREMINDCOMMON_LOGGER_LHB_OP(Logger::Hex<unsigned short>,.value, "%hx")
+        SHAREMINDCOMMON_LOGGER_LHB_OP(Logger::Hex<unsigned int>,.value, "%x")
+        SHAREMINDCOMMON_LOGGER_LHB_OP(Logger::Hex<unsigned long>,.value, "%lx")
+        SHAREMINDCOMMON_LOGGER_LHB_OP(Logger::Hex<unsigned long long>,
+                                      .value,
+                                      "%llx")
+
+        SHAREMINDCOMMON_LOGGER_LHB_OP(double,, "%f")
+        SHAREMINDCOMMON_LOGGER_LHB_OP(long double,, "%Lf")
+
+        inline LogHelperBase & operator<<(const float v) noexcept
+        { return this->operator<<((const double) v); }
+
+        inline LogHelperBase & operator<<(const char * v) noexcept {
+            assert(v);
+            assert(m_operational);
+            using namespace Detail::Logger;
+            size_t o = tl_offset;
+            if (o > MAX_MESSAGE_SIZE) {
+                assert(o == STACK_BUFFER_SIZE);
+                return *this;
+            }
+            if (*v) {
+                do {
+                    if (o == MAX_MESSAGE_SIZE) {
+                        tl_offset = o;
+                        return elide();
+                    }
+                    tl_message[o] = *v;
+                } while ((++o, *++v));
+                tl_offset = o;
+            }
+            return *this;
+        }
+
+        inline LogHelperBase & operator<<(const std::string & v) noexcept
+        { return this->operator<<(v.c_str()); }
+
+        SHAREMINDCOMMON_LOGGER_LHB_OP(void *,, "%p")
+
+        inline LogHelperBase & operator<<(const void * const v) noexcept
+        { return this->operator<<(const_cast<void *>(v)); }
+
+#undef SHAREMINDCOMMON_LOGGER_LHB_OP
+
     private: /* Methods: */
 
-        template <typename Prefix>
-        inline LogHelperBase(LogBackend & logbackend, Prefix && prefix) noexcept {
-            #ifndef NDEBUG
-            const int r =
-            #endif
-                    gettimeofday(&m_time, nullptr);
-            assert(r == 0);
-            try {
-                new (&m_stream) InnerStream();
-                try {
-                    m_stream << std::forward<Prefix>(prefix);
-                    m_backend = &logbackend;
-                    m_haveData = false;
-                    m_operational = true;
-                } catch (...) {
-                    m_stream.~InnerStream();
-                    throw;
-                }
-            } catch (...) {
-                m_operational = false;
+        inline LogHelperBase(LogBackend & logBackend,
+                             const char * prefix) noexcept
+        {
+            using namespace Detail::Logger;
+            { // For accuracy, take timestamp before everything else:
+                #ifndef NDEBUG
+                const int r =
+                #endif
+                        gettimeofday(&tl_time, nullptr);
+                assert(r == 0);
             }
+
+            assert(prefix);
+
+            // Initialize other fields after timestamp:
+            tl_backend = &logBackend;
+            if (*prefix) {
+                size_t o = 0u;
+                do {
+                    if (o == MAX_MESSAGE_SIZE)
+                        break;
+                    tl_message[o] = *prefix;
+                } while ((++o, *++prefix));
+                tl_offset = o;
+            } else {
+                tl_offset = 0u;
+            }
+            m_operational = true;
+        }
+
+        inline LogHelperBase & elide() noexcept {
+            using namespace Detail::Logger;
+            assert(tl_offset <= MAX_MESSAGE_SIZE);
+            assert(m_operational);
+            memcpy(&tl_message[tl_offset], "...", 4u);
+            tl_offset = STACK_BUFFER_SIZE;
+            return *this;
         }
 
     private: /* Fields: */
 
-        timeval m_time;
-        union {
-            char m_unused;
-            InnerStream m_stream;
-        };
-        LogBackend * m_backend;
-        bool m_haveData;
         bool m_operational;
+        #if defined(SHAREMIND_GCC_VERSION) && SHAREMIND_GCC_VERSION < 40800
+        timeval tl_time;
+        LogBackend * tl_backend;
+        size_t tl_offset;
+        char tl_message[Detail::Logger::STACK_BUFFER_SIZE];
+        #endif
 
     }; /* class LogHelperBase { */
 
@@ -198,14 +303,11 @@ public: /* Types: */
 
     private: /* Methods: */
 
-        template <typename Prefix>
         inline LogHelper(LogBackend & backend,
-                         Prefix && prefix) noexcept
+                         const char * const prefix) noexcept
             : std::conditional<priority <= SHAREMIND_LOGLEVEL_MAXDEBUG,
                                LogHelperBase<priority>,
-                               NullLogHelperBase>::type(
-                                   backend,
-                                   std::forward<Prefix>(prefix))
+                               NullLogHelperBase>::type(backend, prefix)
         {}
 
     }; /* class LogHelper */
@@ -255,22 +357,25 @@ public: /* Methods: */
     LogBackend & backend() const noexcept { return m_backend; }
 
     inline LogHelper<LogPriority::Fatal> fatal() const noexcept
-    { return {m_backend, m_prefix}; }
+    { return {m_backend, m_prefix.c_str()}; }
 
     inline LogHelper<LogPriority::Error> error() const noexcept
-    { return {m_backend, m_prefix}; }
+    { return {m_backend, m_prefix.c_str()}; }
 
     inline LogHelper<LogPriority::Warning> warning() const noexcept
-    { return {m_backend, m_prefix}; }
+    { return {m_backend, m_prefix.c_str()}; }
 
     inline LogHelper<LogPriority::Normal> info() const noexcept
-    { return {m_backend, m_prefix}; }
+    { return {m_backend, m_prefix.c_str()}; }
 
     inline LogHelper<LogPriority::Debug> debug() const noexcept
-    { return {m_backend, m_prefix}; }
+    { return {m_backend, m_prefix.c_str()}; }
 
     inline LogHelper<LogPriority::FullDebug> fullDebug() const noexcept
-    { return {m_backend, m_prefix}; }
+    { return {m_backend, m_prefix.c_str()}; }
+
+    template <typename T>
+    inline static Hex<T> hex(T const value) noexcept { return {value}; }
 
 private: /* Fields: */
 
