@@ -189,6 +189,44 @@ public: /* Types: */
 
     }; /* class CFileAppender { */
 
+    class StdAppender: public Appender {
+
+    public: /* Types: */
+
+        FLUFFY_DEFINE_EXCEPTION_SUBCLASS(std::exception, Exception);
+        FLUFFY_DEFINE_EXCEPTION_SUBCLASS_CONST_MSG(
+                Exception,
+                MultipleStdAppenderException,
+                "Multiple Std appenders not allowed!");
+
+    public: /* Methods: */
+
+        void activate(const Appenders & appenders) override {
+            for (Appender * const a : appenders)
+                if (a != this && dynamic_cast<StdAppender *>(a) != nullptr)
+                    throw MultipleStdAppenderException();
+        }
+
+        inline void log(timeval time,
+                        const LogPriority priority,
+                        const char * message) noexcept override
+        {
+            if (priority <= LogPriority::Warning) {
+                CFileAppender::logToFile(stderr, time, priority, message,
+                                         m_stderrMutex);
+            } else {
+                CFileAppender::logToFile(stdout, time, priority, message,
+                                         m_stdoutMutex);
+            }
+        }
+
+    private: /* Fields: */
+
+        Fluffy::QueueingMutex m_stderrMutex;
+        Fluffy::QueueingMutex m_stdoutMutex;
+
+    };
+
     class FileAppender: public Appender {
 
     public: /* Types: */
@@ -264,6 +302,10 @@ public: /* Methods: */
         return addAppender__<CFileAppender,
                              Args...>(std::forward<Args>(args)...);
     }
+
+    /** \brief Adds a StdAppender to the Logger. */
+    inline StdAppender & addStdAppender()
+    { return addAppender__<StdAppender>(); }
 
     inline void addAppender(Appender * const appender) {
         assert(appender);
