@@ -274,7 +274,7 @@ public: /* Methods: */
     }
 
     /**
-      \brief Adds an SyslogAppender to the Logger.
+      \brief Adds a SyslogAppender to the Logger.
       \param[in] args Arguments to the SyslogAppender constructor.
     */
     template <typename ... Args>
@@ -294,7 +294,7 @@ public: /* Methods: */
     }
 
     /**
-      \brief Adds an CFileAppender to the Logger.
+      \brief Adds a CFileAppender to the Logger.
       \param[in] args Arguments to the CFileAppender constructor.
     */
     template <typename ... Args>
