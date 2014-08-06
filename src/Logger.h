@@ -355,6 +355,7 @@ public: /* Methods: */
     {}
 
     LogBackend & backend() const noexcept { return m_backend; }
+    const std::string & prefix() const noexcept { return m_prefix; }
 
     inline LogHelper<LogPriority::Fatal> fatal() const noexcept
     { return {m_backend, m_prefix.c_str()}; }
