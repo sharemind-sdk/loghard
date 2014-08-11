@@ -11,6 +11,7 @@
 #define SHAREMINDCOMMON_LOGBACKEND_H
 
 #include <cassert>
+#include <cstdio>
 #include <fluffy/Exception.h>
 #include <fluffy/QueueingMutex.h>
 #include <fluffy/QueueingRwMutex.h>
@@ -19,6 +20,7 @@
 #include <syslog.h>
 #include <system_error>
 #include <utility>
+#include <unistd.h>
 #include "../Abort.h"
 #include "LogPriority.h"
 
