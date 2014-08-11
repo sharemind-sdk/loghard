@@ -180,6 +180,9 @@ public: /* Types: */
             const Fluffy::QueueingMutex::Guard guard(mutex);
             fprintf(file, "%s %s %s\n", timeStr, priorityStr, message);
             fflush(file);
+            const int fd = fileno(file);
+            if (fd != -1)
+                fsync(fd);
         }
 
     private: /* Fields: */
