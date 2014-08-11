@@ -12,16 +12,18 @@
 
 #include <cassert>
 #include <cstdio>
+#include <fcntl.h>
 #include <fluffy/Exception.h>
 #include <fluffy/QueueingMutex.h>
 #include <fluffy/QueueingRwMutex.h>
 #include <set>
+#include <sys/stat.h>
 #include <sys/time.h>
+#include <sys/uio.h>
 #include <syslog.h>
 #include <system_error>
 #include <utility>
 #include <unistd.h>
-#include "../Abort.h"
 #include "LogPriority.h"
 
 
@@ -53,49 +55,18 @@ public: /* Types: */
         inline static const char * priorityString(const LogPriority priority)
                 noexcept
         {
-            switch (priority) {
-                case LogPriority::Fatal:     return "FATAL";
-                case LogPriority::Error:     return "ERROR";
-                case LogPriority::Warning:   return "WARNING";
-                case LogPriority::Normal:    return "INFO";
-                case LogPriority::Debug:     return "DEBUG";
-                case LogPriority::FullDebug: return "DEBUG2";
-                default:
-                    SHAREMIND_ABORT("LLpS: p=%d", static_cast<int>(priority));
-            }
+            static const char strings[][8u] =
+                    { "FATAL", "ERROR", "WARNING", "INFO", "DEBUG", "DEBUG2" };
+            return &strings[static_cast<unsigned>(priority)][0u];
         }
 
         inline static const char * priorityStringRightPadded(
                 const LogPriority priority) noexcept
         {
-            switch (priority) {
-                case LogPriority::Fatal:     return "FATAL  ";
-                case LogPriority::Error:     return "ERROR  ";
-                case LogPriority::Warning:   return "WARNING";
-                case LogPriority::Normal:    return "INFO   ";
-                case LogPriority::Debug:     return "DEBUG  ";
-                case LogPriority::FullDebug: return "DEBUG2 ";
-                default:
-                    SHAREMIND_ABORT("LLpSRP: p=%d", static_cast<int>(priority));
-            }
-        }
-
-        static const char * timeStamp(char * const buffer,
-                                      const size_t bufferSize,
-                                      const char * const format,
-                                      const timeval time,
-                                      const char * const failStr) noexcept
-        {
-            tm eventTimeTm;
-            if (!localtime_r(&time.tv_sec, &eventTimeTm))
-                return failStr;
-
-            #ifndef NDEBUG
-            const size_t r =
-            #endif
-                strftime(buffer, bufferSize, format, &eventTimeTm);
-            assert(r);
-            return buffer;
+            static const char strings[][8u] = {
+                "FATAL  ", "ERROR  ", "WARNING", "INFO   ", "DEBUG  ", "DEBUG2 "
+            };
+            return &strings[static_cast<unsigned>(priority)][0u];
         }
 
     }; /* class Appender { */
@@ -132,18 +103,10 @@ public: /* Types: */
                         const LogPriority priority,
                         const char * message) noexcept override
         {
-            int p;
-            switch (priority) {
-                case LogPriority::Fatal:     p = LOG_EMERG;   break;
-                case LogPriority::Error:     p = LOG_ERR;     break;
-                case LogPriority::Warning:   p = LOG_WARNING; break;
-                case LogPriority::Normal:    p = LOG_INFO;    break;
-                case LogPriority::Debug:     p = LOG_DEBUG;   break;
-                case LogPriority::FullDebug: p = LOG_DEBUG;   break;
-                default:
-                    SHAREMIND_ABORT("SAsP: p=%d", static_cast<int>(priority));
-            }
-            syslog(p, "%s", message);
+            constexpr static const int priorities[] = {
+                LOG_EMERG, LOG_ERR, LOG_WARNING, LOG_INFO, LOG_DEBUG, LOG_DEBUG
+            };
+            syslog(priorities[static_cast<unsigned>(priority)], "%s", message);
         }
 
         const std::string m_ident;
@@ -156,12 +119,34 @@ public: /* Types: */
 
     public: /* Methods: */
 
-        CFileAppender(FILE * const file) noexcept : m_file(file) {}
+        CFileAppender(FILE * const file) noexcept
+            : m_fd(fileno(file))
+        {
+            if (m_fd == -1)
+                throw std::system_error(errno, std::system_category());
+        }
 
         inline void log(timeval time,
                         const LogPriority priority,
                         const char * message) noexcept override
-        { logToFile(m_file, time, priority, message, m_mutex); }
+        { logToFileSync(m_fd, time, priority, message, m_mutex); }
+
+        static inline void logToFile(const int fd,
+                                     timeval time,
+                                     const LogPriority priority,
+                                     const char * const message,
+                                     Fluffy::QueueingMutex & mutex) noexcept
+        { logToFile__(fd, time, priority, message, mutex, [](const int){}); }
+
+        static inline void logToFileSync(const int fd,
+                                         timeval time,
+                                         const LogPriority priority,
+                                         const char * const message,
+                                         Fluffy::QueueingMutex & mutex) noexcept
+        {
+            logToFile__(fd, time, priority, message, mutex,
+                        [](const int fd){ fsync(fd); });
+        }
 
         static inline void logToFile(FILE * file,
                                      timeval time,
@@ -169,28 +154,80 @@ public: /* Types: */
                                      const char * const message,
                                      Fluffy::QueueingMutex & mutex) noexcept
         {
+            const int fd = fileno(file);
+            assert(fd != -1);
+            logToFile(fd, time, priority, message, mutex);
+        }
 
+        static inline void logToFileSync(FILE * file,
+                                         timeval time,
+                                         const LogPriority priority,
+                                         const char * const message,
+                                         Fluffy::QueueingMutex & mutex) noexcept
+        {
+            const int fd = fileno(file);
+            assert(fd != -1);
+            logToFileSync(fd, time, priority, message, mutex);
+        }
+
+    private: /* Methods: */
+
+        template <typename Sync>
+        static inline void logToFile__(const int fd,
+                                       timeval time,
+                                       const LogPriority priority,
+                                       const char * const message,
+                                       Fluffy::QueueingMutex & mutex,
+                                       Sync && sync) noexcept
+        {
+            assert(fd != -1);
+            assert(message);
             constexpr const size_t bufSize = sizeof("HH:MM:SS");
             char timeStampBuf[bufSize];
-            const char * const timeStr = timeStamp(timeStampBuf,
-                                                   bufSize,
-                                                   "%H:%M:%S",
-                                                   time,
-                                                   "--:--:--");
-            const char * const priorityStr =
-                    priorityStringRightPadded(priority);
+            {
+                tm eventTimeTm;
+                {
+                    #ifndef NDEBUG
+                    tm * const r =
+                    #endif
+                            localtime_r(&time.tv_sec, &eventTimeTm);
+                    assert(r);
+                }
+                {
+                    #ifndef NDEBUG
+                    const size_t r =
+                    #endif
+                        strftime(timeStampBuf,
+                                 bufSize,
+                                 "%H:%M:%S",
+                                 &eventTimeTm);
+                    assert(r == bufSize - 1u);
+                }
+            }
+            const iovec iov[] = {
+                { const_cast<char *>(timeStampBuf), bufSize - 1u },
+                { const_cast<char *>(" "), 1u },
+                { const_cast<char *>(priorityStringRightPadded(priority)), 7u },
+                { const_cast<char *>(" "), 1u },
+                { const_cast<char *>(message), strlen(message) },
+                { const_cast<char *>("\n"), 1u }
+            };
             const Fluffy::QueueingMutex::Guard guard(mutex);
-            fprintf(file, "%s %s %s\n", timeStr, priorityStr, message);
-            fflush(file);
-            const int fd = fileno(file);
-            if (fd != -1)
-                fsync(fd);
+            #ifdef __GNUC__
+            #pragma GCC diagnostic push
+            #pragma GCC diagnostic ignored "-Wunused-result"
+            #endif
+            (void) writev(fd, iov, sizeof(iov) / sizeof(iovec));
+            #ifdef __GNUC__
+            #pragma GCC diagnostic pop
+            #endif
+            sync(fd);
         }
 
     private: /* Fields: */
 
-        FILE * const m_file;
-        mutable Fluffy::QueueingMutex m_mutex;
+        const int m_fd;
+        Fluffy::QueueingMutex m_mutex;
 
     }; /* class CFileAppender { */
 
@@ -217,15 +254,13 @@ public: /* Types: */
                         const char * message) noexcept override
         {
             if (priority <= LogPriority::Warning) {
-                CFileAppender::logToFile(stderr, time, priority, message,
+                CFileAppender::logToFile(STDERR_FILENO, time, priority, message,
                                          m_stderrMutex);
             } else {
-                CFileAppender::logToFile(stdout, time, priority, message,
+                CFileAppender::logToFile(STDOUT_FILENO, time, priority, message,
                                          m_stdoutMutex);
             }
         }
-
-    private: /* Fields: */
 
         Fluffy::QueueingMutex m_stderrMutex;
         Fluffy::QueueingMutex m_stdoutMutex;
@@ -241,33 +276,32 @@ public: /* Types: */
     public: /* Methods: */
 
         template <typename Path>
-        FileAppender(Path && path, const OpenMode openMode)
+        FileAppender(Path && path,
+                     const OpenMode openMode,
+                     const mode_t flags = 0644)
             : m_path(std::forward<Path>(path))
-            , m_file(fopen(m_path.c_str(), openModeString(openMode)))
+            , m_fd(open(m_path.c_str(),
+                        // No O_SYNC since it would hurt performance badly
+                        O_WRONLY | O_CREAT | O_APPEND | O_NOCTTY
+                        | ((openMode == OVERWRITE) ? O_TRUNC : 0u),
+                        flags))
         {
-            if (!m_file)
+            if (m_fd == -1)
                 throw std::system_error(errno, std::system_category());
         }
 
-        inline ~FileAppender() noexcept override { fclose(m_file); }
+        inline ~FileAppender() noexcept override { close(m_fd); }
 
         inline void log(timeval time,
                         const LogPriority priority,
                         const char * message) noexcept override
-        { CFileAppender::logToFile(m_file, time, priority, message, m_mutex); }
-
-        inline static const char * openModeString(const OpenMode openMode)
-                     noexcept
-        {
-            assert(openMode == OVERWRITE || openMode == APPEND);
-            return (openMode == OVERWRITE) ? "w+b" : "a+b";
-        }
+        { CFileAppender::logToFile(m_fd, time, priority, message, m_mutex); }
 
     private: /* Fields: */
 
         const std::string m_path;
-        FILE * const m_file;
-        mutable Fluffy::QueueingMutex m_mutex;
+        const int m_fd;
+        Fluffy::QueueingMutex m_mutex;
 
     }; /* class FileAppender */
 

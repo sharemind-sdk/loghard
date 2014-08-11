@@ -29,7 +29,7 @@ typedef enum SharemindLogPriority_ {
 
 namespace sharemind {
 /// \todo Use syslog levels
-enum class LogPriority {
+enum class LogPriority : unsigned {
     Fatal = SHAREMIND_LOGPRIORITY_FATAL,
     Error = SHAREMIND_LOGPRIORITY_ERROR,
     Warning = SHAREMIND_LOGPRIORITY_WARNING,
