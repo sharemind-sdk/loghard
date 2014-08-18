@@ -75,8 +75,8 @@ public: /* Types: */
 
     public: /* Types: */
 
-        FLUFFY_DEFINE_EXCEPTION_SUBCLASS(std::exception, Exception);
-        FLUFFY_DEFINE_EXCEPTION_SUBCLASS_CONST_MSG(
+        FLUFFY_DEFINE_EXCEPTION(std::exception, Exception);
+        FLUFFY_DEFINE_EXCEPTION_CONST_MSG(
                 Exception,
                 MultipleSyslogAppenderException,
                 "Multiple Syslog appenders not allowed!");
@@ -235,8 +235,8 @@ public: /* Types: */
 
     public: /* Types: */
 
-        FLUFFY_DEFINE_EXCEPTION_SUBCLASS(std::exception, Exception);
-        FLUFFY_DEFINE_EXCEPTION_SUBCLASS_CONST_MSG(
+        FLUFFY_DEFINE_EXCEPTION(std::exception, Exception);
+        FLUFFY_DEFINE_EXCEPTION_CONST_MSG(
                 Exception,
                 MultipleStdAppenderException,
                 "Multiple Std appenders not allowed!");
