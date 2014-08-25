@@ -11,12 +11,12 @@
 #define SHAREMINDCOMMON_LOGGER_H
 
 #include <cassert>
+#include <sharemind/abort.h>
 #include <sharemind/compiler-support/GccVersion.h>
 #include <string>
 #include <sys/time.h>
 #include <type_traits>
 #include <utility>
-#include "../Abort.h"
 #include "../Concat.h"
 #include "LogBackend.h"
 #include "LogPriority.h"
