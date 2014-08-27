@@ -7,41 +7,27 @@
  * code is subject to the appropriate license agreement.
  */
 
-#ifndef SHAREMINDCOMMON_LOGGER_H
-#define SHAREMINDCOMMON_LOGGER_H
+#ifndef LOGHARD_LOGGER_H
+#define LOGHARD_LOGGER_H
 
 #include <cassert>
-#include <sharemind/abort.h>
 #include <sharemind/compiler-support/GccVersion.h>
+#include <sstream>
 #include <string>
 #include <sys/time.h>
 #include <type_traits>
 #include <utility>
-#include "../Concat.h"
-#include "LogBackend.h"
-#include "LogPriority.h"
+#include "Backend.h"
+#include "Priority.h"
 
 
-#ifndef SHAREMIND_LOGLEVEL_MAXDEBUG
-#if defined(SHAREMIND_LOGLEVEL_FULLDEBUG)
-#define SHAREMIND_LOGLEVEL_MAXDEBUG ::sharemind::LogPriority::FullDebug
-#elif defined(SHAREMIND_LOGLEVEL_DEBUG)
-#define SHAREMIND_LOGLEVEL_MAXDEBUG ::sharemind::LogPriority::Debug
-#elif defined(SHAREMIND_LOGLEVEL_NORMAL)
-#define SHAREMIND_LOGLEVEL_MAXDEBUG ::sharemind::LogPriority::Normal
-#elif defined(SHAREMIND_LOGLEVEL_WARNING)
-#define SHAREMIND_LOGLEVEL_MAXDEBUG ::sharemind::LogPriority::Warning
-#elif defined(SHAREMIND_LOGLEVEL_ERROR)
-#define SHAREMIND_LOGLEVEL_MAXDEBUG ::sharemind::LogPriority::Error
-#else
-#define SHAREMIND_LOGLEVEL_MAXDEBUG ::sharemind::LogPriority::Debug
-#endif
+#ifndef LOGHARD_LOGLEVEL_MAXDEBUG
+#define LOGHARD_LOGLEVEL_MAXDEBUG ::LogHard::Priority::Debug
 #endif
 
-namespace sharemind {
+namespace LogHard {
 
 namespace Detail {
-namespace Logger {
 
 static constexpr const size_t MAX_MESSAGE_SIZE = 1024u * 16u;
 static_assert(MAX_MESSAGE_SIZE >= 1u, "Invalid MAX_MESSAGE_SIZE");
@@ -50,12 +36,35 @@ static_assert(STACK_BUFFER_SIZE > MAX_MESSAGE_SIZE, "Overflow");
 
 #if !defined(SHAREMIND_GCC_VERSION) || SHAREMIND_GCC_VERSION >= 40800
 extern thread_local timeval tl_time;
-extern thread_local LogBackend * tl_backend;
+extern thread_local Backend * tl_backend;
 extern thread_local size_t tl_offset;
 extern thread_local char tl_message[STACK_BUFFER_SIZE];
 #endif
 
-} /* namespace Logger { */
+template <typename Arg>
+inline std::string concatBase(std::ostringstream && oss, Arg && arg) {
+    oss << std::forward<Arg>(arg);
+    return oss.str();
+}
+
+template <typename Arg, typename ... Args>
+inline std::string concatBase(std::ostringstream && oss,
+                              Arg && arg,
+                              Args && ... args)
+{
+    oss << std::move(arg);
+    return concatBase(std::move(oss), std::forward<Args>(args)...);
+}
+
+inline std::string concat() { return std::string(); }
+inline std::string concat(const char * const s) { return s; }
+inline std::string concat(std::string && s) { return std::move(s); }
+inline std::string concat(const std::string & s) { return s; }
+
+template <typename ... T>
+inline std::string concat(T && ... args)
+{ return Detail::concatBase(std::ostringstream(), std::forward<T>(args)...); }
+
 } /* namespace Detail { */
 
 class Logger {
@@ -68,11 +77,11 @@ public: /* Types: */
         T const value;
     };
 
-    template <LogPriority> class LogHelper;
+    template <Priority> class LogHelper;
 
     class NullLogHelperBase {
 
-        template <LogPriority> friend class LogHelper;
+        template <Priority> friend class LogHelper;
 
     public : /* Methods: */
 
@@ -82,15 +91,15 @@ public: /* Types: */
 
     private: /* Methods: */
 
-        inline NullLogHelperBase(const LogBackend &,
-                                 const char * const) noexcept {}
+        inline NullLogHelperBase(const Backend &, const char * const) noexcept
+        {}
 
     }; /* class NullLogHelperBase { */
 
-    template <LogPriority priority>
+    template <Priority priority>
     class LogHelperBase {
 
-        template <LogPriority> friend class LogHelper;
+        template <Priority> friend class LogHelper;
 
     public: /* Methods: */
 
@@ -108,7 +117,7 @@ public: /* Types: */
         {
             move.m_operational = false;
             #if defined(SHAREMIND_GCC_VERSION) && SHAREMIND_GCC_VERSION < 40800
-            using namespace Detail::Logger;
+            using namespace ::LogHard::Detail;
             memcpy(tl_message, move.tl_message, STACK_BUFFER_SIZE);
             #endif
         }
@@ -122,7 +131,7 @@ public: /* Types: */
             tl_time = std::move(move.tl_time);
             tl_backend = move.tl_backend;
             tl_offset = move.tl_offset;
-            using namespace Detail::Logger;
+            using namespace ::LogHard::Detail;
             memcpy(tl_message, move.tl_message, STACK_BUFFER_SIZE);
             #endif
         }
@@ -130,7 +139,7 @@ public: /* Types: */
         inline ~LogHelperBase() noexcept {
             if (!m_operational)
                 return;
-            using namespace Detail::Logger;
+            using namespace ::LogHard::Detail;
             assert(tl_offset <= STACK_BUFFER_SIZE);
             assert(tl_offset < STACK_BUFFER_SIZE
                    || tl_message[STACK_BUFFER_SIZE - 1u] == '\0');
@@ -142,7 +151,7 @@ public: /* Types: */
 
         inline LogHelperBase & operator<<(const char v) noexcept {
             assert(m_operational);
-            using namespace Detail::Logger;
+            using namespace ::LogHard::Detail;
             if (tl_offset <= MAX_MESSAGE_SIZE) {
                 if (tl_offset == MAX_MESSAGE_SIZE)
                     return elide();
@@ -155,10 +164,10 @@ public: /* Types: */
         inline LogHelperBase & operator<<(const bool v) noexcept
         { return this->operator<<(v ? '1' : '0'); }
 
-#define SHAREMINDCOMMON_LOGGER_LHB_OP(valueType,valueGetter,formatString) \
+#define LOGHARD_LHB_OP(valueType,valueGetter,formatString) \
     inline LogHelperBase & operator<<(valueType const v) noexcept { \
         assert(m_operational); \
-        using namespace Detail::Logger; \
+        using namespace ::LogHard::Detail; \
         if (tl_offset > MAX_MESSAGE_SIZE) { \
             assert(tl_offset == STACK_BUFFER_SIZE); \
             return *this; \
@@ -171,7 +180,7 @@ public: /* Types: */
                                (formatString), \
                                v valueGetter); \
         if (r < 0) \
-            SHAREMIND_ABORT("LLHBo"); \
+            return elide(); \
         if (static_cast<size_t>(r) > spaceLeft) { \
             tl_offset = MAX_MESSAGE_SIZE; \
             return elide(); \
@@ -180,29 +189,25 @@ public: /* Types: */
         return *this; \
     }
 
-        SHAREMINDCOMMON_LOGGER_LHB_OP(signed char,, "%hhd")
-        SHAREMINDCOMMON_LOGGER_LHB_OP(unsigned char,, "%hhu")
-        SHAREMINDCOMMON_LOGGER_LHB_OP(short,, "%hd")
-        SHAREMINDCOMMON_LOGGER_LHB_OP(unsigned short,, "%hu")
-        SHAREMINDCOMMON_LOGGER_LHB_OP(int,, "%d")
-        SHAREMINDCOMMON_LOGGER_LHB_OP(unsigned int,, "%u")
-        SHAREMINDCOMMON_LOGGER_LHB_OP(long,, "%ld")
-        SHAREMINDCOMMON_LOGGER_LHB_OP(unsigned long,, "%lu")
-        SHAREMINDCOMMON_LOGGER_LHB_OP(long long,, "%lld")
-        SHAREMINDCOMMON_LOGGER_LHB_OP(unsigned long long,, "%llu")
+        LOGHARD_LHB_OP(signed char,, "%hhd")
+        LOGHARD_LHB_OP(unsigned char,, "%hhu")
+        LOGHARD_LHB_OP(short,, "%hd")
+        LOGHARD_LHB_OP(unsigned short,, "%hu")
+        LOGHARD_LHB_OP(int,, "%d")
+        LOGHARD_LHB_OP(unsigned int,, "%u")
+        LOGHARD_LHB_OP(long,, "%ld")
+        LOGHARD_LHB_OP(unsigned long,, "%lu")
+        LOGHARD_LHB_OP(long long,, "%lld")
+        LOGHARD_LHB_OP(unsigned long long,, "%llu")
 
-        SHAREMINDCOMMON_LOGGER_LHB_OP(Logger::Hex<unsigned char>,
-                                      .value,
-                                      "%hhx")
-        SHAREMINDCOMMON_LOGGER_LHB_OP(Logger::Hex<unsigned short>,.value, "%hx")
-        SHAREMINDCOMMON_LOGGER_LHB_OP(Logger::Hex<unsigned int>,.value, "%x")
-        SHAREMINDCOMMON_LOGGER_LHB_OP(Logger::Hex<unsigned long>,.value, "%lx")
-        SHAREMINDCOMMON_LOGGER_LHB_OP(Logger::Hex<unsigned long long>,
-                                      .value,
-                                      "%llx")
+        LOGHARD_LHB_OP(Logger::Hex<unsigned char>,.value,"%hhx")
+        LOGHARD_LHB_OP(Logger::Hex<unsigned short>,.value, "%hx")
+        LOGHARD_LHB_OP(Logger::Hex<unsigned int>,.value, "%x")
+        LOGHARD_LHB_OP(Logger::Hex<unsigned long>,.value, "%lx")
+        LOGHARD_LHB_OP(Logger::Hex<unsigned long long>,.value,"%llx")
 
-        SHAREMINDCOMMON_LOGGER_LHB_OP(double,, "%f")
-        SHAREMINDCOMMON_LOGGER_LHB_OP(long double,, "%Lf")
+        LOGHARD_LHB_OP(double,, "%f")
+        LOGHARD_LHB_OP(long double,, "%Lf")
 
         inline LogHelperBase & operator<<(const float v) noexcept
         { return this->operator<<((const double) v); }
@@ -210,7 +215,7 @@ public: /* Types: */
         inline LogHelperBase & operator<<(const char * v) noexcept {
             assert(v);
             assert(m_operational);
-            using namespace Detail::Logger;
+            using namespace ::LogHard::Detail;
             size_t o = tl_offset;
             if (o > MAX_MESSAGE_SIZE) {
                 assert(o == STACK_BUFFER_SIZE);
@@ -232,19 +237,19 @@ public: /* Types: */
         inline LogHelperBase & operator<<(const std::string & v) noexcept
         { return this->operator<<(v.c_str()); }
 
-        SHAREMINDCOMMON_LOGGER_LHB_OP(void *,, "%p")
+        LOGHARD_LHB_OP(void *,, "%p")
 
         inline LogHelperBase & operator<<(const void * const v) noexcept
         { return this->operator<<(const_cast<void *>(v)); }
 
-#undef SHAREMINDCOMMON_LOGGER_LHB_OP
+#undef LOGHARD_LHB_OP
 
     private: /* Methods: */
 
-        inline LogHelperBase(LogBackend & logBackend,
+        inline LogHelperBase(Backend & backend,
                              const char * prefix) noexcept
         {
-            using namespace Detail::Logger;
+            using namespace ::LogHard::Detail;
             { // For accuracy, take timestamp before everything else:
                 #ifndef NDEBUG
                 const int r =
@@ -256,7 +261,7 @@ public: /* Types: */
             assert(prefix);
 
             // Initialize other fields after timestamp:
-            tl_backend = &logBackend;
+            tl_backend = &backend;
             if (*prefix) {
                 size_t o = 0u;
                 do {
@@ -272,7 +277,7 @@ public: /* Types: */
         }
 
         inline LogHelperBase & elide() noexcept {
-            using namespace Detail::Logger;
+            using namespace ::LogHard::Detail;
             assert(tl_offset <= MAX_MESSAGE_SIZE);
             assert(m_operational);
             memcpy(&tl_message[tl_offset], "...", 4u);
@@ -285,16 +290,16 @@ public: /* Types: */
         bool m_operational;
         #if defined(SHAREMIND_GCC_VERSION) && SHAREMIND_GCC_VERSION < 40800
         timeval tl_time;
-        LogBackend * tl_backend;
+        Backend * tl_backend;
         size_t tl_offset;
-        char tl_message[Detail::Logger::STACK_BUFFER_SIZE];
+        char tl_message[::LogHard::Detail::STACK_BUFFER_SIZE];
         #endif
 
     }; /* class LogHelperBase { */
 
-    template <LogPriority priority = LogPriority::Debug>
+    template <Priority priority = Priority::Debug>
     class LogHelper
-            : public std::conditional<priority <= SHAREMIND_LOGLEVEL_MAXDEBUG,
+            : public std::conditional<priority <= LOGHARD_LOGLEVEL_MAXDEBUG,
                                       LogHelperBase<priority>,
                                       NullLogHelperBase>::type
     {
@@ -303,31 +308,31 @@ public: /* Types: */
 
     private: /* Methods: */
 
-        inline LogHelper(LogBackend & backend,
+        inline LogHelper(Backend & backend,
                          const char * const prefix) noexcept
-            : std::conditional<priority <= SHAREMIND_LOGLEVEL_MAXDEBUG,
+            : std::conditional<priority <= LOGHARD_LOGLEVEL_MAXDEBUG,
                                LogHelperBase<priority>,
                                NullLogHelperBase>::type(backend, prefix)
         {}
 
     }; /* class LogHelper */
 
-    template <LogPriority> friend class LogHelper;
+    template <Priority> friend class LogHelper;
 
 public: /* Methods: */
 
-    inline Logger(LogBackend & backend)
+    inline Logger(Backend & backend)
             noexcept
         : m_backend(backend)
     {}
 
     template <typename Arg, typename ... Args>
-    inline Logger(LogBackend & backend, Arg && arg, Args && ... args)
+    inline Logger(Backend & backend, Arg && arg, Args && ... args)
             noexcept
         : m_backend(backend)
-        , m_prefix(concat(std::forward<Arg>(arg),
-                          std::forward<Args>(args)...,
-                          ' '))
+        , m_prefix(Detail::concat(std::forward<Arg>(arg),
+                                  std::forward<Args>(args)...,
+                                  ' '))
     {}
 
     inline Logger(const Logger & logger) noexcept
@@ -339,40 +344,40 @@ public: /* Methods: */
     inline Logger(const Logger & logger, Arg && arg, Args && ... args) noexcept
         : m_backend(logger.m_backend)
         , m_prefix(logger.m_prefix.empty()
-                   ? concat(std::forward<Arg>(arg),
-                            std::forward<Args>(args)...,
-                            ' ')
+                   ? Detail::concat(std::forward<Arg>(arg),
+                                    std::forward<Args>(args)...,
+                                    ' ')
                    : (*(logger.m_prefix.crbegin()) != ' ')
-                     ? concat(logger.m_prefix,
-                              std::forward<Arg>(arg),
-                              std::forward<Args>(args)...,
-                              ' ')
-                     : concat(std::string(logger.m_prefix.cbegin(),
-                                          logger.m_prefix.cend() - 1),
-                              std::forward<Arg>(arg),
-                              std::forward<Args>(args)...,
-                              ' '))
+                     ? Detail::concat(logger.m_prefix,
+                                      std::forward<Arg>(arg),
+                                      std::forward<Args>(args)...,
+                                      ' ')
+                     : Detail::concat(std::string(logger.m_prefix.cbegin(),
+                                                  logger.m_prefix.cend() - 1),
+                                      std::forward<Arg>(arg),
+                                      std::forward<Args>(args)...,
+                                      ' '))
     {}
 
-    LogBackend & backend() const noexcept { return m_backend; }
+    Backend & backend() const noexcept { return m_backend; }
     const std::string & prefix() const noexcept { return m_prefix; }
 
-    inline LogHelper<LogPriority::Fatal> fatal() const noexcept
+    inline LogHelper<Priority::Fatal> fatal() const noexcept
     { return {m_backend, m_prefix.c_str()}; }
 
-    inline LogHelper<LogPriority::Error> error() const noexcept
+    inline LogHelper<Priority::Error> error() const noexcept
     { return {m_backend, m_prefix.c_str()}; }
 
-    inline LogHelper<LogPriority::Warning> warning() const noexcept
+    inline LogHelper<Priority::Warning> warning() const noexcept
     { return {m_backend, m_prefix.c_str()}; }
 
-    inline LogHelper<LogPriority::Normal> info() const noexcept
+    inline LogHelper<Priority::Normal> info() const noexcept
     { return {m_backend, m_prefix.c_str()}; }
 
-    inline LogHelper<LogPriority::Debug> debug() const noexcept
+    inline LogHelper<Priority::Debug> debug() const noexcept
     { return {m_backend, m_prefix.c_str()}; }
 
-    inline LogHelper<LogPriority::FullDebug> fullDebug() const noexcept
+    inline LogHelper<Priority::FullDebug> fullDebug() const noexcept
     { return {m_backend, m_prefix.c_str()}; }
 
     template <typename T>
@@ -380,11 +385,11 @@ public: /* Methods: */
 
 private: /* Fields: */
 
-    LogBackend & m_backend;
+    Backend & m_backend;
     const std::string m_prefix;
 
 }; /* class Logger { */
 
-} /* namespace sharemind { */
+} /* namespace LogHard { */
 
-#endif /* SHAREMINDCOMMON_LOGGER_H */
+#endif /* LOGHARD_LOGGER_H */

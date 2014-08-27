@@ -7,8 +7,8 @@
  * code is subject to the appropriate license agreement.
  */
 
-#ifndef SHAREMINDCOMMON_LOGBACKEND_H
-#define SHAREMINDCOMMON_LOGBACKEND_H
+#ifndef LOGHARD_BACKEND_H
+#define LOGHARD_BACKEND_H
 
 #include <cassert>
 #include <cstdio>
@@ -24,14 +24,14 @@
 #include <system_error>
 #include <utility>
 #include <unistd.h>
-#include "LogPriority.h"
+#include "Priority.h"
 
 
-namespace sharemind {
+namespace LogHard {
 
 class Logger;
 
-class LogBackend {
+class Backend {
 
     friend class Logger;
 
@@ -49,10 +49,10 @@ public: /* Types: */
         virtual void activate(const Appenders & appenders) { (void) appenders; }
 
         virtual void log(timeval time,
-                         LogPriority priority,
+                         Priority priority,
                          const char * message) noexcept = 0;
 
-        inline static const char * priorityString(const LogPriority priority)
+        inline static const char * priorityString(const Priority priority)
                 noexcept
         {
             static const char strings[][8u] =
@@ -61,7 +61,7 @@ public: /* Types: */
         }
 
         inline static const char * priorityStringRightPadded(
-                const LogPriority priority) noexcept
+                const Priority priority) noexcept
         {
             static const char strings[][8u] = {
                 "FATAL  ", "ERROR  ", "WARNING", "INFO   ", "DEBUG  ", "DEBUG2 "
@@ -100,7 +100,7 @@ public: /* Types: */
         }
 
         inline void log(timeval,
-                        const LogPriority priority,
+                        const Priority priority,
                         const char * message) noexcept override
         {
             constexpr static const int priorities[] = {
@@ -127,20 +127,20 @@ public: /* Types: */
         }
 
         inline void log(timeval time,
-                        const LogPriority priority,
+                        const Priority priority,
                         const char * message) noexcept override
         { logToFileSync(m_fd, time, priority, message, m_mutex); }
 
         static inline void logToFile(const int fd,
                                      timeval time,
-                                     const LogPriority priority,
+                                     const Priority priority,
                                      const char * const message,
                                      Fluffy::QueueingMutex & mutex) noexcept
         { logToFile__(fd, time, priority, message, mutex, [](const int){}); }
 
         static inline void logToFileSync(const int fd,
                                          timeval time,
-                                         const LogPriority priority,
+                                         const Priority priority,
                                          const char * const message,
                                          Fluffy::QueueingMutex & mutex) noexcept
         {
@@ -150,7 +150,7 @@ public: /* Types: */
 
         static inline void logToFile(FILE * file,
                                      timeval time,
-                                     const LogPriority priority,
+                                     const Priority priority,
                                      const char * const message,
                                      Fluffy::QueueingMutex & mutex) noexcept
         {
@@ -161,7 +161,7 @@ public: /* Types: */
 
         static inline void logToFileSync(FILE * file,
                                          timeval time,
-                                         const LogPriority priority,
+                                         const Priority priority,
                                          const char * const message,
                                          Fluffy::QueueingMutex & mutex) noexcept
         {
@@ -175,7 +175,7 @@ public: /* Types: */
         template <typename Sync>
         static inline void logToFile__(const int fd,
                                        timeval time,
-                                       const LogPriority priority,
+                                       const Priority priority,
                                        const char * const message,
                                        Fluffy::QueueingMutex & mutex,
                                        Sync && sync) noexcept
@@ -250,10 +250,10 @@ public: /* Types: */
         }
 
         inline void log(timeval time,
-                        const LogPriority priority,
+                        const Priority priority,
                         const char * message) noexcept override
         {
-            if (priority <= LogPriority::Warning) {
+            if (priority <= Priority::Warning) {
                 CFileAppender::logToFile(STDERR_FILENO, time, priority, message,
                                          m_stderrMutex);
             } else {
@@ -293,7 +293,7 @@ public: /* Types: */
         inline ~FileAppender() noexcept override { close(m_fd); }
 
         inline void log(timeval time,
-                        const LogPriority priority,
+                        const Priority priority,
                         const char * message) noexcept override
         { CFileAppender::logToFile(m_fd, time, priority, message, m_mutex); }
 
@@ -307,7 +307,7 @@ public: /* Types: */
 
 public: /* Methods: */
 
-    virtual ~LogBackend() noexcept {
+    virtual ~Backend() noexcept {
         for (Appender * const appender: m_appenders)
             delete appender;
     }
@@ -360,7 +360,7 @@ public: /* Methods: */
 
 private: /* Methods: */
 
-    template <LogPriority priority>
+    template <Priority priority>
     inline void doLog(const timeval time, const char * const message) {
         const Fluffy::QueueingRwMutex::SharedGuard sharedGuard(m_mutex);
         for (Appender * const appender : m_appenders)
@@ -385,8 +385,8 @@ private: /* Fields: */
     mutable Fluffy::QueueingRwMutex m_mutex;
     Appenders m_appenders;
 
-}; /* class LogBackend { */
+}; /* class Backend { */
 
-} /* namespace sharemind { */
+} /* namespace LogHard { */
 
-#endif /* SHAREMINDCOMMON_LOGBACKEND_H */
+#endif /* LOGHARD_BACKEND_H */

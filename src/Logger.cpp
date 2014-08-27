@@ -11,9 +11,12 @@
 
 
 #if !defined(SHAREMIND_GCC_VERSION) || SHAREMIND_GCC_VERSION >= 40800
-thread_local timeval sharemind::Detail::Logger::tl_time = { 0u, 0u };
-thread_local sharemind::LogBackend * sharemind::Detail::Logger::tl_backend =
-        nullptr;
-thread_local size_t sharemind::Detail::Logger::tl_offset = 0u;
-thread_local char sharemind::Detail::Logger::tl_message[STACK_BUFFER_SIZE] = {};
+namespace LogHard {
+namespace Detail {
+thread_local timeval tl_time = { 0u, 0u };
+thread_local Backend * tl_backend = nullptr;
+thread_local size_t tl_offset = 0u;
+thread_local char tl_message[STACK_BUFFER_SIZE] = {};
+} // namespace Detail {
+} // namespace LogHard {
 #endif
