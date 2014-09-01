@@ -13,10 +13,10 @@
 #include <cassert>
 #include <cstdio>
 #include <fcntl.h>
-#include <fluffy/Exception.h>
 #include <fluffy/QueueingMutex.h>
 #include <fluffy/QueueingRwMutex.h>
 #include <set>
+#include <sharemind/Exception.h>
 #include <sys/stat.h>
 #include <sys/time.h>
 #include <sys/uio.h>
@@ -75,8 +75,8 @@ public: /* Types: */
 
     public: /* Types: */
 
-        FLUFFY_DEFINE_EXCEPTION(std::exception, Exception);
-        FLUFFY_DEFINE_EXCEPTION_CONST_MSG(
+        SHAREMIND_DEFINE_EXCEPTION(std::exception, Exception);
+        SHAREMIND_DEFINE_EXCEPTION_CONST_MSG(
                 Exception,
                 MultipleSyslogAppenderException,
                 "Multiple Syslog appenders not allowed!");
@@ -235,8 +235,8 @@ public: /* Types: */
 
     public: /* Types: */
 
-        FLUFFY_DEFINE_EXCEPTION(std::exception, Exception);
-        FLUFFY_DEFINE_EXCEPTION_CONST_MSG(
+        SHAREMIND_DEFINE_EXCEPTION(std::exception, Exception);
+        SHAREMIND_DEFINE_EXCEPTION_CONST_MSG(
                 Exception,
                 MultipleStdAppenderException,
                 "Multiple Std appenders not allowed!");

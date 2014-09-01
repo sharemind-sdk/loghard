@@ -14,19 +14,34 @@ INCLUDE("${CMAKE_CURRENT_BINARY_DIR}/config.local" OPTIONAL)
 
 SET(LOGHARD_VERSION "0.1.0")
 
-FIND_PACKAGE(SharemindCompilerSupport REQUIRED)
 FIND_PACKAGE(Fluffy REQUIRED)
+FIND_PACKAGE(SharemindCompilerSupport REQUIRED)
+FIND_PACKAGE(SharemindCxxHeaders REQUIRED)
 
-SET(LOGHARD_INSTALL_LINK_LIBRARIES "-L${CMAKE_INSTALL_PREFIX}/lib" "-lLogHard"
-                                   ${SharemindCompilerSupport_LIBRARIES}
-                                   ${Fluffy_Mutex_LIBRARIES})
-SET(LOGHARD_INSTALL_INCLUDE_DIRS "${CMAKE_INSTALL_PREFIX}/include"
-                                 ${SharemindCompilerSupport_INCLUDE_DIRS}
-                                 ${Fluffy_INCLUDE_DIRS})
-SET(LOGHARD_INSTALL_DEFINITIONS ${SharemindCompilerSupport_DEFINITIONS}
-                                ${Fluffy_DEFINITIONS})
+SET(LOGHARD_INSTALL_LINK_LIBRARIES "")
+LIST(APPEND LOGHARD_INSTALL_LINK_LIBRARIES
+    ${SharemindCompilerSupport_LIBRARIES}
+    ${SharemindCxxHeaders_LIBRARIES}
+    ${Fluffy_Mutex_LIBRARIES}
+    "-L${CMAKE_INSTALL_PREFIX}/lib" "-lLogHard"
+)
 LIST(REMOVE_DUPLICATES LOGHARD_INSTALL_LINK_LIBRARIES)
+
+SET(LOGHARD_INSTALL_INCLUDE_DIRS "")
+LIST(APPEND LOGHARD_INSTALL_INCLUDE_DIRS
+    "${CMAKE_INSTALL_PREFIX}/include"
+    ${SharemindCompilerSupport_INCLUDE_DIRS}
+    ${SharemindCxxHeaders_INCLUDE_DIRS}
+    ${Fluffy_INCLUDE_DIRS}
+)
 LIST(REMOVE_DUPLICATES LOGHARD_INSTALL_INCLUDE_DIRS)
+
+SET(LOGHARD_INSTALL_DEFINITIONS "")
+LIST(APPEND LOGHARD_INSTALL_DEFINITIONS
+    ${SharemindCompilerSupport_DEFINITIONS}
+    ${SharemindCxxHeaders_DEFINITIONS}
+    ${Fluffy_DEFINITIONS}
+)
 LIST(REMOVE_DUPLICATES LOGHARD_INSTALL_DEFINITIONS)
 
 ADD_COMPILE_OPTIONS(
