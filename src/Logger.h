@@ -25,6 +25,13 @@
 #define LOGHARD_LOGLEVEL_MAXDEBUG ::LogHard::Priority::Debug
 #endif
 
+/*
+  TLS is Clang is only available when using Clang with GNU libstdc++ 4.8 or
+  later. However there's no good way to determine the version of libstdc++ using
+  preprocessor macros. The __GLIBCXX__ macro gives us a date, but unfortunately
+  its value in libstdc++ 4.7.4 is greater than in 4.8.0, hence it is not
+  entirely reliable.
+*/
 #if (defined(__clang__) && (!defined(__GLIBCXX__) \
                             || __GLIBCXX__ < 20130322)) || \
     (defined(SHAREMIND_GCC_VERSION) && SHAREMIND_GCC_VERSION < 40800)
