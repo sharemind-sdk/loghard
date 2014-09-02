@@ -13,10 +13,10 @@
 #include <cassert>
 #include <cstdio>
 #include <fcntl.h>
-#include <fluffy/QueueingMutex.h>
-#include <fluffy/QueueingRwMutex.h>
 #include <set>
 #include <sharemind/Exception.h>
+#include <sharemind/QueueingMutex.h>
+#include <sharemind/QueueingRwMutex.h>
 #include <sys/stat.h>
 #include <sys/time.h>
 #include <sys/uio.h>
@@ -135,14 +135,15 @@ public: /* Types: */
                                      timeval time,
                                      const Priority priority,
                                      const char * const message,
-                                     Fluffy::QueueingMutex & mutex) noexcept
+                                     sharemind::QueueingMutex & mutex) noexcept
         { logToFile__(fd, time, priority, message, mutex, [](const int){}); }
 
-        static inline void logToFileSync(const int fd,
-                                         timeval time,
-                                         const Priority priority,
-                                         const char * const message,
-                                         Fluffy::QueueingMutex & mutex) noexcept
+        static inline void logToFileSync(
+                const int fd,
+                timeval time,
+                const Priority priority,
+                const char * const message,
+                sharemind::QueueingMutex & mutex) noexcept
         {
             logToFile__(fd, time, priority, message, mutex,
                         [](const int fd){ fsync(fd); });
@@ -152,18 +153,19 @@ public: /* Types: */
                                      timeval time,
                                      const Priority priority,
                                      const char * const message,
-                                     Fluffy::QueueingMutex & mutex) noexcept
+                                     sharemind::QueueingMutex & mutex) noexcept
         {
             const int fd = fileno(file);
             assert(fd != -1);
             logToFile(fd, time, priority, message, mutex);
         }
 
-        static inline void logToFileSync(FILE * file,
-                                         timeval time,
-                                         const Priority priority,
-                                         const char * const message,
-                                         Fluffy::QueueingMutex & mutex) noexcept
+        static inline void logToFileSync(
+                FILE * file,
+                timeval time,
+                const Priority priority,
+                const char * const message,
+                sharemind::QueueingMutex & mutex) noexcept
         {
             const int fd = fileno(file);
             assert(fd != -1);
@@ -177,7 +179,7 @@ public: /* Types: */
                                        timeval time,
                                        const Priority priority,
                                        const char * const message,
-                                       Fluffy::QueueingMutex & mutex,
+                                       sharemind::QueueingMutex & mutex,
                                        Sync && sync) noexcept
         {
             assert(fd != -1);
@@ -212,7 +214,7 @@ public: /* Types: */
                 { const_cast<char *>(message), strlen(message) },
                 { const_cast<char *>("\n"), 1u }
             };
-            const Fluffy::QueueingMutex::Guard guard(mutex);
+            const sharemind::QueueingMutex::Guard guard(mutex);
             #ifdef __GNUC__
             #pragma GCC diagnostic push
             #pragma GCC diagnostic ignored "-Wunused-result"
@@ -227,7 +229,7 @@ public: /* Types: */
     private: /* Fields: */
 
         const int m_fd;
-        Fluffy::QueueingMutex m_mutex;
+        sharemind::QueueingMutex m_mutex;
 
     }; /* class CFileAppender { */
 
@@ -262,8 +264,8 @@ public: /* Types: */
             }
         }
 
-        Fluffy::QueueingMutex m_stderrMutex;
-        Fluffy::QueueingMutex m_stdoutMutex;
+        sharemind::QueueingMutex m_stderrMutex;
+        sharemind::QueueingMutex m_stdoutMutex;
 
     };
 
@@ -301,7 +303,7 @@ public: /* Types: */
 
         const std::string m_path;
         const int m_fd;
-        Fluffy::QueueingMutex m_mutex;
+        sharemind::QueueingMutex m_mutex;
 
     }; /* class FileAppender */
 
@@ -348,7 +350,7 @@ public: /* Methods: */
 
     inline void addAppender(Appender * const appender) {
         assert(appender);
-        const Fluffy::QueueingRwMutex::UniqueGuard uniqueGuard(m_mutex);
+        const sharemind::QueueingRwMutex::UniqueGuard uniqueGuard(m_mutex);
         m_appenders.insert(appender);
         try {
             appender->activate(m_appenders);
@@ -362,7 +364,7 @@ private: /* Methods: */
 
     template <Priority priority>
     inline void doLog(const timeval time, const char * const message) {
-        const Fluffy::QueueingRwMutex::SharedGuard sharedGuard(m_mutex);
+        const sharemind::QueueingRwMutex::SharedGuard sharedGuard(m_mutex);
         for (Appender * const appender : m_appenders)
             appender->log(time, priority, message);
     }
@@ -382,7 +384,7 @@ private: /* Methods: */
 
 private: /* Fields: */
 
-    mutable Fluffy::QueueingRwMutex m_mutex;
+    mutable sharemind::QueueingRwMutex m_mutex;
     Appenders m_appenders;
 
 }; /* class Backend { */
