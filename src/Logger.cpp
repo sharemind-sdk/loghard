@@ -10,7 +10,7 @@
 #include "Logger.h"
 
 
-#if !defined(SHAREMIND_GCC_VERSION) || SHAREMIND_GCC_VERSION >= 40800
+#if LOGHARD_HAVE_TLS
 namespace LogHard {
 namespace Detail {
 thread_local timeval tl_time = { 0u, 0u };

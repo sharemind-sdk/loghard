@@ -25,6 +25,14 @@
 #define LOGHARD_LOGLEVEL_MAXDEBUG ::LogHard::Priority::Debug
 #endif
 
+#if (defined(__clang__) && (!defined(__GLIBCXX__) \
+                            || __GLIBCXX__ < 20130322)) || \
+    (defined(SHAREMIND_GCC_VERSION) && SHAREMIND_GCC_VERSION < 40800)
+#define LOGHARD_HAVE_TLS 0
+#else
+#define LOGHARD_HAVE_TLS 1
+#endif
+
 namespace LogHard {
 
 namespace Detail {
@@ -34,7 +42,7 @@ static_assert(MAX_MESSAGE_SIZE >= 1u, "Invalid MAX_MESSAGE_SIZE");
 static constexpr const size_t STACK_BUFFER_SIZE = MAX_MESSAGE_SIZE + 4u;
 static_assert(STACK_BUFFER_SIZE > MAX_MESSAGE_SIZE, "Overflow");
 
-#if !defined(SHAREMIND_GCC_VERSION) || SHAREMIND_GCC_VERSION >= 40800
+#if LOGHARD_HAVE_TLS
 extern thread_local timeval tl_time;
 extern thread_local Backend * tl_backend;
 extern thread_local size_t tl_offset;
@@ -109,14 +117,14 @@ public: /* Types: */
 
         inline LogHelperBase(LogHelperBase<priority> && move) noexcept
             : m_operational(move.m_operational)
-            #if defined(SHAREMIND_GCC_VERSION) && SHAREMIND_GCC_VERSION < 40800
+            #if ! LOGHARD_HAVE_TLS
             , tl_time(std::move(move.tl_time))
             , tl_backend(move.tl_backend)
             , tl_offset(move.tl_offset)
             #endif
         {
             move.m_operational = false;
-            #if defined(SHAREMIND_GCC_VERSION) && SHAREMIND_GCC_VERSION < 40800
+            #if ! LOGHARD_HAVE_TLS
             using namespace ::LogHard::Detail;
             memcpy(tl_message, move.tl_message, STACK_BUFFER_SIZE);
             #endif
@@ -127,7 +135,7 @@ public: /* Types: */
         {
             m_operational = move.m_operational;
             move.m_operational = false;
-            #if defined(SHAREMIND_GCC_VERSION) && SHAREMIND_GCC_VERSION < 40800
+            #if ! LOGHARD_HAVE_TLS
             tl_time = std::move(move.tl_time);
             tl_backend = move.tl_backend;
             tl_offset = move.tl_offset;
@@ -288,7 +296,7 @@ public: /* Types: */
     private: /* Fields: */
 
         bool m_operational;
-        #if defined(SHAREMIND_GCC_VERSION) && SHAREMIND_GCC_VERSION < 40800
+        #if ! LOGHARD_HAVE_TLS
         timeval tl_time;
         Backend * tl_backend;
         size_t tl_offset;
