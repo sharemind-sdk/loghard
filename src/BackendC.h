@@ -23,28 +23,35 @@ struct LogHardLogger;
 struct LogHardBackend;
 
 LogHardBackend * LogHardBackend_new(LogHardError * error,
-                                    const char ** errorStr);
+                                    const char ** errorStr)
+        __attribute__ ((warn_unused_result));
 
-void LogHardBackend_free(LogHardBackend * backend);
+void LogHardBackend_free(LogHardBackend * backend) __attribute__ ((nonnull(1)));
 
 
 SHAREMIND_LASTERROR_PUBLIC_FUNCTIONS_DECLARE(LogHardBackend,, LogHardError,)
 
 
-void * LogHardBackend_cxx(LogHardBackend * backend);
-const void * LogHardBackend_cxxConst(const LogHardBackend * backend);
+void * LogHardBackend_cxx(LogHardBackend * backend)
+         __attribute__ ((nonnull(1)));
+const void * LogHardBackend_cxxConst(const LogHardBackend * backend)
+         __attribute__ ((nonnull(1)));
 
-bool LogHardBackend_addStdAppender(LogHardBackend * backend);
+bool LogHardBackend_addStdAppender(LogHardBackend * backend)
+         __attribute__ ((nonnull(1)));
 
 bool LogHardBackend_addCFileAppender(LogHardBackend * backend,
-                                     FILE * file);
+                                     FILE * file)
+         __attribute__ ((nonnull(1)));
 
 bool LogHardBackend_addFileAppender(LogHardBackend * backend,
                                     const char * filename,
-                                    bool append);
+                                    bool append)
+         __attribute__ ((nonnull(1, 2)));
 
 LogHardLogger * LogHardBackend_newLogger(LogHardBackend * backend,
-                                         const char * prefix);
+                                         const char * prefix)
+         __attribute__ ((nonnull(1, 2), warn_unused_result));
 
 SHAREMIND_EXTERN_C_END
 
