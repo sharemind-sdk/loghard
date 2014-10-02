@@ -102,7 +102,8 @@ struct LogHardLogger {
         , backend(b)
     {}
 
-    inline LogHardLogger(LogHardLogger * const l, const char * const prefix)
+    inline LogHardLogger(const LogHardLogger * const l,
+                         const char * const prefix)
         : inner(l->inner, prefix)
         , backend(l->backend)
     {}

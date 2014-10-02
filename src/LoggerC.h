@@ -25,12 +25,12 @@ void LogHardLogger_free(LogHardLogger * logger);
 
 SHAREMIND_LASTERROR_PUBLIC_FUNCTIONS_DECLARE(LogHardLogger,, LogHardError,)
 
-LogHardBackend * LogHardLogger_backend(LogHardLogger * logger);
+LogHardBackend * LogHardLogger_backend(const LogHardLogger * logger);
 
 LogHardLogger * LogHardLogger_newLogger(LogHardLogger * logger,
                                         const char * prefix);
 
-void LogHardLogger_log(LogHardLogger * logger,
+void LogHardLogger_log(const LogHardLogger * logger,
                        LogHardPriority priority,
                        const char * message);
 

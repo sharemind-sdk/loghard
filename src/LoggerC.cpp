@@ -39,7 +39,7 @@ void LogHardLogger_free(LogHardLogger * logger) {
     LOGHARD_NOEXCEPT_END("LHBd")
 }
 
-LogHardBackend * LogHardLogger_backend(LogHardLogger * logger) {
+LogHardBackend * LogHardLogger_backend(const LogHardLogger * logger) {
     assert(logger);
     return logger->backend;
 }
@@ -58,7 +58,7 @@ LogHardLogger * LogHardLogger_newLogger(LogHardLogger * logger,
     LOGHARD_EXCEPTIONS_TO_C_END(LogHardLogger, logger, nullptr)
 }
 
-void LogHardLogger_log(LogHardLogger * logger,
+void LogHardLogger_log(const LogHardLogger * logger,
                        LogHardPriority priority,
                        const char * message)
 {
