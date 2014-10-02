@@ -47,6 +47,16 @@ void LogHardBackend_free(LogHardBackend * backend) {
     LOGHARD_NOEXCEPT_END("LHBd")
 }
 
+void * LogHardBackend_cxx(LogHardBackend * backend) {
+    assert(backend);
+    return &backend->inner;
+}
+
+const void * LogHardBackend_cxxConst(const LogHardBackend * backend) {
+    assert(backend);
+    return &backend->inner;
+}
+
 bool LogHardBackend_addStdAppender(LogHardBackend * backend) {
     assert(backend);
     LOGHARD_EXCEPTIONS_TO_C_BEGIN

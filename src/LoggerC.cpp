@@ -44,6 +44,16 @@ LogHardBackend * LogHardLogger_backend(const LogHardLogger * logger) {
     return logger->backend;
 }
 
+void * LogHardLogger_cxx(LogHardLogger * logger) {
+    assert(logger);
+    return &logger->inner;
+}
+
+const void * LogHardLogger_cxxConst(const LogHardLogger * logger) {
+    assert(logger);
+    return &logger->inner;
+}
+
 LogHardLogger * LogHardLogger_newLogger(LogHardLogger * logger,
                                         const char * prefix)
 {

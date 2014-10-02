@@ -27,6 +27,9 @@ SHAREMIND_LASTERROR_PUBLIC_FUNCTIONS_DECLARE(LogHardLogger,, LogHardError,)
 
 LogHardBackend * LogHardLogger_backend(const LogHardLogger * logger);
 
+void * LogHardLogger_cxx(LogHardLogger * logger);
+const void * LogHardLogger_cxxConst(const LogHardLogger * logger);
+
 LogHardLogger * LogHardLogger_newLogger(LogHardLogger * logger,
                                         const char * prefix);
 

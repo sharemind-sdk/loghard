@@ -31,6 +31,9 @@ void LogHardBackend_free(LogHardBackend * backend);
 SHAREMIND_LASTERROR_PUBLIC_FUNCTIONS_DECLARE(LogHardBackend,, LogHardError,)
 
 
+void * LogHardBackend_cxx(LogHardBackend * backend);
+const void * LogHardBackend_cxxConst(const LogHardBackend * backend);
+
 bool LogHardBackend_addStdAppender(LogHardBackend * backend);
 
 bool LogHardBackend_addCFileAppender(LogHardBackend * backend,
