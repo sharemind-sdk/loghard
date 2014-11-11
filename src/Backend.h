@@ -119,7 +119,7 @@ public: /* Types: */
 
     public: /* Methods: */
 
-        CFileAppender(FILE * const file) noexcept
+        CFileAppender(FILE * const file)
             : m_fd(fileno(file))
         {
             if (m_fd == -1)
