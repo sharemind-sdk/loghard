@@ -200,7 +200,7 @@ public: /* Types: */
             tl_offset = MAX_MESSAGE_SIZE; \
             return elide(); \
         } \
-        tl_offset += r; \
+        tl_offset += static_cast<unsigned>(r); \
         return *this; \
     }
 
