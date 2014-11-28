@@ -225,7 +225,7 @@ public: /* Types: */
         LOGHARD_LHB_OP(long double,, "%Lf")
 
         inline LogHelperBase & operator<<(const float v) noexcept
-        { return this->operator<<((const double) v); }
+        { return this->operator<<(static_cast<const double>(v)); }
 
         inline LogHelperBase & operator<<(const char * v) noexcept {
             assert(v);

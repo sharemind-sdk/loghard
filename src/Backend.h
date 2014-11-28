@@ -146,7 +146,7 @@ public: /* Types: */
                 sharemind::QueueingMutex & mutex) noexcept
         {
             logToFile__(fd, time, priority, message, mutex,
-                        [](const int fd){ fsync(fd); });
+                        [](const int f){ fsync(f); });
         }
 
         static inline void logToFile(FILE * file,
