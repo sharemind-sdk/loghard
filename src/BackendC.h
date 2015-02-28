@@ -59,10 +59,6 @@ bool LogHardBackend_addFileAppender(LogHardBackend * backend,
                                     bool append)
          __attribute__ ((nonnull(1, 2)));
 
-LogHardLogger * LogHardBackend_newLogger(LogHardBackend * backend,
-                                         const char * prefix)
-         __attribute__ ((nonnull(1, 2), warn_unused_result));
-
 SHAREMIND_EXTERN_C_END
 
 #endif /* LOGHARD_BACKENDC_H */

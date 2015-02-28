@@ -31,6 +31,10 @@ SHAREMIND_EXTERN_C_BEGIN
 struct LogHardLogger;
 struct LogHardBackend;
 
+LogHardLogger * LogHardBackend_newLogger(LogHardBackend * backend,
+                                         const char * prefix)
+         __attribute__ ((nonnull(1, 2), warn_unused_result));
+
 void LogHardLogger_free(LogHardLogger * logger) __attribute__ ((nonnull(1)));
 
 SHAREMIND_LASTERROR_PUBLIC_FUNCTIONS_DECLARE(LogHardLogger,, LogHardError,)
