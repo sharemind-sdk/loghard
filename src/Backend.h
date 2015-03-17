@@ -194,7 +194,7 @@ public: /* Types: */
         {
             assert(fd != -1);
             assert(message);
-            constexpr const size_t bufSize = sizeof("HH:MM:SS");
+            constexpr const size_t bufSize = sizeof("YYYY.MM.DD HH:MM:SS");
             char timeStampBuf[bufSize];
             {
                 tm eventTimeTm;
@@ -211,7 +211,7 @@ public: /* Types: */
                     #endif
                         strftime(timeStampBuf,
                                  bufSize,
-                                 "%H:%M:%S",
+                                 "%Y.%m.%d %H:%M:%S",
                                  &eventTimeTm);
                     assert(r == bufSize - 1u);
                 }
