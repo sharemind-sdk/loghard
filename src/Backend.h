@@ -56,24 +56,24 @@ public: /* Types: */
 
         virtual ~Appender() noexcept {}
 
-        virtual void activate(const Appenders & appenders) { (void) appenders; }
+        virtual void activate(Appenders const & appenders) { (void) appenders; }
 
         virtual void log(timeval time,
                          Priority priority,
-                         const char * message) noexcept = 0;
+                         char const * message) noexcept = 0;
 
-        inline static const char * priorityString(const Priority priority)
+        inline static char const * priorityString(Priority const priority)
                 noexcept
         {
-            static const char strings[][8u] =
+            static char const strings[][8u] =
                     { "FATAL", "ERROR", "WARNING", "INFO", "DEBUG", "DEBUG2" };
             return &strings[static_cast<unsigned>(priority)][0u];
         }
 
-        inline static const char * priorityStringRightPadded(
-                const Priority priority) noexcept
+        inline static char const * priorityStringRightPadded(
+                Priority const priority) noexcept
         {
-            static const char strings[][8u] = {
+            static char const strings[][8u] = {
                 "FATAL  ", "ERROR  ", "WARNING", "INFO   ", "DEBUG  ", "DEBUG2 "
             };
             return &strings[static_cast<unsigned>(priority)][0u];
@@ -93,35 +93,36 @@ public: /* Types: */
 
     public: /* Methods: */
 
-        inline SyslogAppender(const std::string & ident,
-                              const int logopt,
-                              const int facility)
-            : m_ident(ident)
-            , m_logopt(logopt)
-            , m_facility(facility) {}
+        inline SyslogAppender(std::string ident,
+                              int const logopt,
+                              int const facility)
+            : m_ident{std::move(ident)}
+            , m_logopt{logopt}
+            , m_facility{facility}
+        {}
 
         inline ~SyslogAppender() noexcept override { closelog(); }
 
-        void activate(const Appenders & appenders) override {
+        void activate(Appenders const & appenders) override {
             for (Appender * const a : appenders)
                 if (a != this && dynamic_cast<SyslogAppender *>(a) != nullptr)
-                    throw MultipleSyslogAppenderException();
+                    throw MultipleSyslogAppenderException{};
             openlog(m_ident.c_str(), m_logopt, m_facility);
         }
 
         inline void log(timeval,
-                        const Priority priority,
-                        const char * message) noexcept override
+                        Priority const priority,
+                        char const * message) noexcept override
         {
-            constexpr static const int priorities[] = {
+            constexpr static int const priorities[] = {
                 LOG_EMERG, LOG_ERR, LOG_WARNING, LOG_INFO, LOG_DEBUG, LOG_DEBUG
             };
             syslog(priorities[static_cast<unsigned>(priority)], "%s", message);
         }
 
-        const std::string m_ident;
-        const int m_logopt;
-        const int m_facility;
+        std::string const m_ident;
+        int const m_logopt;
+        int const m_facility;
 
     }; /* class SyslogAppender { */
 
@@ -137,35 +138,35 @@ public: /* Types: */
         }
 
         inline void log(timeval time,
-                        const Priority priority,
-                        const char * message) noexcept override
+                        Priority const priority,
+                        char const * message) noexcept override
         { logToFileSync(m_fd, time, priority, message, m_mutex); }
 
-        static inline void logToFile(const int fd,
+        static inline void logToFile(int const fd,
                                      timeval time,
-                                     const Priority priority,
-                                     const char * const message,
+                                     Priority const priority,
+                                     char const * const message,
                                      sharemind::QueueingMutex & mutex) noexcept
-        { logToFile__(fd, time, priority, message, mutex, [](const int){}); }
+        { logToFile__(fd, time, priority, message, mutex, [](int const){}); }
 
         static inline void logToFileSync(
-                const int fd,
+                int const fd,
                 timeval time,
-                const Priority priority,
-                const char * const message,
+                Priority const priority,
+                char const * const message,
                 sharemind::QueueingMutex & mutex) noexcept
         {
             logToFile__(fd, time, priority, message, mutex,
-                        [](const int f){ fsync(f); });
+                        [](int const f){ fsync(f); });
         }
 
         static inline void logToFile(FILE * file,
                                      timeval time,
-                                     const Priority priority,
-                                     const char * const message,
+                                     Priority const priority,
+                                     char const * const message,
                                      sharemind::QueueingMutex & mutex) noexcept
         {
-            const int fd = fileno(file);
+            int const fd = fileno(file);
             assert(fd != -1);
             logToFile(fd, time, priority, message, mutex);
         }
@@ -173,11 +174,11 @@ public: /* Types: */
         static inline void logToFileSync(
                 FILE * file,
                 timeval time,
-                const Priority priority,
-                const char * const message,
+                Priority const priority,
+                char const * const message,
                 sharemind::QueueingMutex & mutex) noexcept
         {
-            const int fd = fileno(file);
+            int const fd = fileno(file);
             assert(fd != -1);
             logToFileSync(fd, time, priority, message, mutex);
         }
@@ -185,16 +186,16 @@ public: /* Types: */
     private: /* Methods: */
 
         template <typename Sync>
-        static inline void logToFile__(const int fd,
+        static inline void logToFile__(int const fd,
                                        timeval time,
-                                       const Priority priority,
-                                       const char * const message,
+                                       Priority const priority,
+                                       char const * const message,
                                        sharemind::QueueingMutex & mutex,
                                        Sync && sync) noexcept
         {
             assert(fd != -1);
             assert(message);
-            constexpr const size_t bufSize = sizeof("YYYY.MM.DD HH:MM:SS");
+            constexpr size_t const bufSize = sizeof("YYYY.MM.DD HH:MM:SS");
             char timeStampBuf[bufSize];
             {
                 tm eventTimeTm;
@@ -207,7 +208,7 @@ public: /* Types: */
                 }
                 {
                     #ifndef NDEBUG
-                    const size_t r =
+                    size_t const r =
                     #endif
                         strftime(timeStampBuf,
                                  bufSize,
@@ -216,7 +217,7 @@ public: /* Types: */
                     assert(r == bufSize - 1u);
                 }
             }
-            const iovec iov[] = {
+            iovec const iov[] = {
                 { const_cast<char *>(timeStampBuf), bufSize - 1u },
                 { const_cast<char *>(" "), 1u },
                 { const_cast<char *>(priorityStringRightPadded(priority)), 7u },
@@ -224,7 +225,7 @@ public: /* Types: */
                 { const_cast<char *>(message), strlen(message) },
                 { const_cast<char *>("\n"), 1u }
             };
-            const sharemind::QueueingMutex::Guard guard(mutex);
+            sharemind::QueueingMutex::Guard const guard{mutex};
             #ifdef __GNUC__
             #pragma GCC diagnostic push
             #pragma GCC diagnostic ignored "-Wunused-result"
@@ -238,7 +239,7 @@ public: /* Types: */
 
     private: /* Fields: */
 
-        const int m_fd;
+        int const m_fd;
         sharemind::QueueingMutex m_mutex;
 
     }; /* class CFileAppender { */
@@ -255,15 +256,15 @@ public: /* Types: */
 
     public: /* Methods: */
 
-        void activate(const Appenders & appenders) override {
+        void activate(Appenders const & appenders) override {
             for (Appender * const a : appenders)
                 if (a != this && dynamic_cast<StdAppender *>(a) != nullptr)
-                    throw MultipleStdAppenderException();
+                    throw MultipleStdAppenderException{};
         }
 
         inline void log(timeval time,
-                        const Priority priority,
-                        const char * message) noexcept override
+                        Priority const priority,
+                        char const * message) noexcept override
         {
             if (priority <= Priority::Warning) {
                 CFileAppender::logToFile(STDERR_FILENO, time, priority, message,
@@ -287,32 +288,31 @@ public: /* Types: */
 
     public: /* Methods: */
 
-        template <typename Path>
-        FileAppender(Path && path,
-                     const OpenMode openMode,
-                     const mode_t flags = 0644)
-            : m_path(std::forward<Path>(path))
-            , m_fd(open(m_path.c_str(),
+        FileAppender(std::string const path,
+                     OpenMode const openMode,
+                     mode_t const flags = 0644)
+            : m_path{std::move(path)}
+            , m_fd{open(m_path.c_str(),
                         // No O_SYNC since it would hurt performance badly
                         O_WRONLY | O_CREAT | O_APPEND | O_NOCTTY
                         | ((openMode == OVERWRITE) ? O_TRUNC : 0u),
-                        flags))
+                        flags)}
         {
             if (m_fd == -1)
-                throw std::system_error(errno, std::system_category());
+                throw std::system_error{errno, std::system_category()};
         }
 
         inline ~FileAppender() noexcept override { close(m_fd); }
 
         inline void log(timeval time,
-                        const Priority priority,
-                        const char * message) noexcept override
+                        Priority const priority,
+                        char const * message) noexcept override
         { CFileAppender::logToFile(m_fd, time, priority, message, m_mutex); }
 
     private: /* Fields: */
 
-        const std::string m_path;
-        const int m_fd;
+        std::string const m_path;
+        int const m_fd;
         sharemind::QueueingMutex m_mutex;
 
     }; /* class FileAppender */
@@ -360,7 +360,7 @@ public: /* Methods: */
 
     inline void addAppender(Appender * const appender) {
         assert(appender);
-        const sharemind::QueueingRwMutex::UniqueGuard uniqueGuard(m_mutex);
+        sharemind::QueueingRwMutex::UniqueGuard const uniqueGuard{m_mutex};
         m_appenders.insert(appender);
         try {
             appender->activate(m_appenders);
@@ -373,8 +373,8 @@ public: /* Methods: */
 private: /* Methods: */
 
     template <Priority priority>
-    inline void doLog(const timeval time, const char * const message) {
-        const sharemind::QueueingRwMutex::SharedGuard sharedGuard(m_mutex);
+    inline void doLog(timeval const time, char const * const message) {
+        sharemind::QueueingRwMutex::SharedGuard const sharedGuard{m_mutex};
         for (Appender * const appender : m_appenders)
             appender->log(time, priority, message);
     }
@@ -382,7 +382,7 @@ private: /* Methods: */
     template <typename AppenderType, typename ... Args>
     inline AppenderType & addAppender__(Args && ... args) {
         AppenderType * const appender =
-                new AppenderType(std::forward<Args>(args)...);
+                new AppenderType{std::forward<Args>(args)...};
         try {
             addAppender(appender);
             return *appender;
