@@ -90,7 +90,8 @@ INSTALL(FILES ${AllHeaders} DESTINATION "include/LogHard")
 
 FILE(GLOB_RECURSE LogHard_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/src/Logger.cpp")
 ADD_LIBRARY(LogHard SHARED ${LogHard_SOURCES})
-TARGET_LINK_LIBRARIES(LogHard ${SharemindCxxHeaders_LIBRARIES}
+TARGET_LINK_LIBRARIES(LogHard ${SharemindCHeaders_LIBRARIES}
+                              ${SharemindCxxHeaders_LIBRARIES}
                               ${SharemindLibMutexes_LIBRARIES})
 STRING(REGEX REPLACE "(([^\\.]+\\.[^\\.]+)\\.).*" "\\2" LOGHARD_SOVERSION
                      "${LOGHARD_VERSION}")
