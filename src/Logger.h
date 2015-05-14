@@ -365,8 +365,11 @@ public: /* Methods: */
         , m_oldPrefix{logger.m_prefix}
     {}
 
-    Backend & backend() const noexcept { return m_backend; }
-    std::string const & prefix() const noexcept { return m_prefix; }
+    inline Backend & backend() const noexcept { return m_backend; }
+    inline std::string const & prefix() const noexcept { return m_prefix; }
+
+    inline Backend::Lock retrieveBackendLock() const noexcept
+    { return m_backend.retrieveLock(); }
 
     template <typename ... Args> void setPrefix(Args && ... args) {
         m_prefix = sharemind::concat(m_oldPrefix,
@@ -374,26 +377,85 @@ public: /* Methods: */
                                      ' ');
     }
 
-    inline LogHelper<Priority::Fatal> fatal() const noexcept
+    template <Priority PRIORITY>
+    inline LogHelper<PRIORITY> logHelper() const noexcept
     { return {m_backend, m_prefix.c_str()}; }
+
+    inline LogHelper<Priority::Fatal> fatal() const noexcept
+    { return logHelper<Priority::Fatal>(); }
 
     inline LogHelper<Priority::Error> error() const noexcept
-    { return {m_backend, m_prefix.c_str()}; }
+    { return logHelper<Priority::Error>(); }
 
     inline LogHelper<Priority::Warning> warning() const noexcept
-    { return {m_backend, m_prefix.c_str()}; }
+    { return logHelper<Priority::Warning>(); }
 
     inline LogHelper<Priority::Normal> info() const noexcept
-    { return {m_backend, m_prefix.c_str()}; }
+    { return logHelper<Priority::Normal>(); }
 
     inline LogHelper<Priority::Debug> debug() const noexcept
-    { return {m_backend, m_prefix.c_str()}; }
+    { return logHelper<Priority::Debug>(); }
 
     inline LogHelper<Priority::FullDebug> fullDebug() const noexcept
-    { return {m_backend, m_prefix.c_str()}; }
+    { return logHelper<Priority::FullDebug>(); }
 
     template <typename T>
     inline static Hex<T> hex(T const value) noexcept { return {value}; }
+
+    template <Priority PRIORITY = Priority::Error>
+    inline void printCurrentException() const noexcept {
+        printCurrentException<PRIORITY>(
+                &Logger::standardFormatter<LogHelper<PRIORITY> >);
+    }
+
+    template <Priority PRIORITY = Priority::Error, typename Formatter>
+    inline void printCurrentException(Formatter formatter = Formatter{})
+            const noexcept
+    {
+        if (!std::current_exception())
+            return;
+        size_t levels = 1u;
+        printException__<PRIORITY, Formatter>(1u, levels, formatter);
+    }
+
+private: /* Methods: */
+
+    template <Priority PRIORITY, typename Formatter>
+    inline void printException__(size_t const levelNow,
+                                 size_t & totalLevels,
+                                 Formatter & formatter) const noexcept
+    {
+        std::exception_ptr const e{std::current_exception()};
+        assert(e);
+        try {
+            throw;
+        } catch (std::exception const &) {
+            printException__<PRIORITY, Formatter>(levelNow + 1u,
+                                                  ++totalLevels,
+                                                  formatter);
+        } catch (...) {}
+        formatter(levelNow,
+                  const_cast<size_t const &>(totalLevels),
+                  e,
+                  logHelper<PRIORITY>());
+    }
+
+    template <typename OutStream>
+    static void standardFormatter(size_t const exceptionNumber,
+                                  size_t const totalExceptions,
+                                  std::exception_ptr e,
+                                  OutStream out) noexcept
+    {
+        assert(e);
+        out << "Exception " << exceptionNumber << " of " << totalExceptions;
+        try {
+            std::rethrow_exception(e);
+        } catch (std::exception const & e) {
+            out << ": " << e.what();
+        } catch (...) {
+            out << " is not an std::exception!";
+        }
+    }
 
 private: /* Fields: */
 

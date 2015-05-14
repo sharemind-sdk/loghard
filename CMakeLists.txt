@@ -29,12 +29,10 @@ INCLUDE("${CMAKE_CURRENT_BINARY_DIR}/config.local" OPTIONAL)
 
 FIND_PACKAGE(SharemindCHeaders REQUIRED)
 FIND_PACKAGE(SharemindCxxHeaders REQUIRED)
-FIND_PACKAGE(SharemindLibMutexes REQUIRED)
 
 SET(LOGHARD_INSTALL_LINK_LIBRARIES "")
 LIST(APPEND LOGHARD_INSTALL_LINK_LIBRARIES
     ${SharemindCxxHeaders_LIBRARIES}
-    ${SharemindLibMutexes_LIBRARIES}
     "-L${CMAKE_INSTALL_PREFIX}/lib" "-lLogHard"
 )
 LIST(REMOVE_DUPLICATES LOGHARD_INSTALL_LINK_LIBRARIES)
@@ -51,7 +49,6 @@ LIST(APPEND LOGHARD_INSTALL_INCLUDE_DIRS
     "${CMAKE_INSTALL_PREFIX}/include"
     ${SharemindCHeaders_INCLUDE_DIRS}
     ${SharemindCxxHeaders_INCLUDE_DIRS}
-    ${SharemindLibMutexes_INCLUDE_DIRS}
 )
 LIST(REMOVE_DUPLICATES LOGHARD_INSTALL_INCLUDE_DIRS)
 SET(LOGHARDC_INSTALL_INCLUDE_DIRS "")
@@ -61,7 +58,6 @@ SET(LOGHARD_INSTALL_DEFINITIONS "")
 LIST(APPEND LOGHARD_INSTALL_DEFINITIONS
     ${SharemindCHeaders_DEFINITIONS}
     ${SharemindCxxHeaders_DEFINITIONS}
-    ${SharemindLibMutexes_DEFINITIONS}
 )
 IF(APPLE)
     LIST(APPEND LOGHARD_INSTALL_DEFINITIONS "-D_DARWIN_C_SOURCE")
@@ -77,10 +73,10 @@ ADD_COMPILE_OPTIONS(
   "$<$<STREQUAL:$<CONFIGURATION>,Release>:-DNDEBUG>"
   "$<$<STREQUAL:$<CONFIGURATION>,Release>:-fomit-frame-pointer>"
 )
-INCLUDE_DIRECTORIES(${SharemindCxxHeaders_INCLUDE_DIRS}
-                    ${SharemindLibMutexes_INCLUDE_DIRS})
-ADD_DEFINITIONS(${SharemindCxxHeaders_DEFINITIONS}
-                ${SharemindLibMutexes_DEFINITIONS})
+INCLUDE_DIRECTORIES(${SharemindCHeaders_INCLUDE_DIRS}
+                    ${SharemindCxxHeaders_INCLUDE_DIRS})
+ADD_DEFINITIONS(${SharemindCHeaders_DEFINITIONS}
+                ${SharemindCxxHeaders_DEFINITIONS})
 
 FILE(GLOB_RECURSE AllHeaders "${CMAKE_CURRENT_SOURCE_DIR}/src/*.h")
 ADD_CUSTOM_TARGET("include_AllHeaders_in_IDE" SOURCES ${AllHeaders})
@@ -91,8 +87,7 @@ INSTALL(FILES ${AllHeaders} DESTINATION "include/LogHard")
 FILE(GLOB_RECURSE LogHard_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/src/Logger.cpp")
 ADD_LIBRARY(LogHard SHARED ${LogHard_SOURCES})
 TARGET_LINK_LIBRARIES(LogHard ${SharemindCHeaders_LIBRARIES}
-                              ${SharemindCxxHeaders_LIBRARIES}
-                              ${SharemindLibMutexes_LIBRARIES})
+                              ${SharemindCxxHeaders_LIBRARIES})
 STRING(REGEX REPLACE "(([^\\.]+\\.[^\\.]+)\\.).*" "\\2" LOGHARD_SOVERSION
                      "${LOGHARD_VERSION}")
 SET_TARGET_PROPERTIES(LogHard PROPERTIES
