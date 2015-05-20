@@ -26,6 +26,7 @@
 #include <memory>
 #include <mutex>
 #include <set>
+#include <sharemind/compiler-support/GccPR44436.h>
 #include <sharemind/Exception.h>
 #include <sys/stat.h>
 #include <sys/time.h>
@@ -352,7 +353,8 @@ public: /* Methods: */
         assert(appender);
         Appender & a = *appender;
         Guard const guard{m_mutex};
-        auto const r = m_appenders.emplace(std::move(appender));
+        auto const r =
+                m_appenders.SHAREMIND_GCCPR44436_METHOD(std::move(appender));
         assert(r.second);
         assert(r.first->get() == &a);
         try {
