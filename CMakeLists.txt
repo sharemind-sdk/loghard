@@ -104,7 +104,7 @@ STRING(REGEX REPLACE "(([^\\.]+\\.[^\\.]+)\\.).*" "\\2" LOGHARDC_SOVERSION
                      "${LOGHARDC_VERSION}")
 SET_TARGET_PROPERTIES(LogHardC PROPERTIES
                       OUTPUT_NAME "LogHardC"
-                      VERSION "${LOGCHARD_VERSION}"
+                      VERSION "${LOGHARDC_VERSION}"
                       SOVERSION "${LOGHARDC_SOVERSION}")
 INSTALL(TARGETS LogHardC LIBRARY DESTINATION "lib")
 
