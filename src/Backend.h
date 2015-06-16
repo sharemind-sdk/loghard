@@ -313,6 +313,106 @@ public: /* Types: */
 
     }; /* class FileAppender */
 
+    class EarlyAppender: public Appender {
+
+    public: /* Types: */
+
+        SHAREMIND_DEFINE_EXCEPTION(std::exception, Exception);
+        SHAREMIND_DEFINE_EXCEPTION_CONST_MSG(
+                Exception,
+                MultipleEarlyAppenderException,
+                "Multiple early appenders not allowed!");
+        SHAREMIND_DEFINE_EXCEPTION_CONST_MSG(
+                Exception,
+                TooManyEntriesException,
+                "Maximum log entry reservation size exceeded!");
+
+        struct LogEntry {
+            timeval time;
+            Priority priority;
+            std::string message;
+        };
+        using LogEntries = std::vector<LogEntry>;
+
+    public: /* Methods: */
+
+        EarlyAppender(size_t const reserveEntries = 1024u,
+                      size_t const maxMessageSize = 1024u)
+            : m_oomMessage{"Early log buffer full, messages skipped!"}
+            , m_maxMessageSize{(assert(maxMessageSize >= 5u), maxMessageSize)}
+        {
+            size_t const size = reserveEntries + 1u;
+            if (size < reserveEntries)
+                throw TooManyEntriesException{};
+            m_entries.reserve(size);
+            m_freeMessages.resize(reserveEntries);
+            for (std::string & msg : m_freeMessages)
+                msg.reserve(maxMessageSize);
+        }
+
+        LogEntries const & entries() const noexcept { return m_entries; }
+
+        void activate(Appenders const & appenders) override {
+            for (Appenders::value_type const & a : appenders)
+                if (a.second.get() != this
+                    && dynamic_cast<EarlyAppender *>(a.second.get()) != nullptr)
+                    throw MultipleEarlyAppenderException{};
+        }
+
+        inline void log(timeval time,
+                        Priority const priority,
+                        char const * message) noexcept override
+        {
+            if (m_freeMessages.empty()) {
+                if (!m_oom) {
+                    assert(m_entries.size() < m_entries.capacity());
+                    m_entries.emplace_back(LogEntry{time,
+                                                    Priority::Error,
+                                                    std::move(m_oomMessage)});
+                    m_oom = true;
+                }
+            } else {
+                assert(m_entries.size() < m_entries.capacity());
+                std::string & s = m_freeMessages.back();
+                assert(s.empty());
+                assert(s.capacity() >= m_maxMessageSize);
+                try {
+                    try {
+                        s.assign(message);
+                    } catch (...) {
+                        assert(message);
+                        assert(s.empty());
+                        assert(s.capacity() >= m_maxMessageSize);
+                        do {
+                            s.append(message, 1u);
+                        } while (*++message);
+                    }
+                } catch (...) {
+                    size_t const size = s.size();
+                    assert(size > m_maxMessageSize);
+                    static char const elide[] = "[...]";
+                    s.replace(size - 5u, 5u, elide, 5u);
+                }
+                m_entries.emplace_back(LogEntry{time, priority, std::move(s)});
+                m_freeMessages.pop_back();
+            }
+        }
+
+        inline void logToAppender(Appender & appender) const noexcept {
+            for (LogEntry const & entry : m_entries)
+                appender.log(entry.time, entry.priority, entry.message.c_str());
+        }
+
+    private: /* Fields: */
+
+        LogEntries m_entries;
+        std::vector<std::string> m_freeMessages;
+        std::string m_oomMessage;
+        bool m_oom = false;
+        size_t const m_maxMessageSize;
+
+    }; /* class EarlyAppender */
+
 public: /* Methods: */
 
     /**
@@ -365,6 +465,16 @@ public: /* Methods: */
             m_appenders.erase(r.first);
             throw;
         }
+    }
+
+    /**
+      \brief Adds an EarlyAppender to the Logger.
+      \param[in] args Arguments to the EarlyAppender constructor.
+    */
+    template <typename ... Args>
+    inline EarlyAppender & addEarlyAppender(Args && ... args) {
+        return addAppender__<EarlyAppender,
+                             Args...>(std::forward<Args>(args)...);
     }
 
     inline std::unique_ptr<Appender> takeAppender(Appender & appender) noexcept
