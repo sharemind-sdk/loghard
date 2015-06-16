@@ -23,10 +23,9 @@
 #include <cassert>
 #include <cstdio>
 #include <fcntl.h>
+#include <map>
 #include <memory>
 #include <mutex>
-#include <set>
-#include <sharemind/compiler-support/GccPR44436.h>
 #include <sharemind/Exception.h>
 #include <sys/stat.h>
 #include <sys/time.h>
@@ -35,6 +34,7 @@
 #include <system_error>
 #include <utility>
 #include <unistd.h>
+#include <vector>
 #include "Priority.h"
 
 
@@ -56,7 +56,7 @@ public: /* Types: */
     using Lock = std::unique_lock<Mutex>;
 
     class Appender;
-    using Appenders = std::set<std::unique_ptr<Appender> >;
+    using Appenders = std::map<Appender *, std::unique_ptr<Appender> >;
 
     class Appender {
 
@@ -112,9 +112,9 @@ public: /* Types: */
         inline ~SyslogAppender() noexcept override { closelog(); }
 
         void activate(Appenders const & appenders) override {
-            for (std::unique_ptr<Appender> const & a : appenders)
-                if (a.get() != this
-                    && dynamic_cast<SyslogAppender *>(a.get()) != nullptr)
+            for (Appenders::value_type const & a : appenders)
+                if (a.second.get() != this
+                    && dynamic_cast<SyslogAppender *>(a.second.get()) != nullptr)
                     throw MultipleSyslogAppenderException{};
             openlog(m_ident.c_str(), m_logopt, m_facility);
         }
@@ -259,9 +259,9 @@ public: /* Types: */
     public: /* Methods: */
 
         void activate(Appenders const & appenders) override {
-            for (std::unique_ptr<Appender> const & a : appenders)
-                if (a.get() != this
-                    && dynamic_cast<StdAppender *>(a.get()) != nullptr)
+            for (Appenders::value_type const & a : appenders)
+                if (a.second.get() != this
+                    && dynamic_cast<StdAppender *>(a.second.get()) != nullptr)
                     throw MultipleStdAppenderException{};
         }
 
@@ -354,9 +354,10 @@ public: /* Methods: */
         Appender & a = *appender;
         Guard const guard{m_mutex};
         auto const r =
-                m_appenders.SHAREMIND_GCCPR44436_METHOD(std::move(appender));
+                m_appenders.insert(Appenders::value_type{&a,
+                                                         std::move(appender)});
         assert(r.second);
-        assert(r.first->get() == &a);
+        assert(r.first->second.get() == &a);
         try {
             a.activate(m_appenders);
             return a;
@@ -366,6 +367,16 @@ public: /* Methods: */
         }
     }
 
+    inline std::unique_ptr<Appender> takeAppender(Appender & appender) noexcept
+    {
+        Guard const guard{m_mutex};
+        Appenders::iterator it{m_appenders.find(&appender)};
+        assert(it != m_appenders.end());
+        std::unique_ptr<Appender> r{std::move(it->second)};
+        m_appenders.erase(it);
+        return r;
+    }
+
 private: /* Methods: */
 
     inline Lock retrieveLock() noexcept { return Lock{m_mutex}; }
@@ -373,8 +384,8 @@ private: /* Methods: */
     template <Priority priority>
     inline void doLog(timeval const time, char const * const message) noexcept {
         Guard const guard{m_mutex};
-        for (std::unique_ptr<Appender> const & appender : m_appenders)
-            appender->log(time, priority, message);
+        for (Appenders::value_type const & a : m_appenders)
+            a.second->log(time, priority, message);
     }
 
     template <typename AppenderType, typename ... Args>
