@@ -61,11 +61,11 @@ public: /* Types: */
 
     public: /* Methods: */
 
-        template <typename Appender>
+        template <typename AppenderType>
         const_iterator findFirstAppenderOfType() const noexcept {
             const_iterator it{begin()};
             for (; it != end(); ++it)
-                if (dynamic_cast<Appender *>(it->second.get()))
+                if (dynamic_cast<AppenderType *>(it->second.get()))
                     return it;
             return it;
         }
