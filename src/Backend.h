@@ -26,6 +26,7 @@
 #include <map>
 #include <memory>
 #include <mutex>
+#include <sharemind/compiler-support/GccPR50025.h>
 #include <sharemind/Exception.h>
 #include <sys/stat.h>
 #include <sys/time.h>
@@ -88,6 +89,27 @@ public: /* Types: */
         }
 
     }; /* class Appender { */
+
+    class BackendAppender: public Appender {
+
+    public: /* Methods: */
+
+        inline BackendAppender(Backend & backend)
+            : m_backend SHAREMIND_GCCPR50025_WORKAROUND(backend)
+        {}
+
+        /// \todo Implement activate() to check for loops.
+
+        inline void log(timeval time,
+                        Priority const priority,
+                        char const * message) noexcept override
+        { m_backend.doLog(time, priority, message); }
+
+    private: /* Fields: */
+
+        Backend & m_backend;
+
+    };
 
     class SyslogAppender: public Appender {
 
@@ -416,6 +438,23 @@ public: /* Types: */
     }; /* class EarlyAppender */
 
 public: /* Methods: */
+
+    /**
+      \brief Adds a BackendAppender to the Logger.
+      \param[in] args Arguments to the BackendAppender constructor.
+    */
+    template <typename ... Args>
+    inline BackendAppender & addBackendAppender(Args && ... args) {
+        return addAppender__<BackendAppender,
+                             Args...>(std::forward<Args>(args)...);
+    }
+
+    /**
+      \brief Adds a BackendAppender to the Logger.
+      \param[in] backend The LogHard backend to pass messages to.
+    */
+    inline BackendAppender & addAppender(Backend & backend)
+    { return addBackendAppender(backend); }
 
     /**
       \brief Adds a SyslogAppender to the Logger.
