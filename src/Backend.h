@@ -129,6 +129,8 @@ public: /* Types: */
             syslog(priorities[static_cast<unsigned>(priority)], "%s", message);
         }
 
+    private: /* Fields: */
+
         std::string const m_ident;
         int const m_logopt;
         int const m_facility;
