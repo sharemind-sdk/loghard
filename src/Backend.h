@@ -543,6 +543,14 @@ public: /* Methods: */
         return r;
     }
 
+    template <typename AppenderType, typename ... Args>
+    inline AppenderType & constructAndAddAppender(Args && ... args) {
+        return static_cast<AppenderType &>(
+                    addAppender(
+                        std::unique_ptr<Appender>{
+                            new AppenderType{std::forward<Args>(args)...}}));
+    }
+
 private: /* Methods: */
 
     inline Lock retrieveLock() noexcept { return Lock{m_mutex}; }
@@ -554,14 +562,6 @@ private: /* Methods: */
         Guard const guard{m_mutex};
         for (Appenders::value_type const & a : m_appenders)
             a.second->log(time, priority, message);
-    }
-
-    template <typename AppenderType, typename ... Args>
-    inline AppenderType & constructAndAddAppender(Args && ... args) {
-        return static_cast<AppenderType &>(
-                    addAppender(
-                        std::unique_ptr<Appender>{
-                            new AppenderType{std::forward<Args>(args)...}}));
     }
 
 private: /* Fields: */
