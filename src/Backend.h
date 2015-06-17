@@ -427,6 +427,15 @@ public: /* Types: */
                 appender.log(entry.time, entry.priority, entry.message.c_str());
         }
 
+        inline void clear() noexcept {
+            if (m_oom)
+                m_oomMessage = std::move(m_entries.back().message);
+            m_entries.pop_back();
+            for (LogEntry & entry : m_entries)
+                m_freeMessages.emplace_back(std::move(entry.message));
+            m_entries.clear();
+        }
+
     private: /* Fields: */
 
         LogEntries m_entries;
