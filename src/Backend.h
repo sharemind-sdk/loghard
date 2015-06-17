@@ -495,9 +495,15 @@ public: /* Methods: */
                                        Args...>(std::forward<Args>(args)...);
     }
 
-    /** \brief Adds a StdAppender to the Logger. */
-    inline StdAppender & addStdAppender()
-    { return constructAndAddAppender<StdAppender>(); }
+    /**
+      \brief Adds a StdAppender to the Logger.
+      \param[in] args Arguments to the StdAppender constructor.
+    */
+    template <typename ... Args>
+    inline StdAppender & addStdAppender(Args && ... args) {
+        return constructAndAddAppender<StdAppender,
+                                       Args...>(std::forward<Args>(args)...);
+    }
 
     inline Appender & addAppender(std::unique_ptr<Appender> appender) {
         assert(appender);
