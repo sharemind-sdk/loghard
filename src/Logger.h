@@ -149,7 +149,7 @@ public: /* Types: */
             if (tl_offset < STACK_BUFFER_SIZE)
                 tl_message[tl_offset] = '\0';
             assert(tl_backend);
-            tl_backend->doLog<priority>(std::move(tl_time), tl_message);
+            tl_backend->doLog(std::move(tl_time), priority, tl_message);
         }
 
         inline LogHelperBase & operator<<(char const v) noexcept {

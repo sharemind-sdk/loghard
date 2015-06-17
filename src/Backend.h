@@ -493,8 +493,10 @@ private: /* Methods: */
 
     inline Lock retrieveLock() noexcept { return Lock{m_mutex}; }
 
-    template <Priority priority>
-    inline void doLog(timeval const time, char const * const message) noexcept {
+    inline void doLog(timeval const time,
+                      Priority const priority,
+                      char const * const message) noexcept
+    {
         Guard const guard{m_mutex};
         for (Appenders::value_type const & a : m_appenders)
             a.second->log(time, priority, message);
