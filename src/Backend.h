@@ -454,8 +454,8 @@ public: /* Methods: */
     */
     template <typename ... Args>
     inline BackendAppender & addBackendAppender(Args && ... args) {
-        return addAppender__<BackendAppender,
-                             Args...>(std::forward<Args>(args)...);
+        return constructAndAddAppender<BackendAppender,
+                                       Args...>(std::forward<Args>(args)...);
     }
 
     /**
@@ -471,8 +471,8 @@ public: /* Methods: */
     */
     template <typename ... Args>
     inline SyslogAppender & addSyslogAppender(Args && ... args) {
-        return addAppender__<SyslogAppender,
-                             Args...>(std::forward<Args>(args)...);
+        return constructAndAddAppender<SyslogAppender,
+                                       Args...>(std::forward<Args>(args)...);
     }
 
     /**
@@ -481,8 +481,8 @@ public: /* Methods: */
     */
     template <typename ... Args>
     inline FileAppender & addFileAppender(Args && ... args) {
-        return addAppender__<FileAppender,
-                             Args...>(std::forward<Args>(args)...);
+        return constructAndAddAppender<FileAppender,
+                                       Args...>(std::forward<Args>(args)...);
     }
 
     /**
@@ -491,13 +491,13 @@ public: /* Methods: */
     */
     template <typename ... Args>
     inline CFileAppender & addCFileAppender(Args && ... args) {
-        return addAppender__<CFileAppender,
-                             Args...>(std::forward<Args>(args)...);
+        return constructAndAddAppender<CFileAppender,
+                                       Args...>(std::forward<Args>(args)...);
     }
 
     /** \brief Adds a StdAppender to the Logger. */
     inline StdAppender & addStdAppender()
-    { return addAppender__<StdAppender>(); }
+    { return constructAndAddAppender<StdAppender>(); }
 
     inline Appender & addAppender(std::unique_ptr<Appender> appender) {
         assert(appender);
@@ -523,8 +523,8 @@ public: /* Methods: */
     */
     template <typename ... Args>
     inline EarlyAppender & addEarlyAppender(Args && ... args) {
-        return addAppender__<EarlyAppender,
-                             Args...>(std::forward<Args>(args)...);
+        return constructAndAddAppender<EarlyAppender,
+                                       Args...>(std::forward<Args>(args)...);
     }
 
     inline std::unique_ptr<Appender> takeAppender(Appender & appender) noexcept
@@ -551,7 +551,7 @@ private: /* Methods: */
     }
 
     template <typename AppenderType, typename ... Args>
-    inline AppenderType & addAppender__(Args && ... args) {
+    inline AppenderType & constructAndAddAppender(Args && ... args) {
         return static_cast<AppenderType &>(
                     addAppender(
                         std::unique_ptr<Appender>{
