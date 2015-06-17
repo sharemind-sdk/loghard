@@ -505,17 +505,17 @@ public: /* Methods: */
                                        Args...>(std::forward<Args>(args)...);
     }
 
-    inline Appender & addAppender(std::unique_ptr<Appender> appender) {
-        assert(appender);
-        Appender & a = *appender;
+    inline Appender & addAppender(std::unique_ptr<Appender> && appenderPtr) {
+        assert(appenderPtr);
+        Appender & a = *appenderPtr;
         Guard const guard{m_mutex};
         auto const r =
-                m_appenders.insert(Appenders::value_type{&a,
-                                                         std::move(appender)});
+                m_appenders.insert(
+                    Appenders::value_type{&a, std::unique_ptr<Appender>{}});
         assert(r.second);
-        assert(r.first->second.get() == &a);
         try {
             a.activate(m_appenders);
+            r.first->second.swap(appenderPtr);
             return a;
         } catch (...) {
             m_appenders.erase(r.first);
