@@ -57,7 +57,20 @@ public: /* Types: */
     using Lock = std::unique_lock<Mutex>;
 
     class Appender;
-    using Appenders = std::map<Appender *, std::unique_ptr<Appender> >;
+    class Appenders: public std::map<Appender *, std::unique_ptr<Appender> > {
+
+    public: /* Methods: */
+
+        template <typename Appender>
+        const_iterator findFirstAppenderOfType() const noexcept {
+            const_iterator it{begin()};
+            for (; it != end(); ++it)
+                if (dynamic_cast<Appender *>(it->second.get()))
+                    return it;
+            return it;
+        }
+
+    };
 
     class Appender {
 
@@ -134,10 +147,9 @@ public: /* Types: */
         inline ~SyslogAppender() noexcept override { closelog(); }
 
         void activate(Appenders const & appenders) override {
-            for (Appenders::value_type const & a : appenders)
-                if (a.second.get() != this
-                    && dynamic_cast<SyslogAppender *>(a.second.get()) != nullptr)
-                    throw MultipleSyslogAppenderException{};
+            if (appenders.findFirstAppenderOfType<SyslogAppender>()
+                    != appenders.end())
+                throw MultipleSyslogAppenderException{};
             openlog(m_ident.c_str(), m_logopt, m_facility);
         }
 
@@ -283,10 +295,9 @@ public: /* Types: */
     public: /* Methods: */
 
         void activate(Appenders const & appenders) override {
-            for (Appenders::value_type const & a : appenders)
-                if (a.second.get() != this
-                    && dynamic_cast<StdAppender *>(a.second.get()) != nullptr)
-                    throw MultipleStdAppenderException{};
+            if (appenders.findFirstAppenderOfType<StdAppender>()
+                    != appenders.end())
+                throw MultipleStdAppenderException{};
         }
 
         inline void log(timeval time,
@@ -377,10 +388,9 @@ public: /* Types: */
         LogEntries const & entries() const noexcept { return m_entries; }
 
         void activate(Appenders const & appenders) override {
-            for (Appenders::value_type const & a : appenders)
-                if (a.second.get() != this
-                    && dynamic_cast<EarlyAppender *>(a.second.get()) != nullptr)
-                    throw MultipleEarlyAppenderException{};
+            if (appenders.findFirstAppenderOfType<EarlyAppender>()
+                    != appenders.end())
+                throw MultipleEarlyAppenderException{};
         }
 
         inline void log(timeval time,
