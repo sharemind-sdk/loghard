@@ -527,9 +527,13 @@ public: /* Methods: */
                 m_appenders.insert(
                     Appenders::value_type{&a, std::unique_ptr<Appender>{}});
         assert(r.second);
+        assert(r.first->first == &a);
+        assert(!r.first->second);
         try {
             a.activate(m_appenders);
             r.first->second.swap(appenderPtr);
+            assert(r.first->second.get() == &a);
+            assert(r.first->second.get() == r.first->first);
             return a;
         } catch (...) {
             m_appenders.erase(r.first);
@@ -552,6 +556,8 @@ public: /* Methods: */
         Guard const guard{m_mutex};
         Appenders::iterator it{m_appenders.find(&appender)};
         assert(it != m_appenders.end());
+        assert(it->first == &appender);
+        assert(it->second.get() == &appender);
         std::unique_ptr<Appender> r{std::move(it->second)};
         m_appenders.erase(it);
         return r;
@@ -574,8 +580,12 @@ private: /* Methods: */
                       char const * const message) noexcept
     {
         Guard const guard{m_mutex};
-        for (Appenders::value_type const & a : m_appenders)
+        for (Appenders::value_type const & a : m_appenders) {
+            assert(a.first);
+            assert(a.second);
+            assert(a.first == a.second.get());
             a.second->log(time, priority, message);
+        }
     }
 
 private: /* Fields: */
