@@ -554,7 +554,7 @@ public: /* Methods: */
     inline std::unique_ptr<Appender> takeAppender(Appender & appender) noexcept
     {
         Guard const guard{m_mutex};
-        Appenders::iterator it{m_appenders.find(&appender)};
+        Appenders::iterator const it{m_appenders.find(&appender)};
         assert(it != m_appenders.end());
         assert(it->first == &appender);
         assert(it->second.get() == &appender);
