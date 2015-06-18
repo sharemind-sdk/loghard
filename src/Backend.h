@@ -374,7 +374,9 @@ public: /* Types: */
         EarlyAppender(size_t const reserveEntries = 1024u,
                       size_t const maxMessageSize = 1024u)
             : m_oomMessage{"Early log buffer full, messages skipped!"}
+            #ifndef NDEBUG
             , m_maxMessageSize{(assert(maxMessageSize >= 5u), maxMessageSize)}
+            #endif
         {
             size_t const size = reserveEntries + 1u;
             if (size < reserveEntries)
@@ -452,7 +454,9 @@ public: /* Types: */
         std::vector<std::string> m_freeMessages;
         std::string m_oomMessage;
         bool m_oom = false;
+        #ifndef NDEBUG
         size_t const m_maxMessageSize;
+        #endif
 
     }; /* class EarlyAppender */
 
