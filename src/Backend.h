@@ -132,7 +132,7 @@ public: /* Types: */
         SHAREMIND_DEFINE_EXCEPTION_CONST_MSG(
                 Exception,
                 MultipleSyslogAppenderException,
-                "Multiple Syslog appenders not allowed!");
+                "Multiple Syslog active appenders per process not allowed!");
 
     public: /* Methods: */
 
@@ -142,16 +142,9 @@ public: /* Types: */
             : m_ident{std::move(ident)}
             , m_logopt{logopt}
             , m_facility{facility}
-        {}
+        { setEnabled_(true); }
 
-        inline ~SyslogAppender() noexcept override { closelog(); }
-
-        void activate(Appenders const & appenders) override {
-            if (appenders.findFirstAppenderOfType<SyslogAppender>()
-                    != appenders.end())
-                throw MultipleSyslogAppenderException{};
-            openlog(m_ident.c_str(), m_logopt, m_facility);
-        }
+        inline ~SyslogAppender() noexcept override { setEnabled_(false); }
 
         inline void log(timeval,
                         Priority const priority,
@@ -161,6 +154,22 @@ public: /* Types: */
                 LOG_EMERG, LOG_ERR, LOG_WARNING, LOG_INFO, LOG_DEBUG, LOG_DEBUG
             };
             syslog(priorities[static_cast<unsigned>(priority)], "%s", message);
+        }
+
+    private: /* Methods: */
+
+        inline void setEnabled_(bool const enable) const {
+            static SyslogAppender const * singleInstance = nullptr;
+            if (enable) {
+                if (singleInstance)
+                    throw MultipleSyslogAppenderException{};
+                singleInstance = this;
+                ::openlog(m_ident.c_str(), m_logopt, m_facility);
+            } else {
+                assert(singleInstance == this);
+                ::closelog();
+                singleInstance = nullptr;
+            }
         }
 
     private: /* Fields: */
