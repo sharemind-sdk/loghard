@@ -284,21 +284,7 @@ public: /* Types: */
 
     class StdAppender: public Appender {
 
-    public: /* Types: */
-
-        SHAREMIND_DEFINE_EXCEPTION(std::exception, Exception);
-        SHAREMIND_DEFINE_EXCEPTION_CONST_MSG(
-                Exception,
-                MultipleStdAppenderException,
-                "Multiple Std appenders not allowed!");
-
     public: /* Methods: */
-
-        void activate(Appenders const & appenders) override {
-            if (appenders.findFirstAppenderOfType<StdAppender>()
-                    != appenders.end())
-                throw MultipleStdAppenderException{};
-        }
 
         inline void log(timeval time,
                         Priority const priority,
