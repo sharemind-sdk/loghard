@@ -409,14 +409,18 @@ public: /* Methods: */
     }
 
     template <Priority PRIORITY = Priority::Error, typename Formatter>
-    inline void printCurrentException(Formatter formatter = Formatter{})
+    inline void printCurrentException(Formatter && formatter = Formatter{})
             const noexcept
     {
         std::exception_ptr const e{std::current_exception()};
         if (!e)
             return;
         size_t levels = 1u;
-        printException__<PRIORITY, Formatter>(e, 1u, levels, formatter);
+        printException__<PRIORITY, Formatter>(
+                       e,
+                       1u,
+                       levels,
+                       std::forward<Formatter>(formatter));
     }
 
 private: /* Methods: */
@@ -425,7 +429,7 @@ private: /* Methods: */
     inline void printException__(std::exception_ptr const e,
                                  size_t const levelNow,
                                  size_t & totalLevels,
-                                 Formatter & formatter) const noexcept
+                                 Formatter && formatter) const noexcept
     {
         assert(e);
         try {
@@ -433,10 +437,10 @@ private: /* Methods: */
         } catch (std::nested_exception const & e2) {
             std::exception_ptr const ne{e2.nested_ptr()};
             if (ne)
-                printException__<PRIORITY, Formatter>(ne,
-                                                      levelNow + 1u,
-                                                      ++totalLevels,
-                                                      formatter);
+                printException__<PRIORITY, Formatter &>(ne,
+                                                        levelNow + 1u,
+                                                        ++totalLevels,
+                                                        formatter);
         } catch (...) {}
         formatter(levelNow,
                   const_cast<size_t const &>(totalLevels),
