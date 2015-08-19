@@ -121,10 +121,11 @@ public: /* Types: */
 
     public: /* Methods: */
 
-        inline SyslogAppender(std::string ident,
+        template <typename Ident>
+        inline SyslogAppender(Ident && ident,
                               int const logopt,
                               int const facility)
-            : m_ident{std::move(ident)}
+            : m_ident{std::forward<Ident>(ident)}
             , m_logopt{logopt}
             , m_facility{facility}
         { setEnabled_(true); }
@@ -300,10 +301,11 @@ public: /* Types: */
 
     public: /* Methods: */
 
-        FileAppender(std::string const path,
+        template <typename Path>
+        FileAppender(Path && path,
                      OpenMode const openMode,
                      mode_t const flags = 0644)
-            : m_path{std::move(path)}
+            : m_path{std::forward<Path>(path)}
             , m_fd{open(m_path.c_str(),
                         // No O_SYNC since it would hurt performance badly
                         O_WRONLY | O_CREAT | O_APPEND | O_NOCTTY
