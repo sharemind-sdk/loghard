@@ -341,10 +341,6 @@ public: /* Types: */
         SHAREMIND_DEFINE_EXCEPTION(std::exception, Exception);
         SHAREMIND_DEFINE_EXCEPTION_CONST_MSG(
                 Exception,
-                MultipleEarlyAppenderException,
-                "Multiple early appenders not allowed!");
-        SHAREMIND_DEFINE_EXCEPTION_CONST_MSG(
-                Exception,
                 TooManyEntriesException,
                 "Maximum log entry reservation size exceeded!");
 
@@ -374,12 +370,6 @@ public: /* Types: */
         }
 
         LogEntries const & entries() const noexcept { return m_entries; }
-
-        void activate(Appenders const & appenders) override {
-            if (appenders.findFirstAppenderOfType<EarlyAppender>()
-                    != appenders.end())
-                throw MultipleEarlyAppenderException{};
-        }
 
         inline void log(timeval time,
                         Priority const priority,
