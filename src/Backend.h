@@ -57,28 +57,13 @@ public: /* Types: */
     using Lock = std::unique_lock<Mutex>;
 
     class Appender;
-    class Appenders: public std::map<Appender *, std::unique_ptr<Appender> > {
-
-    public: /* Methods: */
-
-        template <typename AppenderType>
-        const_iterator findFirstAppenderOfType() const noexcept {
-            const_iterator it{begin()};
-            for (; it != end(); ++it)
-                if (dynamic_cast<AppenderType *>(it->second.get()))
-                    return it;
-            return it;
-        }
-
-    };
+    using Appenders = std::map<Appender *, std::unique_ptr<Appender> >;
 
     class Appender {
 
     public: /* Methods: */
 
         virtual ~Appender() noexcept {}
-
-        virtual void activate(Appenders const & appenders) { (void) appenders; }
 
         virtual void log(timeval time,
                          Priority priority,
@@ -111,7 +96,7 @@ public: /* Types: */
             : m_backend SHAREMIND_GCCPR50025_WORKAROUND(backend)
         {}
 
-        /// \todo Implement activate() to check for loops.
+        /// \todo Check for backend loops.
 
         inline void log(timeval time,
                         Priority const priority,
@@ -515,7 +500,6 @@ public: /* Methods: */
         assert(r.first->first == &a);
         assert(!r.first->second);
         try {
-            a.activate(m_appenders);
             r.first->second.swap(appenderPtr);
             assert(r.first->second.get() == &a);
             assert(r.first->second.get() == r.first->first);
