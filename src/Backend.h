@@ -54,6 +54,12 @@ private: /* Types: */
 
 public: /* Types: */
 
+    SHAREMIND_DEFINE_EXCEPTION(std::exception, Exception);
+    SHAREMIND_DEFINE_EXCEPTION_CONST_MSG(
+            Exception,
+            AddAppenderException,
+            "Failed to add appender for logging!");
+
     using Lock = std::unique_lock<Mutex>;
 
     class Appender;
@@ -168,13 +174,25 @@ public: /* Types: */
 
     class CFileAppender: public Appender {
 
+    public: /* Types: */
+
+        SHAREMIND_DEFINE_EXCEPTION(std::exception, Exception);
+        SHAREMIND_DEFINE_EXCEPTION_CONST_MSG(
+                Exception,
+                InvalidFileException,
+                "Invalid FILE handle given for logging!");
+
     public: /* Methods: */
 
         CFileAppender(FILE * const file)
             : m_fd(fileno(file))
         {
-            if (m_fd == -1)
-                throw std::system_error(errno, std::system_category());
+            try {
+                if (m_fd == -1)
+                    throw std::system_error(errno, std::system_category());
+            } catch (...) {
+                std::throw_with_nested(InvalidFileException{});
+            }
         }
 
         inline void log(timeval time,
@@ -299,6 +317,12 @@ public: /* Types: */
 
         enum OpenMode { APPEND, OVERWRITE };
 
+        SHAREMIND_DEFINE_EXCEPTION(std::exception, Exception);
+        SHAREMIND_DEFINE_EXCEPTION_CONST_MSG(
+                Exception,
+                FileOpenException,
+                "Failed to open file for logging!");
+
     public: /* Methods: */
 
         template <typename Path>
@@ -312,8 +336,12 @@ public: /* Types: */
                         | ((openMode == OVERWRITE) ? O_TRUNC : 0u),
                         flags)}
         {
-            if (m_fd == -1)
-                throw std::system_error{errno, std::system_category()};
+            try {
+                if (m_fd == -1)
+                    throw std::system_error{errno, std::system_category()};
+            } catch (...) {
+                std::throw_with_nested(FileOpenException{});
+            }
         }
 
         inline ~FileAppender() noexcept override { close(m_fd); }
@@ -492,23 +520,27 @@ public: /* Methods: */
     }
 
     inline Appender & addAppender(std::unique_ptr<Appender> && appenderPtr) {
-        assert(appenderPtr);
-        Appender & a = *appenderPtr;
-        Guard const guard{m_mutex};
-        auto const r =
-                m_appenders.insert(
-                    Appenders::value_type{&a, std::unique_ptr<Appender>{}});
-        assert(r.second);
-        assert(r.first->first == &a);
-        assert(!r.first->second);
         try {
-            r.first->second.swap(appenderPtr);
-            assert(r.first->second.get() == &a);
-            assert(r.first->second.get() == r.first->first);
-            return a;
+            assert(appenderPtr);
+            Appender & a = *appenderPtr;
+            Guard const guard{m_mutex};
+            auto const r =
+                    m_appenders.insert(
+                        Appenders::value_type{&a, std::unique_ptr<Appender>{}});
+            assert(r.second);
+            assert(r.first->first == &a);
+            assert(!r.first->second);
+            try {
+                r.first->second.swap(appenderPtr);
+                assert(r.first->second.get() == &a);
+                assert(r.first->second.get() == r.first->first);
+                return a;
+            } catch (...) {
+                m_appenders.erase(r.first);
+                throw;
+            }
         } catch (...) {
-            m_appenders.erase(r.first);
-            throw;
+            std::throw_with_nested(AddAppenderException{});
         }
     }
 
@@ -536,10 +568,15 @@ public: /* Methods: */
 
     template <typename AppenderType, typename ... Args>
     inline AppenderType & constructAndAddAppender(Args && ... args) {
-        return static_cast<AppenderType &>(
-                    addAppender(
-                        std::unique_ptr<Appender>{
-                            new AppenderType{std::forward<Args>(args)...}}));
+        try {
+            return static_cast<AppenderType &>(
+                        addAppender(
+                            std::unique_ptr<Appender>{
+                                new AppenderType{
+                                    std::forward<Args>(args)...}}));
+        } catch (...) {
+            std::throw_with_nested(AddAppenderException{});
+        }
     }
 
 private: /* Methods: */
