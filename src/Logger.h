@@ -423,6 +423,23 @@ public: /* Methods: */
                        std::forward<Formatter>(formatter));
     }
 
+    template <typename OutStream>
+    static void standardFormatter(size_t const exceptionNumber,
+                                  size_t const totalExceptions,
+                                  std::exception_ptr e,
+                                  OutStream out) noexcept
+    {
+        assert(e);
+        out << "  * Exception " << exceptionNumber << " of " << totalExceptions;
+        try {
+            std::rethrow_exception(e);
+        } catch (std::exception const & e) {
+            out << ": " << e.what();
+        } catch (...) {
+            out << " is not an std::exception!";
+        }
+    }
+
 private: /* Methods: */
 
     template <Priority PRIORITY, typename Formatter>
@@ -446,23 +463,6 @@ private: /* Methods: */
                   const_cast<size_t const &>(totalLevels),
                   e,
                   logHelper<PRIORITY>());
-    }
-
-    template <typename OutStream>
-    static void standardFormatter(size_t const exceptionNumber,
-                                  size_t const totalExceptions,
-                                  std::exception_ptr e,
-                                  OutStream out) noexcept
-    {
-        assert(e);
-        out << "  * Exception " << exceptionNumber << " of " << totalExceptions;
-        try {
-            std::rethrow_exception(e);
-        } catch (std::exception const & e) {
-            out << ": " << e.what();
-        } catch (...) {
-            out << " is not an std::exception!";
-        }
     }
 
 private: /* Fields: */
