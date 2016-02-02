@@ -24,6 +24,7 @@
 #include <sharemind/compiler-support/GccPR50025.h>
 #include <sharemind/compiler-support/GccVersion.h>
 #include <sharemind/Concat.h>
+#include <sharemind/Uuid.h>
 #include <sstream>
 #include <string>
 #include <sys/time.h>
@@ -244,6 +245,20 @@ public: /* Types: */
 
         inline LogHelperBase & operator<<(void const * const v) noexcept
         { return this->operator<<(const_cast<void *>(v)); }
+
+        inline LogHelperBase & operator<<(sharemind::Uuid const & v) noexcept {
+#define LOGHARD_UUID_V(i) Logger::Hex<uint8_t>{v.data[i]}
+            return (*this)
+                << LOGHARD_UUID_V(0u)  << LOGHARD_UUID_V(1u)
+                << LOGHARD_UUID_V(2u)  << LOGHARD_UUID_V(3u) << '-'
+                << LOGHARD_UUID_V(4u)  << LOGHARD_UUID_V(5u) << '-'
+                << LOGHARD_UUID_V(6u)  << LOGHARD_UUID_V(7u) << '-'
+                << LOGHARD_UUID_V(8u)  << LOGHARD_UUID_V(9u) << '-'
+                << LOGHARD_UUID_V(10u) << LOGHARD_UUID_V(11u)
+                << LOGHARD_UUID_V(12u) << LOGHARD_UUID_V(13u)
+                << LOGHARD_UUID_V(14u) << LOGHARD_UUID_V(15u);
+#undef LOGHARD_UUID_V
+        }
 
 #undef LOGHARD_LHB_OP
 
