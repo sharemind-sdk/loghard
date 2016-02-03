@@ -21,6 +21,7 @@
 #define LOGHARD_LOGGER_H
 
 #include <cassert>
+#include <cstdint>
 #include <sharemind/compiler-support/GccPR50025.h>
 #include <sharemind/compiler-support/GccVersion.h>
 #include <sharemind/Concat.h>
