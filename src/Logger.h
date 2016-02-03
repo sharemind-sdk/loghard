@@ -82,6 +82,8 @@ public: /* Types: */
         T const value;
     };
 
+    struct HexByte { uint8_t const value; };
+
     template <Priority> class LogHelper;
 
     class NullLogHelperBase {
@@ -211,6 +213,8 @@ public: /* Types: */
         LOGHARD_LHB_OP(Logger::Hex<unsigned long>,.value, "%lx")
         LOGHARD_LHB_OP(Logger::Hex<unsigned long long>,.value,"%llx")
 
+        LOGHARD_LHB_OP(Logger::HexByte,.value,"%02hhx")
+
         LOGHARD_LHB_OP(double,, "%f")
         LOGHARD_LHB_OP(long double,, "%Lf")
 
@@ -248,7 +252,7 @@ public: /* Types: */
         { return this->operator<<(const_cast<void *>(v)); }
 
         inline LogHelperBase & operator<<(sharemind::Uuid const & v) noexcept {
-#define LOGHARD_UUID_V(i) Logger::Hex<uint8_t>{v.data[i]}
+#define LOGHARD_UUID_V(i) Logger::HexByte{v.data[i]}
             return (*this)
                 << LOGHARD_UUID_V(0u)  << LOGHARD_UUID_V(1u)
                 << LOGHARD_UUID_V(2u)  << LOGHARD_UUID_V(3u) << '-'
