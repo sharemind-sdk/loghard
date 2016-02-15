@@ -204,7 +204,7 @@ public: /* Types: */
                                      timeval time,
                                      Priority const priority,
                                      char const * const message) noexcept
-        { logToFile__(fd, time, priority, message, [](int const){}); }
+        { logToFile_(fd, time, priority, message, [](int const){}); }
 
         static inline void logToFileSync(
                 int const fd,
@@ -212,8 +212,8 @@ public: /* Types: */
                 Priority const priority,
                 char const * const message) noexcept
         {
-            logToFile__(fd, time, priority, message,
-                        [](int const f){ fsync(f); });
+            logToFile_(fd, time, priority, message,
+                       [](int const f){ fsync(f); });
         }
 
         static inline void logToFile(FILE * file,
@@ -240,11 +240,11 @@ public: /* Types: */
     private: /* Methods: */
 
         template <typename Sync>
-        static inline void logToFile__(int const fd,
-                                       timeval time,
-                                       Priority const priority,
-                                       char const * const message,
-                                       Sync && sync) noexcept
+        static inline void logToFile_(int const fd,
+                                      timeval time,
+                                      Priority const priority,
+                                      char const * const message,
+                                      Sync && sync) noexcept
         {
             assert(fd != -1);
             assert(message);
