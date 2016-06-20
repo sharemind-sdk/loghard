@@ -17,13 +17,33 @@
  * For further information, please contact us at sharemind@cyber.ee.
  */
 
-#include "Logger.h"
+#ifndef LOGHARD_STDAPPENDER_H
+#define LOGHARD_STDAPPENDER_H
+
+#include "Appender.h"
+
+#include <unistd.h>
+#include "CFileAppender.h"
 
 
-#if LOGHARD_HAVE_TLS
 namespace LogHard {
-namespace Detail {
-thread_local char tl_message[STACK_BUFFER_SIZE] = {};
-} // namespace Detail {
-} // namespace LogHard {
-#endif
+
+class StdAppender: public Appender {
+
+public: /* Methods: */
+
+    inline void log(::timeval time,
+                    Priority const priority,
+                    char const * message) noexcept override
+    {
+        int const fn = (priority <= Priority::Warning)
+                        ? STDERR_FILENO
+                        : STDOUT_FILENO;
+        CFileAppender::logToFile(fn, time, priority, message);
+    }
+
+}; /* class StdAppender */
+
+} /* namespace LogHard { */
+
+#endif /* LOGHARD_STDAPPENDER_H */

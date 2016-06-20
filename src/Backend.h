@@ -21,21 +21,11 @@
 #define LOGHARD_BACKEND_H
 
 #include <cassert>
-#include <cstdio>
-#include <fcntl.h>
-#include <map>
 #include <memory>
 #include <mutex>
-#include <sharemind/compiler-support/GccPR50025.h>
-#include <sharemind/Exception.h>
-#include <sys/stat.h>
-#include <sys/time.h>
-#include <sys/uio.h>
-#include <syslog.h>
-#include <system_error>
+#include <set>
 #include <utility>
-#include <unistd.h>
-#include <vector>
+#include "Appender.h"
 #include "Priority.h"
 
 
@@ -47,559 +37,63 @@ class Backend {
 
     friend class Logger;
 
-private: /* Types: */
-
-    using Mutex = std::recursive_mutex;
-    using Guard = std::lock_guard<Mutex>;
-
 public: /* Types: */
 
-    SHAREMIND_DEFINE_EXCEPTION(std::exception, Exception);
-    SHAREMIND_DEFINE_EXCEPTION_CONST_MSG(
-            Exception,
-            AddAppenderException,
-            "Failed to add appender for logging!");
+    using Lock = std::unique_lock<std::recursive_mutex>;
 
-    using Lock = std::unique_lock<Mutex>;
-
-    class Appender;
-    using Appenders = std::map<Appender *, std::unique_ptr<Appender> >;
-
-    class Appender {
+    class Appender: public LogHard::Appender {
 
     public: /* Methods: */
 
-        virtual ~Appender() noexcept {}
-
-        virtual void log(timeval time,
-                         Priority priority,
-                         char const * message) noexcept = 0;
-
-        inline static char const * priorityString(Priority const priority)
-                noexcept
-        {
-            static char const strings[][8u] =
-                    { "FATAL", "ERROR", "WARNING", "INFO", "DEBUG", "DEBUG2" };
-            return &strings[static_cast<unsigned>(priority)][0u];
-        }
-
-        inline static char const * priorityStringRightPadded(
-                Priority const priority) noexcept
-        {
-            static char const strings[][8u] = {
-                "FATAL  ", "ERROR  ", "WARNING", "INFO   ", "DEBUG  ", "DEBUG2 "
-            };
-            return &strings[static_cast<unsigned>(priority)][0u];
-        }
-
-    }; /* class Appender { */
-
-    class BackendAppender: public Appender {
-
-    public: /* Methods: */
-
-        inline BackendAppender(Backend & backend)
-            : m_backend SHAREMIND_GCCPR50025_WORKAROUND(backend)
+        inline Appender(std::shared_ptr<Backend> backend)
+            : m_backend(std::move(backend))
         {}
 
         /// \todo Check for backend loops.
 
-        inline void log(timeval time,
+        inline void log(::timeval time,
                         Priority const priority,
                         char const * message) noexcept override
-        { m_backend.doLog(time, priority, message); }
+        { m_backend->doLog(time, priority, message); }
 
     private: /* Fields: */
 
-        Backend & m_backend;
+        std::shared_ptr<Backend> m_backend;
 
-    };
-
-    class SyslogAppender: public Appender {
-
-    public: /* Types: */
-
-        SHAREMIND_DEFINE_EXCEPTION(std::exception, Exception);
-        SHAREMIND_DEFINE_EXCEPTION_CONST_MSG(
-                Exception,
-                MultipleSyslogAppenderException,
-                "Multiple Syslog active appenders per process not allowed!");
-
-    public: /* Methods: */
-
-        template <typename Ident>
-        inline SyslogAppender(Ident && ident,
-                              int const logopt,
-                              int const facility)
-            : m_ident{std::forward<Ident>(ident)}
-            , m_logopt{logopt}
-            , m_facility{facility}
-        { setEnabled_(true); }
-
-        inline ~SyslogAppender() noexcept override { setEnabled_(false); }
-
-        inline void log(timeval,
-                        Priority const priority,
-                        char const * message) noexcept override
-        {
-            constexpr static int const priorities[] = {
-                LOG_EMERG, LOG_ERR, LOG_WARNING, LOG_INFO, LOG_DEBUG, LOG_DEBUG
-            };
-            syslog(priorities[static_cast<unsigned>(priority)], "%s", message);
-        }
-
-    private: /* Methods: */
-
-        inline void setEnabled_(bool const enable) const {
-            static SyslogAppender const * singleInstance = nullptr;
-            if (enable) {
-                if (singleInstance)
-                    throw MultipleSyslogAppenderException{};
-                singleInstance = this;
-                ::openlog(m_ident.c_str(), m_logopt, m_facility);
-            } else {
-                assert(singleInstance == this);
-                ::closelog();
-                singleInstance = nullptr;
-            }
-        }
-
-    private: /* Fields: */
-
-        std::string const m_ident;
-        int const m_logopt;
-        int const m_facility;
-
-    }; /* class SyslogAppender { */
-
-    class CFileAppender: public Appender {
-
-    public: /* Types: */
-
-        SHAREMIND_DEFINE_EXCEPTION(std::exception, Exception);
-        SHAREMIND_DEFINE_EXCEPTION_CONST_MSG(
-                Exception,
-                InvalidFileException,
-                "Invalid FILE handle given for logging!");
-
-    public: /* Methods: */
-
-        CFileAppender(FILE * const file)
-            : m_fd(fileno(file))
-        {
-            try {
-                if (m_fd == -1)
-                    throw std::system_error(errno, std::system_category());
-            } catch (...) {
-                std::throw_with_nested(InvalidFileException{});
-            }
-        }
-
-        inline void log(timeval time,
-                        Priority const priority,
-                        char const * message) noexcept override
-        { logToFileSync(m_fd, time, priority, message); }
-
-        static inline void logToFile(int const fd,
-                                     timeval time,
-                                     Priority const priority,
-                                     char const * const message) noexcept
-        { logToFile_(fd, time, priority, message, [](int const){}); }
-
-        static inline void logToFileSync(
-                int const fd,
-                timeval time,
-                Priority const priority,
-                char const * const message) noexcept
-        {
-            logToFile_(fd, time, priority, message,
-                       [](int const f){ fsync(f); });
-        }
-
-        static inline void logToFile(FILE * file,
-                                     timeval time,
-                                     Priority const priority,
-                                     char const * const message) noexcept
-        {
-            int const fd = fileno(file);
-            assert(fd != -1);
-            logToFile(fd, time, priority, message);
-        }
-
-        static inline void logToFileSync(
-                FILE * file,
-                timeval time,
-                Priority const priority,
-                char const * const message) noexcept
-        {
-            int const fd = fileno(file);
-            assert(fd != -1);
-            logToFileSync(fd, time, priority, message);
-        }
-
-    private: /* Methods: */
-
-        template <typename Sync>
-        static inline void logToFile_(int const fd,
-                                      timeval time,
-                                      Priority const priority,
-                                      char const * const message,
-                                      Sync && sync) noexcept
-        {
-            assert(fd != -1);
-            assert(message);
-            constexpr size_t const bufSize = sizeof("YYYY.MM.DD HH:MM:SS");
-            char timeStampBuf[bufSize];
-            {
-                tm eventTimeTm;
-                {
-                    #ifndef NDEBUG
-                    tm * const r =
-                    #endif
-                            localtime_r(&time.tv_sec, &eventTimeTm);
-                    assert(r);
-                }
-                {
-                    #ifndef NDEBUG
-                    size_t const r =
-                    #endif
-                        strftime(timeStampBuf,
-                                 bufSize,
-                                 "%Y.%m.%d %H:%M:%S",
-                                 &eventTimeTm);
-                    assert(r == bufSize - 1u);
-                }
-            }
-            iovec const iov[] = {
-                { const_cast<char *>(timeStampBuf), bufSize - 1u },
-                { const_cast<char *>(" "), 1u },
-                { const_cast<char *>(priorityStringRightPadded(priority)), 7u },
-                { const_cast<char *>(" "), 1u },
-                { const_cast<char *>(message), strlen(message) },
-                { const_cast<char *>("\n"), 1u }
-            };
-            #ifdef __GNUC__
-            #pragma GCC diagnostic push
-            #pragma GCC diagnostic ignored "-Wunused-result"
-            #endif
-            (void) writev(fd, iov, sizeof(iov) / sizeof(iovec));
-            #ifdef __GNUC__
-            #pragma GCC diagnostic pop
-            #endif
-            sync(fd);
-        }
-
-    private: /* Fields: */
-
-        int const m_fd;
-
-    }; /* class CFileAppender { */
-
-    class StdAppender: public Appender {
-
-    public: /* Methods: */
-
-        inline void log(timeval time,
-                        Priority const priority,
-                        char const * message) noexcept override
-        {
-            int const fn = (priority <= Priority::Warning)
-                            ? STDERR_FILENO
-                            : STDOUT_FILENO;
-            CFileAppender::logToFile(fn, time, priority, message);
-        }
-
-    };
-
-    class FileAppender: public Appender {
-
-    public: /* Types: */
-
-        enum OpenMode { APPEND, OVERWRITE };
-
-        SHAREMIND_DEFINE_EXCEPTION(std::exception, Exception);
-        SHAREMIND_DEFINE_EXCEPTION_CONST_MSG(
-                Exception,
-                FileOpenException,
-                "Failed to open file for logging!");
-
-    public: /* Methods: */
-
-        template <typename Path>
-        FileAppender(Path && path,
-                     OpenMode const openMode,
-                     mode_t const flags = 0644)
-            : m_path{std::forward<Path>(path)}
-            , m_fd{open(m_path.c_str(),
-                        // No O_SYNC since it would hurt performance badly
-                        O_WRONLY | O_CREAT | O_APPEND | O_NOCTTY
-                        | ((openMode == OVERWRITE) ? O_TRUNC : 0u),
-                        flags)}
-        {
-            try {
-                if (m_fd == -1)
-                    throw std::system_error{errno, std::system_category()};
-            } catch (...) {
-                std::throw_with_nested(FileOpenException{});
-            }
-        }
-
-        inline ~FileAppender() noexcept override { close(m_fd); }
-
-        inline void log(timeval time,
-                        Priority const priority,
-                        char const * message) noexcept override
-        { CFileAppender::logToFile(m_fd, time, priority, message); }
-
-    private: /* Fields: */
-
-        std::string const m_path;
-        int const m_fd;
-
-    }; /* class FileAppender */
-
-    class EarlyAppender: public Appender {
-
-    public: /* Types: */
-
-        SHAREMIND_DEFINE_EXCEPTION(std::exception, Exception);
-        SHAREMIND_DEFINE_EXCEPTION_CONST_MSG(
-                Exception,
-                TooManyEntriesException,
-                "Maximum log entry reservation size exceeded!");
-
-        struct LogEntry {
-            timeval time;
-            Priority priority;
-            std::string message;
-        };
-        using LogEntries = std::vector<LogEntry>;
-
-    public: /* Methods: */
-
-        EarlyAppender(size_t const reserveEntries = 1024u,
-                      size_t const maxMessageSize = 1024u)
-            : m_oomMessage{"Early log buffer full, messages skipped!"}
-            #ifndef NDEBUG
-            , m_maxMessageSize{(assert(maxMessageSize >= 5u), maxMessageSize)}
-            #endif
-        {
-            size_t const size = reserveEntries + 1u;
-            if (size < reserveEntries)
-                throw TooManyEntriesException{};
-            m_entries.reserve(size);
-            m_freeMessages.resize(reserveEntries);
-            for (std::string & msg : m_freeMessages)
-                msg.reserve(maxMessageSize);
-        }
-
-        LogEntries const & entries() const noexcept { return m_entries; }
-
-        inline void log(timeval time,
-                        Priority const priority,
-                        char const * message) noexcept override
-        {
-            if (m_freeMessages.empty()) {
-                if (!m_oom) {
-                    assert(m_entries.size() < m_entries.capacity());
-                    m_entries.emplace_back(LogEntry{time,
-                                                    Priority::Error,
-                                                    std::move(m_oomMessage)});
-                    m_oom = true;
-                }
-            } else {
-                assert(m_entries.size() < m_entries.capacity());
-                std::string & s = m_freeMessages.back();
-                assert(s.empty());
-                assert(s.capacity() >= m_maxMessageSize);
-                try {
-                    try {
-                        s.assign(message);
-                    } catch (...) {
-                        assert(message);
-                        assert(s.empty());
-                        assert(s.capacity() >= m_maxMessageSize);
-                        do {
-                            s.append(message, 1u);
-                        } while (*++message);
-                    }
-                } catch (...) {
-                    size_t const size = s.size();
-                    assert(size > m_maxMessageSize);
-                    static char const elide[] = "[...]";
-                    s.replace(size - 5u, 5u, elide, 5u);
-                }
-                m_entries.emplace_back(LogEntry{time, priority, std::move(s)});
-                m_freeMessages.pop_back();
-            }
-        }
-
-        inline void logToAppender(Appender & appender) const noexcept {
-            for (LogEntry const & entry : m_entries)
-                appender.log(entry.time, entry.priority, entry.message.c_str());
-        }
-
-        inline void clear() noexcept {
-            if (m_oom)
-                m_oomMessage = std::move(m_entries.back().message);
-            m_entries.pop_back();
-            for (LogEntry & entry : m_entries)
-                m_freeMessages.emplace_back(std::move(entry.message));
-            m_entries.clear();
-        }
-
-    private: /* Fields: */
-
-        LogEntries m_entries;
-        std::vector<std::string> m_freeMessages;
-        std::string m_oomMessage;
-        bool m_oom = false;
-        #ifndef NDEBUG
-        size_t const m_maxMessageSize;
-        #endif
-
-    }; /* class EarlyAppender */
+    }; /* class Appender */
 
 public: /* Methods: */
 
-    /**
-      \brief Adds a BackendAppender to the Logger.
-      \param[in] args Arguments to the BackendAppender constructor.
-    */
-    template <typename ... Args>
-    inline BackendAppender & addBackendAppender(Args && ... args) {
-        return constructAndAddAppender<BackendAppender,
-                                       Args...>(std::forward<Args>(args)...);
+    inline void addAppender(std::shared_ptr<LogHard::Appender> appenderPtr) {
+        assert(appenderPtr);
+        std::lock_guard<std::recursive_mutex> const guard(m_mutex);
+        m_appenders.insert(appenderPtr);
     }
 
-    /**
-      \brief Adds a BackendAppender to the Logger.
-      \param[in] backend The LogHard backend to pass messages to.
-    */
-    inline BackendAppender & addAppender(Backend & backend)
-    { return addBackendAppender(backend); }
-
-    /**
-      \brief Adds a SyslogAppender to the Logger.
-      \param[in] args Arguments to the SyslogAppender constructor.
-    */
-    template <typename ... Args>
-    inline SyslogAppender & addSyslogAppender(Args && ... args) {
-        return constructAndAddAppender<SyslogAppender,
-                                       Args...>(std::forward<Args>(args)...);
-    }
-
-    /**
-      \brief Adds a FileAppender to the Logger.
-      \param[in] args Arguments to the FileAppender constructor.
-    */
-    template <typename ... Args>
-    inline FileAppender & addFileAppender(Args && ... args) {
-        return constructAndAddAppender<FileAppender,
-                                       Args...>(std::forward<Args>(args)...);
-    }
-
-    /**
-      \brief Adds a CFileAppender to the Logger.
-      \param[in] args Arguments to the CFileAppender constructor.
-    */
-    template <typename ... Args>
-    inline CFileAppender & addCFileAppender(Args && ... args) {
-        return constructAndAddAppender<CFileAppender,
-                                       Args...>(std::forward<Args>(args)...);
-    }
-
-    /**
-      \brief Adds a StdAppender to the Logger.
-      \param[in] args Arguments to the StdAppender constructor.
-    */
-    template <typename ... Args>
-    inline StdAppender & addStdAppender(Args && ... args) {
-        return constructAndAddAppender<StdAppender,
-                                       Args...>(std::forward<Args>(args)...);
-    }
-
-    inline Appender & addAppender(std::unique_ptr<Appender> && appenderPtr) {
-        try {
-            assert(appenderPtr);
-            Appender & a = *appenderPtr;
-            Guard const guard{m_mutex};
-            auto const r =
-                    m_appenders.insert(
-                        Appenders::value_type{&a, std::unique_ptr<Appender>{}});
-            assert(r.second);
-            assert(r.first->first == &a);
-            assert(!r.first->second);
-            try {
-                r.first->second.swap(appenderPtr);
-                assert(r.first->second.get() == &a);
-                assert(r.first->second.get() == r.first->first);
-                return a;
-            } catch (...) {
-                m_appenders.erase(r.first);
-                throw;
-            }
-        } catch (...) {
-            std::throw_with_nested(AddAppenderException{});
-        }
-    }
-
-    /**
-      \brief Adds an EarlyAppender to the Logger.
-      \param[in] args Arguments to the EarlyAppender constructor.
-    */
-    template <typename ... Args>
-    inline EarlyAppender & addEarlyAppender(Args && ... args) {
-        return constructAndAddAppender<EarlyAppender,
-                                       Args...>(std::forward<Args>(args)...);
-    }
-
-    inline std::unique_ptr<Appender> takeAppender(Appender & appender) noexcept
+    inline void removeAppender(std::shared_ptr<LogHard::Appender> appenderPtr)
+            noexcept
     {
-        Guard const guard{m_mutex};
-        Appenders::iterator const it{m_appenders.find(&appender)};
-        assert(it != m_appenders.end());
-        assert(it->first == &appender);
-        assert(it->second.get() == &appender);
-        std::unique_ptr<Appender> r{std::move(it->second)};
-        m_appenders.erase(it);
-        return r;
-    }
-
-    template <typename AppenderType, typename ... Args>
-    inline AppenderType & constructAndAddAppender(Args && ... args) {
-        try {
-            return static_cast<AppenderType &>(
-                        addAppender(
-                            std::unique_ptr<Appender>{
-                                new AppenderType{
-                                    std::forward<Args>(args)...}}));
-        } catch (...) {
-            std::throw_with_nested(AddAppenderException{});
-        }
+        std::lock_guard<std::recursive_mutex> const guard(m_mutex);
+        m_appenders.erase(appenderPtr);
     }
 
 private: /* Methods: */
 
-    inline Lock retrieveLock() noexcept { return Lock{m_mutex}; }
+    inline Lock retrieveLock() noexcept { return Lock(m_mutex); }
 
-    inline void doLog(timeval const time,
+    inline void doLog(::timeval const time,
                       Priority const priority,
                       char const * const message) noexcept
     {
-        Guard const guard{m_mutex};
-        for (Appenders::value_type const & a : m_appenders) {
-            assert(a.first);
-            assert(a.second);
-            assert(a.first == a.second.get());
-            a.second->log(time, priority, message);
-        }
+        std::lock_guard<std::recursive_mutex> const guard(m_mutex);
+        for (auto const & a : m_appenders)
+            a->log(time, priority, message);
     }
 
 private: /* Fields: */
 
     std::recursive_mutex m_mutex;
-    Appenders m_appenders;
+    std::set<std::shared_ptr<LogHard::Appender> > m_appenders;
 
 }; /* class Backend { */
 

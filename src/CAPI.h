@@ -92,7 +92,8 @@
 
 struct LogHardBackend {
 
-    LogHard::Backend inner;
+    std::shared_ptr<LogHard::Backend> const inner{
+        std::make_shared<LogHard::Backend>()};
     SHAREMIND_RECURSIVE_LOCK_DECLARE_FIELDS;
     LOGHARD_LASTERROR_FIELDS;
 

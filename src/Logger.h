@@ -23,7 +23,7 @@
 #include <cassert>
 #include <cstdint>
 #include <cstring>
-#include <sharemind/compiler-support/GccPR50025.h>
+#include <memory>
 #include <sharemind/compiler-support/GccVersion.h>
 #include <sharemind/Concat.h>
 #include <sharemind/DebugOnly.h>
@@ -48,7 +48,7 @@
   its value in libstdc++ 4.7.4 is greater than in 4.8.0, hence it is not
   entirely reliable.
 */
-#if (defined(__clang__) && (!defined(__GLIBCXX__) \
+#if 1 || (defined(__clang__) && (!defined(__GLIBCXX__) \
                             || __GLIBCXX__ < 20130322)) || \
     (defined(SHAREMIND_GCC_VERSION) && SHAREMIND_GCC_VERSION < 40800)
 #define LOGHARD_HAVE_TLS 0
@@ -66,9 +66,6 @@ static constexpr std::size_t const STACK_BUFFER_SIZE = MAX_MESSAGE_SIZE + 4u;
 static_assert(STACK_BUFFER_SIZE > MAX_MESSAGE_SIZE, "Overflow");
 
 #if LOGHARD_HAVE_TLS
-extern thread_local std::timeval tl_time;
-extern thread_local Backend * tl_backend;
-extern thread_local std::size_t tl_offset;
 extern thread_local char tl_message[STACK_BUFFER_SIZE];
 #endif
 
@@ -100,7 +97,10 @@ public: /* Types: */
 
     private: /* Methods: */
 
-        inline NullLogHelperBase(Backend const &, char const * const) noexcept
+        template <typename BackendPtr>
+        inline NullLogHelperBase(::timeval const &,
+                                 BackendPtr &&,
+                                 char const * const) noexcept
         {}
 
     }; /* class NullLogHelperBase { */
@@ -117,14 +117,10 @@ public: /* Types: */
                 delete;
 
         inline LogHelperBase(LogHelperBase<priority> && move) noexcept
-            : m_operational(move.m_operational)
-            #if ! LOGHARD_HAVE_TLS
-            , tl_time(std::move(move.tl_time))
-            , tl_backend(move.tl_backend)
-            , tl_offset(move.tl_offset)
-            #endif
+            : m_time(std::move(move.m_time))
+            , m_backend(std::move(move.m_backend))
+            , m_offset(std::move(move.m_offset))
         {
-            move.m_operational = false;
             #if ! LOGHARD_HAVE_TLS
             using namespace ::LogHard::Detail;
             std::memcpy(tl_message, move.tl_message, STACK_BUFFER_SIZE);
@@ -134,38 +130,35 @@ public: /* Types: */
         inline LogHelperBase<priority> & operator=(
                 LogHelperBase<priority> const && move)
         {
-            m_operational = move.m_operational;
-            move.m_operational = false;
+            m_time = std::move(move.m_time);
+            m_backend = std::move(move.m_backend);
+            m_offset = std::move(move.m_offset);
             #if ! LOGHARD_HAVE_TLS
-            tl_time = std::move(move.tl_time);
-            tl_backend = move.tl_backend;
-            tl_offset = move.tl_offset;
             using namespace ::LogHard::Detail;
             std::memcpy(tl_message, move.tl_message, STACK_BUFFER_SIZE);
             #endif
         }
 
         inline ~LogHelperBase() noexcept {
-            if (!m_operational)
+            if (!m_backend)
                 return;
             using namespace ::LogHard::Detail;
-            assert(tl_offset <= STACK_BUFFER_SIZE);
-            assert(tl_offset < STACK_BUFFER_SIZE
+            assert(m_offset <= STACK_BUFFER_SIZE);
+            assert(m_offset < STACK_BUFFER_SIZE
                    || tl_message[STACK_BUFFER_SIZE - 1u] == '\0');
-            if (tl_offset < STACK_BUFFER_SIZE)
-                tl_message[tl_offset] = '\0';
-            assert(tl_backend);
-            tl_backend->doLog(std::move(tl_time), priority, tl_message);
+            if (m_offset < STACK_BUFFER_SIZE)
+                tl_message[m_offset] = '\0';
+            m_backend->doLog(std::move(m_time), priority, tl_message);
         }
 
         inline LogHelperBase & operator<<(char const v) noexcept {
-            assert(m_operational);
+            assert(m_backend);
             using namespace ::LogHard::Detail;
-            if (tl_offset <= MAX_MESSAGE_SIZE) {
-                if (tl_offset == MAX_MESSAGE_SIZE)
+            if (m_offset <= MAX_MESSAGE_SIZE) {
+                if (m_offset == MAX_MESSAGE_SIZE)
                     return elide();
-                tl_message[tl_offset] = v;
-                tl_offset++;
+                tl_message[m_offset] = v;
+                m_offset++;
             }
             return *this;
         }
@@ -175,26 +168,26 @@ public: /* Types: */
 
 #define LOGHARD_LHB_OP(valueType,valueGetter,formatString) \
     inline LogHelperBase & operator<<(valueType const v) noexcept { \
-        assert(m_operational); \
+        assert(m_backend); \
         using namespace ::LogHard::Detail; \
-        if (tl_offset > MAX_MESSAGE_SIZE) { \
-            assert(tl_offset == STACK_BUFFER_SIZE); \
+        if (m_offset > MAX_MESSAGE_SIZE) { \
+            assert(m_offset == STACK_BUFFER_SIZE); \
             return *this; \
         } \
-        std::size_t const spaceLeft = MAX_MESSAGE_SIZE - tl_offset; \
+        std::size_t const spaceLeft = MAX_MESSAGE_SIZE - m_offset; \
         if (!spaceLeft) \
             return elide(); \
-        auto const r = std::snprintf(&tl_message[tl_offset], \
-                                     spaceLeft, \
-                                     (formatString), \
-                                     v valueGetter); \
+        int const r = snprintf(&tl_message[m_offset], \
+                               spaceLeft, \
+                               (formatString), \
+                               v valueGetter); \
         if (r < 0) \
             return elide(); \
         if (static_cast<std::size_t>(r) > spaceLeft) { \
-            tl_offset = MAX_MESSAGE_SIZE; \
+            m_offset = MAX_MESSAGE_SIZE; \
             return elide(); \
         } \
-        tl_offset += static_cast<unsigned>(r); \
+        m_offset += static_cast<unsigned>(r); \
         return *this; \
     }
 
@@ -225,9 +218,9 @@ public: /* Types: */
 
         inline LogHelperBase & operator<<(char const * v) noexcept {
             assert(v);
-            assert(m_operational);
+            assert(m_backend);
             using namespace ::LogHard::Detail;
-            auto o = tl_offset;
+            auto o = m_offset;
             if (o > MAX_MESSAGE_SIZE) {
                 assert(o == STACK_BUFFER_SIZE);
                 return *this;
@@ -235,12 +228,12 @@ public: /* Types: */
             if (*v) {
                 do {
                     if (o == MAX_MESSAGE_SIZE) {
-                        tl_offset = o;
+                        m_offset = o;
                         return elide();
                     }
                     tl_message[o] = *v;
                 } while ((++o, *++v));
-                tl_offset = o;
+                m_offset = o;
             }
             return *this;
         }
@@ -271,20 +264,15 @@ public: /* Types: */
 
     private: /* Methods: */
 
-        inline LogHelperBase(Backend & backend,
+        template <typename BackendPtr>
+        inline LogHelperBase(::timeval theTime,
+                             BackendPtr && backendPtr,
                              char const * prefix) noexcept
+            : m_time(std::move(theTime))
+            , m_backend(std::forward<BackendPtr>(backendPtr))
         {
             using namespace ::LogHard::Detail;
-            { // For accuracy, take timestamp before everything else:
-                SHAREMIND_DEBUG_ONLY(auto const r =)
-                        gettimeofday(&tl_time, nullptr);
-                assert(r == 0);
-            }
-
             assert(prefix);
-
-            // Initialize other fields after timestamp:
-            tl_backend = &backend;
             if (*prefix) {
                 std::size_t o = 0u;
                 do {
@@ -292,29 +280,27 @@ public: /* Types: */
                         break;
                     tl_message[o] = *prefix;
                 } while ((++o, *++prefix));
-                tl_offset = o;
+                m_offset = o;
             } else {
-                tl_offset = 0u;
+                m_offset = 0u;
             }
-            m_operational = true;
         }
 
         inline LogHelperBase & elide() noexcept {
             using namespace ::LogHard::Detail;
-            assert(tl_offset <= MAX_MESSAGE_SIZE);
-            assert(m_operational);
-            std::memcpy(&tl_message[tl_offset], "...", 4u);
-            tl_offset = STACK_BUFFER_SIZE;
+            assert(m_offset <= MAX_MESSAGE_SIZE);
+            assert(m_backend);
+            std::memcpy(&tl_message[m_offset], "...", 4u);
+            m_offset = STACK_BUFFER_SIZE;
             return *this;
         }
 
     private: /* Fields: */
 
-        bool m_operational;
+        ::timeval m_time;
+        std::shared_ptr<Backend> m_backend;
+        std::size_t m_offset;
         #if ! LOGHARD_HAVE_TLS
-        ::timeval tl_time;
-        Backend * tl_backend;
-        std::size_t tl_offset;
         char tl_message[::LogHard::Detail::STACK_BUFFER_SIZE];
         #endif
 
@@ -331,11 +317,17 @@ public: /* Types: */
 
     private: /* Methods: */
 
-        inline LogHelper(Backend & backend,
-                         char const * const prefix) noexcept
+        template <typename BackendPtr>
+        inline LogHelper(
+                ::timeval theTime,
+                BackendPtr && backend,
+                char const * const prefix) noexcept
             : std::conditional<priority <= LOGHARD_LOGLEVEL_MAXDEBUG,
                                LogHelperBase<priority>,
-                               NullLogHelperBase>::type{backend, prefix}
+                               NullLogHelperBase>::type{
+                                    std::move(theTime),
+                                    std::forward<BackendPtr>(backend),
+                                    prefix}
         {}
 
     }; /* class LogHelper */
@@ -344,29 +336,30 @@ public: /* Types: */
 
 public: /* Methods: */
 
-    inline Logger(Backend & backend)
+    inline Logger(std::shared_ptr<Backend> backend)
             noexcept
-        : m_backend SHAREMIND_GCCPR50025_WORKAROUND(backend)
+        : m_backend(std::move(backend))
     {}
 
     template <typename Arg, typename ... Args>
-    inline Logger(Backend & backend, Arg && arg, Args && ... args)
-            noexcept
-        : m_backend SHAREMIND_GCCPR50025_WORKAROUND(backend)
+    inline Logger(std::shared_ptr<Backend> backend,
+                  Arg && arg,
+                  Args && ... args) noexcept
+        : m_backend(std::move(backend))
         , m_prefix{sharemind::concat(std::forward<Arg>(arg),
                                      std::forward<Args>(args)...,
                                      ' ')}
     {}
 
     inline Logger(Logger const & logger) noexcept
-        : m_backend SHAREMIND_GCCPR50025_WORKAROUND(logger.m_backend)
+        : m_backend(logger.m_backend)
         , m_prefix{logger.m_prefix}
         , m_oldPrefix{logger.m_prefix}
     {}
 
     template <typename Arg, typename ... Args>
     inline Logger(Logger const & logger, Arg && arg, Args && ... args) noexcept
-        : m_backend SHAREMIND_GCCPR50025_WORKAROUND(logger.m_backend)
+        : m_backend(logger.m_backend)
         , m_prefix{logger.m_prefix.empty()
                    ? sharemind::concat(std::forward<Arg>(arg),
                                        std::forward<Args>(args)...,
@@ -385,11 +378,13 @@ public: /* Methods: */
         , m_oldPrefix{logger.m_prefix}
     {}
 
-    inline Backend & backend() const noexcept { return m_backend; }
+    inline std::shared_ptr<Backend> backend() const noexcept
+    { return m_backend; }
+
     inline std::string const & prefix() const noexcept { return m_prefix; }
 
     inline Backend::Lock retrieveBackendLock() const noexcept
-    { return m_backend.retrieveLock(); }
+    { return m_backend->retrieveLock(); }
 
     template <typename ... Args> void setPrefix(Args && ... args) {
         m_prefix = sharemind::concat(m_oldPrefix,
@@ -399,7 +394,14 @@ public: /* Methods: */
 
     template <Priority PRIORITY>
     inline LogHelper<PRIORITY> logHelper() const noexcept
-    { return {m_backend, m_prefix.c_str()}; }
+    { return logHelper<PRIORITY>(now()); }
+
+    template <Priority PRIORITY>
+    inline LogHelper<PRIORITY> logHelper(::timeval theTime) const noexcept {
+        return LogHelper<PRIORITY>(std::move(theTime),
+                                   m_backend,
+                                   m_prefix.c_str());
+    }
 
     inline LogHelper<Priority::Fatal> fatal() const noexcept
     { return logHelper<Priority::Fatal>(); }
@@ -425,22 +427,41 @@ public: /* Methods: */
     template <Priority PRIORITY = Priority::Error>
     inline void printCurrentException() const noexcept {
         printCurrentException<PRIORITY>(
+                now(),
+                &Logger::standardFormatter<LogHelper<PRIORITY> >);
+    }
+
+    template <Priority PRIORITY = Priority::Error>
+    inline void printCurrentException(::timeval theTime) const noexcept {
+        printCurrentException<PRIORITY>(
+                std::move(theTime),
                 &Logger::standardFormatter<LogHelper<PRIORITY> >);
     }
 
     template <Priority PRIORITY = Priority::Error, typename Formatter>
-    inline void printCurrentException(Formatter && formatter = Formatter{})
+    inline void printCurrentException(Formatter && formatter) const noexcept
+    { return printCurrentException(now(), std::forward<Formatter>(formatter)); }
+
+    template <Priority PRIORITY = Priority::Error, typename Formatter>
+    inline void printCurrentException(::timeval theTime, Formatter && formatter)
             const noexcept
     {
         std::exception_ptr const e{std::current_exception()};
         if (!e)
             return;
+        auto printer =
+            [this, &formatter, theTime](std::size_t const exceptionNumber,
+                                        std::size_t const totalExceptions,
+                                        std::exception_ptr e)
+            {
+                return formatter(std::move(exceptionNumber),
+                                 std::move(totalExceptions),
+                                 std::move(e),
+                                 logHelper<PRIORITY>(theTime));
+            };
+
         std::size_t levels = 1u;
-        printException_<PRIORITY, Formatter>(
-                       e,
-                       1u,
-                       levels,
-                       std::forward<Formatter>(formatter));
+        printException_(e, 1u, levels, printer);
     }
 
     template <typename OutStream>
@@ -462,11 +483,18 @@ public: /* Methods: */
 
 private: /* Methods: */
 
-    template <Priority PRIORITY, typename Formatter>
+    inline static ::timeval now() noexcept {
+        ::timeval theTime;
+        SHAREMIND_DEBUG_ONLY(auto const r =) ::gettimeofday(&theTime, nullptr);
+        assert(r == 0);
+        return theTime;
+    }
+
+    template <typename Printer>
     inline void printException_(std::exception_ptr const e,
                                 std::size_t const levelNow,
                                 std::size_t & totalLevels,
-                                Formatter && formatter) const noexcept
+                                Printer && printer) const noexcept
     {
         assert(e);
         try {
@@ -474,20 +502,17 @@ private: /* Methods: */
         } catch (std::nested_exception const & e2) {
             std::exception_ptr const ne{e2.nested_ptr()};
             if (ne)
-                printException_<PRIORITY, Formatter &>(ne,
-                                                       levelNow + 1u,
-                                                       ++totalLevels,
-                                                       formatter);
+                printException_(ne, levelNow + 1u, ++totalLevels, printer);
         } catch (...) {}
-        formatter(levelNow,
-                  const_cast<std::size_t const &>(totalLevels),
-                  e,
-                  logHelper<PRIORITY>());
+        std::forward<Printer>(printer)(
+                       levelNow,
+                       static_cast<std::size_t const>(totalLevels),
+                       e);
     }
 
 private: /* Fields: */
 
-    Backend & m_backend;
+    std::shared_ptr<Backend> m_backend;
     std::string m_prefix;
     std::string const m_oldPrefix;
 

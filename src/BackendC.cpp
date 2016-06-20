@@ -19,7 +19,11 @@
 
 #include "BackendC.h"
 
+#include <memory>
 #include "CAPI.h"
+#include "CFileAppender.h"
+#include "FileAppender.h"
+#include "StdAppender.h"
 
 
 extern "C" {
@@ -57,20 +61,10 @@ void LogHardBackend_free(LogHardBackend * backend) {
     LOGHARD_NOEXCEPT_END("LHBd")
 }
 
-void * LogHardBackend_cxx(LogHardBackend * backend) {
-    assert(backend);
-    return &backend->inner;
-}
-
-const void * LogHardBackend_cxxConst(const LogHardBackend * backend) {
-    assert(backend);
-    return &backend->inner;
-}
-
 bool LogHardBackend_addStdAppender(LogHardBackend * backend) {
     assert(backend);
     LOGHARD_EXCEPTIONS_TO_C_BEGIN
-    backend->inner.addStdAppender();
+    backend->inner->addAppender(std::make_shared<LogHard::StdAppender>());
     return true;
     LOGHARD_EXCEPTIONS_TO_C_END(LogHardBackend,backend, false)
 }
@@ -78,7 +72,7 @@ bool LogHardBackend_addStdAppender(LogHardBackend * backend) {
 bool LogHardBackend_addCFileAppender(LogHardBackend * backend, FILE * file) {
     assert(backend);
     LOGHARD_EXCEPTIONS_TO_C_BEGIN
-    backend->inner.addCFileAppender(file);
+    backend->inner->addAppender(std::make_shared<LogHard::CFileAppender>(file));
     return true;
     LOGHARD_EXCEPTIONS_TO_C_END(LogHardBackend,backend, false)
 }
@@ -90,10 +84,12 @@ bool LogHardBackend_addFileAppender(LogHardBackend * backend,
     assert(backend);
     assert(filename);
     LOGHARD_EXCEPTIONS_TO_C_BEGIN
-    backend->inner.addFileAppender(filename,
-                                   append
-                                   ? LogHard::Backend::FileAppender::APPEND
-                                   : LogHard::Backend::FileAppender::OVERWRITE);
+    backend->inner->addAppender(
+                std::make_shared<LogHard::FileAppender>(
+                    filename,
+                    append
+                    ? LogHard::FileAppender::APPEND
+                    : LogHard::FileAppender::OVERWRITE));
     return true;
     LOGHARD_EXCEPTIONS_TO_C_END(LogHardBackend,backend, false)
 }
