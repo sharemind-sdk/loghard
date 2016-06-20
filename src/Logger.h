@@ -22,6 +22,7 @@
 
 #include <cassert>
 #include <cstdint>
+#include <cstring>
 #include <sharemind/compiler-support/GccPR50025.h>
 #include <sharemind/compiler-support/GccVersion.h>
 #include <sharemind/Concat.h>
