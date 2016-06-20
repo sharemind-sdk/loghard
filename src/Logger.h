@@ -60,15 +60,15 @@ namespace LogHard {
 
 namespace Detail {
 
-static constexpr size_t const MAX_MESSAGE_SIZE = 1024u * 16u;
+static constexpr std::size_t const MAX_MESSAGE_SIZE = 1024u * 16u;
 static_assert(MAX_MESSAGE_SIZE >= 1u, "Invalid MAX_MESSAGE_SIZE");
-static constexpr size_t const STACK_BUFFER_SIZE = MAX_MESSAGE_SIZE + 4u;
+static constexpr std::size_t const STACK_BUFFER_SIZE = MAX_MESSAGE_SIZE + 4u;
 static_assert(STACK_BUFFER_SIZE > MAX_MESSAGE_SIZE, "Overflow");
 
 #if LOGHARD_HAVE_TLS
-extern thread_local timeval tl_time;
+extern thread_local std::timeval tl_time;
 extern thread_local Backend * tl_backend;
-extern thread_local size_t tl_offset;
+extern thread_local std::size_t tl_offset;
 extern thread_local char tl_message[STACK_BUFFER_SIZE];
 #endif
 
@@ -127,7 +127,7 @@ public: /* Types: */
             move.m_operational = false;
             #if ! LOGHARD_HAVE_TLS
             using namespace ::LogHard::Detail;
-            memcpy(tl_message, move.tl_message, STACK_BUFFER_SIZE);
+            std::memcpy(tl_message, move.tl_message, STACK_BUFFER_SIZE);
             #endif
         }
 
@@ -141,7 +141,7 @@ public: /* Types: */
             tl_backend = move.tl_backend;
             tl_offset = move.tl_offset;
             using namespace ::LogHard::Detail;
-            memcpy(tl_message, move.tl_message, STACK_BUFFER_SIZE);
+            std::memcpy(tl_message, move.tl_message, STACK_BUFFER_SIZE);
             #endif
         }
 
@@ -181,16 +181,16 @@ public: /* Types: */
             assert(tl_offset == STACK_BUFFER_SIZE); \
             return *this; \
         } \
-        size_t const spaceLeft = MAX_MESSAGE_SIZE - tl_offset; \
+        std::size_t const spaceLeft = MAX_MESSAGE_SIZE - tl_offset; \
         if (!spaceLeft) \
             return elide(); \
-        int const r = snprintf(&tl_message[tl_offset], \
-                               spaceLeft, \
-                               (formatString), \
-                               v valueGetter); \
+        auto const r = std::snprintf(&tl_message[tl_offset], \
+                                     spaceLeft, \
+                                     (formatString), \
+                                     v valueGetter); \
         if (r < 0) \
             return elide(); \
-        if (static_cast<size_t>(r) > spaceLeft) { \
+        if (static_cast<std::size_t>(r) > spaceLeft) { \
             tl_offset = MAX_MESSAGE_SIZE; \
             return elide(); \
         } \
@@ -227,7 +227,7 @@ public: /* Types: */
             assert(v);
             assert(m_operational);
             using namespace ::LogHard::Detail;
-            size_t o = tl_offset;
+            auto o = tl_offset;
             if (o > MAX_MESSAGE_SIZE) {
                 assert(o == STACK_BUFFER_SIZE);
                 return *this;
@@ -286,7 +286,7 @@ public: /* Types: */
             // Initialize other fields after timestamp:
             tl_backend = &backend;
             if (*prefix) {
-                size_t o = 0u;
+                std::size_t o = 0u;
                 do {
                     if (o == MAX_MESSAGE_SIZE)
                         break;
@@ -303,7 +303,7 @@ public: /* Types: */
             using namespace ::LogHard::Detail;
             assert(tl_offset <= MAX_MESSAGE_SIZE);
             assert(m_operational);
-            memcpy(&tl_message[tl_offset], "...", 4u);
+            std::memcpy(&tl_message[tl_offset], "...", 4u);
             tl_offset = STACK_BUFFER_SIZE;
             return *this;
         }
@@ -312,9 +312,9 @@ public: /* Types: */
 
         bool m_operational;
         #if ! LOGHARD_HAVE_TLS
-        timeval tl_time;
+        ::timeval tl_time;
         Backend * tl_backend;
-        size_t tl_offset;
+        std::size_t tl_offset;
         char tl_message[::LogHard::Detail::STACK_BUFFER_SIZE];
         #endif
 
@@ -435,7 +435,7 @@ public: /* Methods: */
         std::exception_ptr const e{std::current_exception()};
         if (!e)
             return;
-        size_t levels = 1u;
+        std::size_t levels = 1u;
         printException_<PRIORITY, Formatter>(
                        e,
                        1u,
@@ -444,8 +444,8 @@ public: /* Methods: */
     }
 
     template <typename OutStream>
-    static void standardFormatter(size_t const exceptionNumber,
-                                  size_t const totalExceptions,
+    static void standardFormatter(std::size_t const exceptionNumber,
+                                  std::size_t const totalExceptions,
                                   std::exception_ptr e,
                                   OutStream out) noexcept
     {
@@ -464,8 +464,8 @@ private: /* Methods: */
 
     template <Priority PRIORITY, typename Formatter>
     inline void printException_(std::exception_ptr const e,
-                                size_t const levelNow,
-                                size_t & totalLevels,
+                                std::size_t const levelNow,
+                                std::size_t & totalLevels,
                                 Formatter && formatter) const noexcept
     {
         assert(e);
@@ -480,7 +480,7 @@ private: /* Methods: */
                                                        formatter);
         } catch (...) {}
         formatter(levelNow,
-                  const_cast<size_t const &>(totalLevels),
+                  const_cast<std::size_t const &>(totalLevels),
                   e,
                   logHelper<PRIORITY>());
     }

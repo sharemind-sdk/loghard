@@ -23,9 +23,9 @@
 #if LOGHARD_HAVE_TLS
 namespace LogHard {
 namespace Detail {
-thread_local timeval tl_time = { 0u, 0u };
+thread_local ::timeval tl_time = { 0u, 0u };
 thread_local Backend * tl_backend = nullptr;
-thread_local size_t tl_offset = 0u;
+thread_local std::size_t tl_offset = 0u;
 thread_local char tl_message[STACK_BUFFER_SIZE] = {};
 } // namespace Detail {
 } // namespace LogHard {
