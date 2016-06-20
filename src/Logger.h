@@ -26,6 +26,7 @@
 #include <sharemind/compiler-support/GccPR50025.h>
 #include <sharemind/compiler-support/GccVersion.h>
 #include <sharemind/Concat.h>
+#include <sharemind/DebugOnly.h>
 #include <sharemind/Uuid.h>
 #include <sstream>
 #include <string>
@@ -275,9 +276,7 @@ public: /* Types: */
         {
             using namespace ::LogHard::Detail;
             { // For accuracy, take timestamp before everything else:
-                #ifndef NDEBUG
-                int const r =
-                #endif
+                SHAREMIND_DEBUG_ONLY(auto const r =)
                         gettimeofday(&tl_time, nullptr);
                 assert(r == 0);
             }
