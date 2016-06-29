@@ -354,7 +354,7 @@ public: /* Methods: */
     inline Logger(Logger const & logger) noexcept
         : m_backend(logger.m_backend)
         , m_prefix{logger.m_prefix}
-        , m_oldPrefix{logger.m_prefix}
+        , m_basePrefix{logger.m_prefix}
     {}
 
     template <typename Arg, typename ... Args>
@@ -375,7 +375,7 @@ public: /* Methods: */
                            std::forward<Arg>(arg),
                            std::forward<Args>(args)...,
                            ' ')}
-        , m_oldPrefix{logger.m_prefix}
+        , m_basePrefix{logger.m_prefix}
     {}
 
     inline std::shared_ptr<Backend> backend() const noexcept
@@ -383,11 +383,13 @@ public: /* Methods: */
 
     inline std::string const & prefix() const noexcept { return m_prefix; }
 
+    inline std::string const & basePrefix() const noexcept { return m_prefix; }
+
     inline Backend::Lock retrieveBackendLock() const noexcept
     { return m_backend->retrieveLock(); }
 
     template <typename ... Args> void setPrefix(Args && ... args) {
-        m_prefix = sharemind::concat(m_oldPrefix,
+        m_prefix = sharemind::concat(m_basePrefix,
                                      std::forward<Args>(args)...,
                                      ' ');
     }
@@ -517,7 +519,7 @@ private: /* Fields: */
 
     std::shared_ptr<Backend> m_backend;
     std::string m_prefix;
-    std::string const m_oldPrefix;
+    std::string const m_basePrefix;
 
 }; /* class Logger { */
 
