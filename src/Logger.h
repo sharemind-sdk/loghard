@@ -97,11 +97,8 @@ public: /* Types: */
 
     private: /* Methods: */
 
-        template <typename BackendPtr>
-        inline NullLogHelperBase(::timeval const &,
-                                 BackendPtr &&,
-                                 char const * const) noexcept
-        {}
+        template <typename ... Args>
+        inline NullLogHelperBase(Args && ...) noexcept {}
 
     }; /* class NullLogHelperBase { */
 
