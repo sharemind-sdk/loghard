@@ -263,14 +263,30 @@ public: /* Types: */
 
         template <typename BackendPtr>
         inline LogHelperBase(::timeval theTime,
+                             BackendPtr && backendPtr) noexcept
+            : m_time(std::move(theTime))
+            , m_backend(std::forward<BackendPtr>(backendPtr))
+            , m_offset(0u)
+        {}
+
+        template <typename BackendPtr>
+        inline LogHelperBase(::timeval theTime,
+                             BackendPtr && backendPtr,
+                             std::string const & prefix) noexcept
+            : LogHelperBase(std::move(theTime),
+                            std::forward<BackendPtr>(backendPtr),
+                            prefix.c_str())
+        {}
+
+        template <typename BackendPtr>
+        inline LogHelperBase(::timeval theTime,
                              BackendPtr && backendPtr,
                              char const * prefix) noexcept
             : m_time(std::move(theTime))
             , m_backend(std::forward<BackendPtr>(backendPtr))
         {
             using namespace ::LogHard::Detail;
-            assert(prefix);
-            if (*prefix) {
+            if (prefix && *prefix) {
                 std::size_t o = 0u;
                 do {
                     if (o == MAX_MESSAGE_SIZE)
@@ -314,17 +330,17 @@ public: /* Types: */
 
     private: /* Methods: */
 
-        template <typename BackendPtr>
+        template <typename BackendPtr, typename ... Args>
         inline LogHelper(
                 ::timeval theTime,
                 BackendPtr && backend,
-                char const * const prefix) noexcept
+                Args && ... args) noexcept
             : std::conditional<priority <= LOGHARD_LOGLEVEL_MAXDEBUG,
                                LogHelperBase<priority>,
                                NullLogHelperBase>::type{
                                     std::move(theTime),
                                     std::forward<BackendPtr>(backend),
-                                    prefix}
+                                    std::forward<Args>(args)...}
         {}
 
     }; /* class LogHelper */
@@ -396,11 +412,8 @@ public: /* Methods: */
     { return logHelper<PRIORITY>(now()); }
 
     template <Priority PRIORITY>
-    inline LogHelper<PRIORITY> logHelper(::timeval theTime) const noexcept {
-        return LogHelper<PRIORITY>(std::move(theTime),
-                                   m_backend,
-                                   m_prefix.c_str());
-    }
+    inline LogHelper<PRIORITY> logHelper(::timeval theTime) const noexcept
+    { return LogHelper<PRIORITY>(std::move(theTime), m_backend, m_prefix); }
 
     inline LogHelper<Priority::Fatal> fatal() const noexcept
     { return logHelper<Priority::Fatal>(); }
