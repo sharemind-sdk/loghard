@@ -407,13 +407,16 @@ public: /* Methods: */
                                      ' ');
     }
 
-    template <Priority PRIORITY>
+    template <Priority PRIORITY, bool usePrefix = true>
     inline LogHelper<PRIORITY> logHelper() const noexcept
-    { return logHelper<PRIORITY>(now()); }
+    { return logHelper<PRIORITY, usePrefix>(now()); }
 
-    template <Priority PRIORITY>
-    inline LogHelper<PRIORITY> logHelper(::timeval theTime) const noexcept
-    { return LogHelper<PRIORITY>(std::move(theTime), m_backend, m_prefix); }
+    template <Priority PRIORITY, bool usePrefix = true>
+    inline LogHelper<PRIORITY> logHelper(::timeval theTime) const noexcept {
+        return usePrefix
+               ? LogHelper<PRIORITY>(std::move(theTime), m_backend, m_prefix)
+               : LogHelper<PRIORITY>(std::move(theTime), m_backend);
+    }
 
     inline LogHelper<Priority::Fatal> fatal() const noexcept
     { return logHelper<Priority::Fatal>(); }
