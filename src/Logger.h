@@ -461,8 +461,10 @@ public: /* Methods: */
     }
 
     template <Priority PRIORITY = Priority::Error, typename Formatter>
-    inline void printCurrentException(::timeval theTime, Formatter && formatter)
-            const noexcept
+    inline void printCurrentException(
+                    ::timeval theTime,
+                    Formatter && formatter = Formatter{}
+                    ) const noexcept
     {
         std::exception_ptr const e{std::current_exception()};
         if (!e)
