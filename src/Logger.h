@@ -460,7 +460,8 @@ public: /* Methods: */
                        std::forward<Formatter>(formatter));
     }
 
-    template <Priority PRIORITY = Priority::Error, typename Formatter>
+    // TODO: possibly bad fix to put Fromatter = void in here
+    template <Priority PRIORITY = Priority::Error, typename Formatter = void>
     inline void printCurrentException(::timeval theTime, Formatter && formatter)
             const noexcept
     {
