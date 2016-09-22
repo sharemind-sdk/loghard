@@ -20,6 +20,7 @@
 #ifndef LOGHARD_BACKENDC_H
 #define LOGHARD_BACKENDC_H
 
+#include <sharemind/DebugOnly.h>
 #include <sharemind/extern_c.h>
 #include <sharemind/lasterror.h>
 #include "ErrorC.h"
@@ -36,21 +37,22 @@ void LogHardLogger_free(LogHardLogger * logger) __attribute__ ((nonnull(1)));
 SHAREMIND_LASTERROR_PUBLIC_FUNCTIONS_DECLARE(LogHardLogger,, LogHardError,)
 
 LogHardBackend * LogHardLogger_backend(const LogHardLogger * logger)
-         __attribute__ ((nonnull(1)));
+         SHAREMIND_NDEBUG_ONLY(__attribute__ ((nonnull(1))));
 
 void * LogHardLogger_cxx(LogHardLogger * logger)
-         __attribute__ ((nonnull(1)));
+         SHAREMIND_NDEBUG_ONLY(__attribute__ ((nonnull(1))));
 const void * LogHardLogger_cxxConst(const LogHardLogger * logger)
-         __attribute__ ((nonnull(1)));
+         SHAREMIND_NDEBUG_ONLY(__attribute__ ((nonnull(1))));
 
 LogHardLogger * LogHardLogger_newLogger(LogHardLogger * logger,
                                         const char * prefix)
-         __attribute__ ((nonnull(1, 2), warn_unused_result));
+         __attribute__ ((SHAREMIND_NDEBUG_ONLY(nonnull(1, 2),)
+                         warn_unused_result));
 
 void LogHardLogger_log(const LogHardLogger * logger,
                        LogHardPriority priority,
                        const char * message)
-         __attribute__ ((nonnull(1, 3)));
+         SHAREMIND_NDEBUG_ONLY(__attribute__ ((nonnull(1, 2))));
 
 SHAREMIND_EXTERN_C_END
 

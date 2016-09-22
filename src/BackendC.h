@@ -20,6 +20,7 @@
 #ifndef LOGHARD_BACKENDC_H
 #define LOGHARD_BACKENDC_H
 
+#include <sharemind/DebugOnly.h>
 #include <sharemind/extern_c.h>
 #include <sharemind/lasterror.h>
 #include <stdbool.h>
@@ -43,25 +44,26 @@ SHAREMIND_LASTERROR_PUBLIC_FUNCTIONS_DECLARE(LogHardBackend,, LogHardError,)
 
 
 void * LogHardBackend_cxx(LogHardBackend * backend)
-         __attribute__ ((nonnull(1)));
+         SHAREMIND_NDEBUG_ONLY(__attribute__ ((nonnull(1))));
 const void * LogHardBackend_cxxConst(const LogHardBackend * backend)
-         __attribute__ ((nonnull(1)));
+         SHAREMIND_NDEBUG_ONLY(__attribute__ ((nonnull(1))));
 
 bool LogHardBackend_addStdAppender(LogHardBackend * backend)
-         __attribute__ ((nonnull(1)));
+         SHAREMIND_NDEBUG_ONLY(__attribute__ ((nonnull(1))));
 
 bool LogHardBackend_addCFileAppender(LogHardBackend * backend,
                                      FILE * file)
-         __attribute__ ((nonnull(1)));
+         SHAREMIND_NDEBUG_ONLY(__attribute__ ((nonnull(1))));
 
 bool LogHardBackend_addFileAppender(LogHardBackend * backend,
                                     const char * filename,
                                     bool append)
-         __attribute__ ((nonnull(1, 2)));
+         SHAREMIND_NDEBUG_ONLY(__attribute__ ((nonnull(1, 2))));
 
 LogHardLogger * LogHardBackend_newLogger(LogHardBackend * backend,
                                          const char * prefix)
-         __attribute__ ((nonnull(1, 2), warn_unused_result));
+         __attribute__ ((SHAREMIND_NDEBUG_ONLY(nonnull(1, 2),)
+                         warn_unused_result));
 
 SHAREMIND_EXTERN_C_END
 
