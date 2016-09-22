@@ -32,7 +32,8 @@ SHAREMIND_EXTERN_C_BEGIN
 struct LogHardLogger;
 struct LogHardBackend;
 
-void LogHardLogger_free(LogHardLogger * logger) __attribute__ ((nonnull(1)));
+void LogHardLogger_free(LogHardLogger * logger)
+        SHAREMIND_NDEBUG_ONLY(__attribute__ ((nonnull(1))));
 
 SHAREMIND_LASTERROR_PUBLIC_FUNCTIONS_DECLARE(LogHardLogger,, LogHardError,)
 

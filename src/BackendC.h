@@ -37,7 +37,8 @@ LogHardBackend * LogHardBackend_new(LogHardError * error,
                                     const char ** errorStr)
         __attribute__ ((warn_unused_result));
 
-void LogHardBackend_free(LogHardBackend * backend) __attribute__ ((nonnull(1)));
+void LogHardBackend_free(LogHardBackend * backend)
+        SHAREMIND_NDEBUG_ONLY(__attribute__ ((nonnull(1))));
 
 
 SHAREMIND_LASTERROR_PUBLIC_FUNCTIONS_DECLARE(LogHardBackend,, LogHardError,)
