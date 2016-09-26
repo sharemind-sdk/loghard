@@ -53,7 +53,7 @@ LogHardLogger * LogHardLogger_newLogger(LogHardLogger * logger,
 void LogHardLogger_log(const LogHardLogger * logger,
                        LogHardPriority priority,
                        const char * message)
-         SHAREMIND_NDEBUG_ONLY(__attribute__ ((nonnull(1, 2))));
+         SHAREMIND_NDEBUG_ONLY(__attribute__ ((nonnull(1, 3))));
 
 SHAREMIND_EXTERN_C_END
 
