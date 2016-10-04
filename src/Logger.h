@@ -472,11 +472,11 @@ public: /* Methods: */
         auto printer =
             [this, &formatter, theTime](std::size_t const exceptionNumber,
                                         std::size_t const totalExceptions,
-                                        std::exception_ptr e)
+                                        std::exception_ptr e_)
             {
                 return formatter(std::move(exceptionNumber),
                                  std::move(totalExceptions),
-                                 std::move(e),
+                                 std::move(e_),
                                  logHelper<PRIORITY>(theTime));
             };
 
