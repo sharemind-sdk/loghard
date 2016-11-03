@@ -501,14 +501,14 @@ public: /* Methods: */
         }
     }
 
-private: /* Methods: */
-
     inline static ::timeval now() noexcept {
         ::timeval theTime;
         SHAREMIND_DEBUG_ONLY(auto const r =) ::gettimeofday(&theTime, nullptr);
         assert(r == 0);
         return theTime;
     }
+
+private: /* Methods: */
 
     template <typename Printer>
     inline void printException_(std::exception_ptr const e,
