@@ -478,9 +478,7 @@ public: /* Methods: */
                        std::forward<Formatter>(formatter));
     }
 
-    // TODO: possibly bad fix to put Fromatter = void in here
-    // https://gcc.gnu.org/bugzilla/show_bug.cgi?id=54104
-    template <Priority PRIORITY = Priority::Error, typename Formatter = void>
+    template <Priority PRIORITY = Priority::Error, typename Formatter>
     inline void printCurrentException(::timeval theTime, Formatter && formatter)
             const noexcept
     {
