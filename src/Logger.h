@@ -347,6 +347,28 @@ public: /* Types: */
 
     template <Priority> friend class LogHelper;
 
+    struct StandardFormatter {
+
+        template <typename OutStream>
+        void operator()(std::size_t const exceptionNumber,
+                        std::size_t const totalExceptions,
+                        std::exception_ptr e,
+                        OutStream out) noexcept
+        {
+            assert(e);
+            out << "  * Exception " << exceptionNumber << " of "
+                << totalExceptions;
+            try {
+                std::rethrow_exception(e);
+            } catch (std::exception const & e) {
+                out << ": " << e.what();
+            } catch (...) {
+                out << " is not an std::exception!";
+            }
+        }
+
+    };
+
 public: /* Methods: */
 
     inline Logger(std::shared_ptr<Backend> backend)
@@ -440,17 +462,13 @@ public: /* Methods: */
     inline static Hex<T> hex(T const value) noexcept { return {value}; }
 
     template <Priority PRIORITY = Priority::Error>
-    inline void printCurrentException() const noexcept {
-        printCurrentException<PRIORITY>(
-                now(),
-                &Logger::standardFormatter<LogHelper<PRIORITY> >);
-    }
+    inline void printCurrentException() const noexcept
+    { printCurrentException<PRIORITY>(now(), StandardFormatter()); }
 
     template <Priority PRIORITY = Priority::Error>
     inline void printCurrentException(::timeval theTime) const noexcept {
-        printCurrentException<PRIORITY>(
-                std::move(theTime),
-                &Logger::standardFormatter<LogHelper<PRIORITY> >);
+        printCurrentException<PRIORITY>(std::move(theTime),
+                                        StandardFormatter());
     }
 
     template <Priority PRIORITY = Priority::Error, typename Formatter>
@@ -482,23 +500,6 @@ public: /* Methods: */
 
         std::size_t levels = 1u;
         printException_(e, 1u, levels, printer);
-    }
-
-    template <typename OutStream>
-    static void standardFormatter(std::size_t const exceptionNumber,
-                                  std::size_t const totalExceptions,
-                                  std::exception_ptr e,
-                                  OutStream out) noexcept
-    {
-        assert(e);
-        out << "  * Exception " << exceptionNumber << " of " << totalExceptions;
-        try {
-            std::rethrow_exception(e);
-        } catch (std::exception const & e) {
-            out << ": " << e.what();
-        } catch (...) {
-            out << " is not an std::exception!";
-        }
     }
 
     inline static ::timeval now() noexcept {
