@@ -60,9 +60,9 @@ namespace LogHard {
 
 namespace Detail {
 
-static constexpr std::size_t const MAX_MESSAGE_SIZE = 1024u * 16u;
+static constexpr std::size_t MAX_MESSAGE_SIZE = 1024u * 16u;
 static_assert(MAX_MESSAGE_SIZE >= 1u, "Invalid MAX_MESSAGE_SIZE");
-static constexpr std::size_t const STACK_BUFFER_SIZE = MAX_MESSAGE_SIZE + 4u;
+static constexpr std::size_t STACK_BUFFER_SIZE = MAX_MESSAGE_SIZE + 4u;
 static_assert(STACK_BUFFER_SIZE > MAX_MESSAGE_SIZE, "Overflow");
 
 #if LOGHARD_HAVE_TLS

@@ -59,9 +59,8 @@ public: /* Methods: */
                     Priority const priority,
                     char const * message) noexcept override
     {
-        constexpr static int const priorities[] = {
-            LOG_EMERG, LOG_ERR, LOG_WARNING, LOG_INFO, LOG_DEBUG, LOG_DEBUG
-        };
+        constexpr static int priorities[] =
+            { LOG_EMERG, LOG_ERR, LOG_WARNING, LOG_INFO, LOG_DEBUG, LOG_DEBUG };
         ::syslog(priorities[static_cast<unsigned>(priority)], "%s", message);
     }
 

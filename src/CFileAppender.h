@@ -112,7 +112,7 @@ private: /* Methods: */
     {
         assert(fd != -1);
         assert(message);
-        constexpr std::size_t const bufSize = sizeof("YYYY.MM.DD HH:MM:SS");
+        constexpr std::size_t bufSize = sizeof("YYYY.MM.DD HH:MM:SS");
         char timeStampBuf[bufSize];
         {
             std::tm eventTimeTm;
