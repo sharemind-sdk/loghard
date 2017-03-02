@@ -386,10 +386,10 @@ public: /* Methods: */
                                      ' ')}
     {}
 
-    inline Logger(Logger const & logger) noexcept
-        : m_backend(logger.m_backend)
-        , m_prefix{logger.m_prefix}
-        , m_basePrefix{logger.m_prefix}
+    inline Logger(Logger const & copy) noexcept
+        : m_backend(copy.m_backend)
+        , m_prefix(copy.m_prefix)
+        , m_basePrefix(copy.m_prefix)
     {}
 
     template <typename Arg, typename ... Args>
