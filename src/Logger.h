@@ -352,14 +352,14 @@ public: /* Types: */
         template <typename OutStream>
         void operator()(std::size_t const exceptionNumber,
                         std::size_t const totalExceptions,
-                        std::exception_ptr e,
+                        std::exception_ptr exception,
                         OutStream out) noexcept
         {
-            assert(e);
+            assert(exception);
             out << "  * Exception " << exceptionNumber << " of "
                 << totalExceptions;
             try {
-                std::rethrow_exception(e);
+                std::rethrow_exception(std::move(exception));
             } catch (std::exception const & e) {
                 out << ": " << e.what();
             } catch (...) {
@@ -482,22 +482,21 @@ public: /* Methods: */
     inline void printCurrentException(::timeval theTime, Formatter && formatter)
             const noexcept
     {
-        auto const e(std::current_exception());
-        if (!e)
-            return;
-        auto printer =
-            [this, &formatter, theTime](std::size_t const exceptionNumber,
-                                        std::size_t const totalExceptions,
-                                        std::exception_ptr e_)
-            {
-                return formatter(std::move(exceptionNumber),
-                                 std::move(totalExceptions),
-                                 std::move(e_),
-                                 logHelper<PRIORITY>(theTime));
-            };
+        if (auto e = std::current_exception()) {
+            auto printer =
+                [this, &formatter, theTime](std::size_t const exceptionNumber,
+                                            std::size_t const totalExceptions,
+                                            std::exception_ptr e_)
+                {
+                    return formatter(std::move(exceptionNumber),
+                                     std::move(totalExceptions),
+                                     std::move(e_),
+                                     logHelper<PRIORITY>(theTime));
+                };
 
-        std::size_t levels = 1u;
-        printException_(e, 1u, levels, printer);
+            std::size_t levels = 1u;
+            printException_(std::move(e), 1u, levels, printer);
+        }
     }
 
     inline static ::timeval now() noexcept {
@@ -510,7 +509,7 @@ public: /* Methods: */
 private: /* Methods: */
 
     template <typename Printer>
-    inline void printException_(std::exception_ptr const e,
+    inline void printException_(std::exception_ptr e,
                                 std::size_t const levelNow,
                                 std::size_t & totalLevels,
                                 Printer && printer) const noexcept
@@ -526,7 +525,7 @@ private: /* Methods: */
         std::forward<Printer>(printer)(
                        levelNow,
                        static_cast<std::size_t const>(totalLevels),
-                       e);
+                       std::move(e));
     }
 
 private: /* Fields: */
