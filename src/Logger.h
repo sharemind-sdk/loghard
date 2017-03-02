@@ -244,7 +244,7 @@ public: /* Types: */
         { return this->operator<<(const_cast<void *>(v)); }
 
         inline LogHelperBase & operator<<(sharemind::Uuid const & v) noexcept {
-#define LOGHARD_UUID_V(i) Logger::HexByte(v.data[i])
+#define LOGHARD_UUID_V(i) Logger::HexByte{v.data[i]}
             return (*this)
                 << LOGHARD_UUID_V(0u)  << LOGHARD_UUID_V(1u)
                 << LOGHARD_UUID_V(2u)  << LOGHARD_UUID_V(3u) << '-'
