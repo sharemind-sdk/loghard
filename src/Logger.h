@@ -244,7 +244,7 @@ public: /* Types: */
         { return this->operator<<(const_cast<void *>(v)); }
 
         inline LogHelperBase & operator<<(sharemind::Uuid const & v) noexcept {
-#define LOGHARD_UUID_V(i) Logger::HexByte{v.data[i]}
+#define LOGHARD_UUID_V(i) Logger::HexByte(v.data[i])
             return (*this)
                 << LOGHARD_UUID_V(0u)  << LOGHARD_UUID_V(1u)
                 << LOGHARD_UUID_V(2u)  << LOGHARD_UUID_V(3u) << '-'
@@ -337,10 +337,10 @@ public: /* Types: */
                 Args && ... args) noexcept
             : std::conditional<priority <= LOGHARD_LOGLEVEL_MAXDEBUG,
                                LogHelperBase<priority>,
-                               NullLogHelperBase>::type{
+                               NullLogHelperBase>::type(
                                     std::move(theTime),
                                     std::forward<BackendPtr>(backend),
-                                    std::forward<Args>(args)...}
+                                    std::forward<Args>(args)...)
         {}
 
     }; /* class LogHelper */
@@ -381,9 +381,9 @@ public: /* Methods: */
                   Arg && arg,
                   Args && ... args) noexcept
         : m_backend(std::move(backend))
-        , m_prefix{sharemind::concat(std::forward<Arg>(arg),
+        , m_prefix(sharemind::concat(std::forward<Arg>(arg),
                                      std::forward<Args>(args)...,
-                                     ' ')}
+                                     ' '))
     {}
 
     inline Logger(Logger const & copy) noexcept
@@ -395,7 +395,7 @@ public: /* Methods: */
     template <typename Arg, typename ... Args>
     inline Logger(Logger const & logger, Arg && arg, Args && ... args) noexcept
         : m_backend(logger.m_backend)
-        , m_prefix{logger.m_prefix.empty()
+        , m_prefix(logger.m_prefix.empty()
                    ? sharemind::concat(std::forward<Arg>(arg),
                                        std::forward<Args>(args)...,
                                        ' ')
@@ -405,12 +405,12 @@ public: /* Methods: */
                                          std::forward<Args>(args)...,
                                          ' ')
                      : sharemind::concat(
-                           std::string{logger.m_prefix.cbegin(),
-                                       logger.m_prefix.cend() - 1},
+                           std::string(logger.m_prefix.cbegin(),
+                                       logger.m_prefix.cend() - 1),
                            std::forward<Arg>(arg),
                            std::forward<Args>(args)...,
-                           ' ')}
-        , m_basePrefix{logger.m_prefix}
+                           ' '))
+        , m_basePrefix(logger.m_prefix)
     {}
 
     inline std::shared_ptr<Backend> backend() const noexcept
@@ -482,7 +482,7 @@ public: /* Methods: */
     inline void printCurrentException(::timeval theTime, Formatter && formatter)
             const noexcept
     {
-        std::exception_ptr const e{std::current_exception()};
+        auto const e(std::current_exception());
         if (!e)
             return;
         auto printer =
@@ -519,7 +519,7 @@ private: /* Methods: */
         try {
             std::rethrow_exception(e);
         } catch (std::nested_exception const & e2) {
-            std::exception_ptr const ne{e2.nested_ptr()};
+            auto const ne(e2.nested_ptr());
             if (ne)
                 printException_(ne, levelNow + 1u, ++totalLevels, printer);
         } catch (...) {}
