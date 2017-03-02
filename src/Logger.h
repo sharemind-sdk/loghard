@@ -413,6 +413,9 @@ public: /* Methods: */
         , m_basePrefix(logger.m_prefix)
     {}
 
+    Logger & operator=(Logger &&) = delete;
+    Logger & operator=(Logger const &) = delete;
+
     inline std::shared_ptr<Backend> backend() const noexcept
     { return m_backend; }
 
