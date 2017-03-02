@@ -386,6 +386,12 @@ public: /* Methods: */
                                      ' '))
     {}
 
+    inline Logger(Logger && move) noexcept
+        : m_backend(std::move(move.m_backend))
+        , m_prefix(std::move(move.m_prefix))
+        , m_basePrefix(std::move(move.m_prefix))
+    {}
+
     inline Logger(Logger const & copy) noexcept
         : m_backend(copy.m_backend)
         , m_prefix(copy.m_prefix)
@@ -535,7 +541,7 @@ private: /* Fields: */
 
     std::shared_ptr<Backend> m_backend;
     std::string m_prefix;
-    std::string const m_basePrefix;
+    std::string m_basePrefix;
 
 }; /* class Logger { */
 
