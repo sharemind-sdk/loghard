@@ -289,10 +289,8 @@ public: /* Types: */
             if (prefix && *prefix) {
                 std::size_t o = 0u;
                 do {
-                    if (o == MAX_MESSAGE_SIZE)
-                        break;
                     tl_message[o] = *prefix;
-                } while ((++o, *++prefix));
+                } while ((++o < MAX_MESSAGE_SIZE) && (*++prefix));
                 m_offset = o;
             } else {
                 m_offset = 0u;
