@@ -19,11 +19,208 @@
 
 #include "Logger.h"
 
+#include <cstring>
+#include <sharemind/DebugOnly.h>
 
-#if LOGHARD_HAVE_TLS
+
 namespace LogHard {
+
+
 namespace Detail {
+
+static constexpr std::size_t MAX_MESSAGE_SIZE = 1024u * 16u;
+static_assert(MAX_MESSAGE_SIZE >= 1u, "Invalid MAX_MESSAGE_SIZE");
+static constexpr std::size_t STACK_BUFFER_SIZE = MAX_MESSAGE_SIZE + 4u;
+static_assert(STACK_BUFFER_SIZE > MAX_MESSAGE_SIZE, "Overflow");
+
 thread_local char tl_message[STACK_BUFFER_SIZE] = {};
+thread_local ::timeval tl_time = {};
+thread_local std::size_t tl_offset = 0u;
+
 } // namespace Detail {
+
+Logger::LogHelperContents::LogHelperContents(
+        ::timeval theTime,
+        std::shared_ptr<Backend> backendPtr) noexcept
+    : m_backend(std::move(backendPtr))
+{
+    Detail::tl_time = std::move(theTime);
+    Detail::tl_offset = 0u;
+}
+
+Logger::LogHelperContents::LogHelperContents(
+        ::timeval theTime,
+        std::shared_ptr<Backend> backendPtr,
+        std::string const & prefix) noexcept
+    : LogHelperContents(std::move(theTime),
+                    std::move(backendPtr),
+                    prefix.c_str())
+{}
+
+Logger::LogHelperContents::LogHelperContents(
+        ::timeval theTime,
+        std::shared_ptr<Backend> backendPtr,
+        char const * prefix) noexcept
+    : m_backend(std::move(backendPtr))
+{
+    Detail::tl_time = std::move(theTime);
+    using namespace ::LogHard::Detail;
+    if (prefix && *prefix) {
+        std::size_t o = 0u;
+        do {
+            Detail::tl_message[o] = *prefix;
+        } while ((++o < MAX_MESSAGE_SIZE) && (*++prefix));
+        Detail::tl_offset = o;
+    } else {
+        Detail::tl_offset = 0u;
+    }
+}
+
+void Logger::LogHelperContents::finish(Priority priority) noexcept {
+    if (!m_backend)
+        return;
+    using namespace ::LogHard::Detail;
+    assert(Detail::tl_offset <= STACK_BUFFER_SIZE);
+    assert(Detail::tl_offset < STACK_BUFFER_SIZE
+           || Detail::tl_message[STACK_BUFFER_SIZE - 1u] == '\0');
+    if (Detail::tl_offset < STACK_BUFFER_SIZE)
+        Detail::tl_message[Detail::tl_offset] = '\0';
+    m_backend->doLog(std::move(Detail::tl_time), priority, Detail::tl_message);
+}
+
+void Logger::LogHelperContents::log(char const v) noexcept {
+    assert(m_backend);
+    using namespace ::LogHard::Detail;
+    if (Detail::tl_offset <= MAX_MESSAGE_SIZE) {
+        if (Detail::tl_offset == MAX_MESSAGE_SIZE)
+            return elide();
+        Detail::tl_message[Detail::tl_offset] = v;
+        Detail::tl_offset++;
+    }
+}
+
+void Logger::LogHelperContents::log(bool const v) noexcept
+{ return log(v ? '1' : '0'); }
+
+#define LOGHARD_LHC_OP(valueType,valueGetter,formatString) \
+    void Logger::LogHelperContents::log(valueType const v) noexcept { \
+        assert(m_backend); \
+        using namespace ::LogHard::Detail; \
+        if (Detail::tl_offset > MAX_MESSAGE_SIZE) { \
+            assert(Detail::tl_offset == STACK_BUFFER_SIZE); \
+            return; \
+        } \
+        std::size_t const spaceLeft = MAX_MESSAGE_SIZE - Detail::tl_offset; \
+        if (!spaceLeft) \
+            return elide(); \
+        int const r = snprintf(&Detail::tl_message[Detail::tl_offset], \
+                               spaceLeft, \
+                               (formatString), \
+                               v valueGetter); \
+        if (r < 0) \
+            return elide(); \
+        if (static_cast<std::size_t>(r) > spaceLeft) { \
+            Detail::tl_offset = MAX_MESSAGE_SIZE; \
+            return elide(); \
+        } \
+        Detail::tl_offset += static_cast<unsigned>(r); \
+    }
+
+LOGHARD_LHC_OP(signed char,, "%hhd")
+LOGHARD_LHC_OP(unsigned char,, "%hhu")
+LOGHARD_LHC_OP(short,, "%hd")
+LOGHARD_LHC_OP(unsigned short,, "%hu")
+LOGHARD_LHC_OP(int,, "%d")
+LOGHARD_LHC_OP(unsigned int,, "%u")
+LOGHARD_LHC_OP(long,, "%ld")
+LOGHARD_LHC_OP(unsigned long,, "%lu")
+LOGHARD_LHC_OP(long long,, "%lld")
+LOGHARD_LHC_OP(unsigned long long,, "%llu")
+
+LOGHARD_LHC_OP(Logger::Hex<unsigned char>,.value,"%hhx")
+LOGHARD_LHC_OP(Logger::Hex<unsigned short>,.value, "%hx")
+LOGHARD_LHC_OP(Logger::Hex<unsigned int>,.value, "%x")
+LOGHARD_LHC_OP(Logger::Hex<unsigned long>,.value, "%lx")
+LOGHARD_LHC_OP(Logger::Hex<unsigned long long>,.value,"%llx")
+
+LOGHARD_LHC_OP(Logger::HexByte,.value,"%02hhx")
+
+LOGHARD_LHC_OP(double,, "%f")
+LOGHARD_LHC_OP(long double,, "%Lf")
+
+void Logger::LogHelperContents::log(float const v) noexcept
+{ return log(static_cast<double const>(v)); }
+
+void Logger::LogHelperContents::log(char const * v) noexcept {
+    assert(v);
+    assert(m_backend);
+    using namespace ::LogHard::Detail;
+    auto o = Detail::tl_offset;
+    if (o > MAX_MESSAGE_SIZE) {
+        assert(o == STACK_BUFFER_SIZE);
+        return;
+    }
+    if (*v) {
+        do {
+            if (o == MAX_MESSAGE_SIZE) {
+                Detail::tl_offset = o;
+                return elide();
+            }
+            Detail::tl_message[o] = *v;
+        } while ((++o, *++v));
+        Detail::tl_offset = o;
+    }
+}
+
+void Logger::LogHelperContents::log(std::string const & v) noexcept
+{ return log(v.c_str()); }
+
+LOGHARD_LHC_OP(void *,, "%p")
+
+void Logger::LogHelperContents::log(void const * const v) noexcept
+{ return log(const_cast<void *>(v)); }
+
+void Logger::LogHelperContents::log(sharemind::Uuid const & v) noexcept {
+#define LOGHARD_UUID_V(i) Logger::HexByte{v.data[i]}
+    log(LOGHARD_UUID_V(0u)); log(LOGHARD_UUID_V(1u));
+    log(LOGHARD_UUID_V(2u)); log(LOGHARD_UUID_V(3u)); log('-');
+    log(LOGHARD_UUID_V(4u)); log(LOGHARD_UUID_V(5u)); log('-');
+    log(LOGHARD_UUID_V(6u)); log(LOGHARD_UUID_V(7u)); log('-');
+    log(LOGHARD_UUID_V(8u)); log(LOGHARD_UUID_V(9u)); log('-');
+    log(LOGHARD_UUID_V(10u)); log(LOGHARD_UUID_V(11u));
+    log(LOGHARD_UUID_V(12u)); log(LOGHARD_UUID_V(13u));
+    log(LOGHARD_UUID_V(14u)); log(LOGHARD_UUID_V(15u));
+}
+
+void Logger::LogHelperContents::elide() noexcept {
+    using namespace ::LogHard::Detail;
+    assert(Detail::tl_offset <= MAX_MESSAGE_SIZE);
+    assert(m_backend);
+    std::memcpy(&Detail::tl_message[Detail::tl_offset], "...", 4u);
+    Detail::tl_offset = STACK_BUFFER_SIZE;
+}
+
+Logger::Logger(std::shared_ptr<Backend> backend) noexcept
+    : m_backend(std::move(backend))
+{}
+
+Logger::Logger(Logger && move) noexcept
+    : m_backend(std::move(move.m_backend))
+    , m_prefix(std::move(move.m_prefix))
+    , m_basePrefix(std::move(move.m_prefix))
+{}
+
+Logger::Logger(Logger const & copy) noexcept
+    : m_backend(copy.m_backend)
+    , m_prefix(copy.m_prefix)
+    , m_basePrefix(copy.m_prefix)
+{}
+
+::timeval Logger::now() noexcept {
+    ::timeval theTime;
+    SHAREMIND_DEBUG_ONLY(auto const r =) ::gettimeofday(&theTime, nullptr);
+    assert(r == 0);
+    return theTime;
+}
+
 } // namespace LogHard {
-#endif
