@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015 Cybernetica
+ * Copyright (C) 2015-2017 Cybernetica
  *
  * Research/Commercial License Usage
  * Licensees holding a valid Research License or Commercial License
@@ -27,8 +27,8 @@
 #include <sharemind/Exception.h>
 #include <string>
 #include <sys/stat.h>
+#include <sys/types.h>
 #include <unistd.h>
-#include "CFileAppender.h"
 
 
 namespace LogHard {
@@ -49,35 +49,17 @@ public: /* Methods: */
 
     FileAppender(std::string const & path,
                  OpenMode const openMode,
-                 ::mode_t const flags = 0644)
-        : FileAppender(path.c_str(),
-                       openMode,
-                       flags)
-    {}
+                 ::mode_t const flags = 0644);
 
     FileAppender(char const * const path,
                  OpenMode const openMode,
-                 ::mode_t const flags = 0644)
-        : m_fd(::open(path,
-                    // No O_SYNC since it would hurt performance badly
-                    O_WRONLY | O_CREAT | O_APPEND | O_NOCTTY
-                    | ((openMode == OVERWRITE) ? O_TRUNC : 0u),
-                    flags))
-    {
-        try {
-            if (m_fd == -1)
-                throw sharemind::ErrnoException(errno);
-        } catch (...) {
-            std::throw_with_nested(FileOpenException());
-        }
-    }
+                 ::mode_t const flags = 0644);
 
-    ~FileAppender() noexcept override { ::close(m_fd); }
+    ~FileAppender() noexcept override;
 
     void log(::timeval time,
              Priority const priority,
-             char const * message) noexcept override
-    { CFileAppender::logToFile(m_fd, time, priority, message); }
+             char const * message) noexcept override;
 
 private: /* Fields: */
 
