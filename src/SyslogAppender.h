@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015 Cybernetica
+ * Copyright (C) 2015-2017 Cybernetica
  *
  * Research/Commercial License Usage
  * Licensees holding a valid Research License or Commercial License
@@ -22,12 +22,9 @@
 
 #include "Appender.h"
 
-#include <cassert>
 #include <exception>
 #include <sharemind/Exception.h>
 #include <string>
-#include <syslog.h>
-#include <utility>
 
 
 namespace LogHard {
@@ -44,47 +41,24 @@ public: /* Types: */
 
 public: /* Methods: */
 
-    template <typename Ident>
-    SyslogAppender(Ident && ident,
-                   int const logopt,
-                   int const facility)
-        : m_ident{std::forward<Ident>(ident)}
-        , m_logopt{logopt}
-        , m_facility{facility}
-    { setEnabled_(true); }
+    SyslogAppender(std::string ident, int const logopt, int const facility);
 
-    ~SyslogAppender() noexcept override { setEnabled_(false); }
+    ~SyslogAppender() noexcept override;
 
     void log(::timeval,
              Priority const priority,
-             char const * message) noexcept override
-    {
-        constexpr static int priorities[] =
-            { LOG_EMERG, LOG_ERR, LOG_WARNING, LOG_INFO, LOG_DEBUG, LOG_DEBUG };
-        ::syslog(priorities[static_cast<unsigned>(priority)], "%s", message);
-    }
+             char const * message) noexcept override;
 
 private: /* Methods: */
 
-    void setEnabled_(bool const enable) const {
-        static SyslogAppender const * singleInstance = nullptr;
-        if (enable) {
-            if (singleInstance)
-                throw MultipleSyslogAppenderException{};
-            singleInstance = this;
-            ::openlog(m_ident.c_str(), m_logopt, m_facility);
-        } else {
-            assert(singleInstance == this);
-            ::closelog();
-            singleInstance = nullptr;
-        }
-    }
+    void setEnabled_(bool const enable) const;
 
 private: /* Fields: */
 
     std::string const m_ident;
     int const m_logopt;
     int const m_facility;
+    static SyslogAppender const * m_singleInstance;
 
 }; /* class SyslogAppender { */
 
