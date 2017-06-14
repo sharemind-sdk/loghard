@@ -45,19 +45,19 @@ public: /* Types: */
 public: /* Methods: */
 
     template <typename Ident>
-    inline SyslogAppender(Ident && ident,
-                          int const logopt,
-                          int const facility)
+    SyslogAppender(Ident && ident,
+                   int const logopt,
+                   int const facility)
         : m_ident{std::forward<Ident>(ident)}
         , m_logopt{logopt}
         , m_facility{facility}
     { setEnabled_(true); }
 
-    inline ~SyslogAppender() noexcept override { setEnabled_(false); }
+    ~SyslogAppender() noexcept override { setEnabled_(false); }
 
-    inline void log(::timeval,
-                    Priority const priority,
-                    char const * message) noexcept override
+    void log(::timeval,
+             Priority const priority,
+             char const * message) noexcept override
     {
         constexpr static int priorities[] =
             { LOG_EMERG, LOG_ERR, LOG_WARNING, LOG_INFO, LOG_DEBUG, LOG_DEBUG };
@@ -66,7 +66,7 @@ public: /* Methods: */
 
 private: /* Methods: */
 
-    inline void setEnabled_(bool const enable) const {
+    void setEnabled_(bool const enable) const {
         static SyslogAppender const * singleInstance = nullptr;
         if (enable) {
             if (singleInstance)

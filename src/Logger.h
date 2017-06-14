@@ -92,13 +92,13 @@ public: /* Types: */
     public : /* Methods: */
 
         template <class T>
-        inline NullLogHelperBase & operator<<(T &&) noexcept
+        NullLogHelperBase & operator<<(T &&) noexcept
         { return *this; }
 
     private: /* Methods: */
 
         template <typename ... Args>
-        inline NullLogHelperBase(Args && ...) noexcept {}
+        NullLogHelperBase(Args && ...) noexcept {}
 
     }; /* class NullLogHelperBase { */
 
@@ -113,7 +113,7 @@ public: /* Types: */
         LogHelperBase<priority> & operator=(LogHelperBase<priority> const &) =
                 delete;
 
-        inline LogHelperBase(LogHelperBase<priority> && move) noexcept
+        LogHelperBase(LogHelperBase<priority> && move) noexcept
             : m_time(std::move(move.m_time))
             , m_backend(std::move(move.m_backend))
             , m_offset(std::move(move.m_offset))
@@ -124,7 +124,7 @@ public: /* Types: */
             #endif
         }
 
-        inline LogHelperBase<priority> & operator=(
+        LogHelperBase<priority> & operator=(
                 LogHelperBase<priority> const && move)
         {
             m_time = std::move(move.m_time);
@@ -136,7 +136,7 @@ public: /* Types: */
             #endif
         }
 
-        inline ~LogHelperBase() noexcept {
+        ~LogHelperBase() noexcept {
             if (!m_backend)
                 return;
             using namespace ::LogHard::Detail;
@@ -148,7 +148,7 @@ public: /* Types: */
             m_backend->doLog(std::move(m_time), priority, tl_message);
         }
 
-        inline LogHelperBase & operator<<(char const v) noexcept {
+        LogHelperBase & operator<<(char const v) noexcept {
             assert(m_backend);
             using namespace ::LogHard::Detail;
             if (m_offset <= MAX_MESSAGE_SIZE) {
@@ -160,11 +160,11 @@ public: /* Types: */
             return *this;
         }
 
-        inline LogHelperBase & operator<<(bool const v) noexcept
+        LogHelperBase & operator<<(bool const v) noexcept
         { return this->operator<<(v ? '1' : '0'); }
 
 #define LOGHARD_LHB_OP(valueType,valueGetter,formatString) \
-    inline LogHelperBase & operator<<(valueType const v) noexcept { \
+    LogHelperBase & operator<<(valueType const v) noexcept { \
         assert(m_backend); \
         using namespace ::LogHard::Detail; \
         if (m_offset > MAX_MESSAGE_SIZE) { \
@@ -210,10 +210,10 @@ public: /* Types: */
         LOGHARD_LHB_OP(double,, "%f")
         LOGHARD_LHB_OP(long double,, "%Lf")
 
-        inline LogHelperBase & operator<<(float const v) noexcept
+        LogHelperBase & operator<<(float const v) noexcept
         { return this->operator<<(static_cast<double const>(v)); }
 
-        inline LogHelperBase & operator<<(char const * v) noexcept {
+        LogHelperBase & operator<<(char const * v) noexcept {
             assert(v);
             assert(m_backend);
             using namespace ::LogHard::Detail;
@@ -235,15 +235,15 @@ public: /* Types: */
             return *this;
         }
 
-        inline LogHelperBase & operator<<(std::string const & v) noexcept
+        LogHelperBase & operator<<(std::string const & v) noexcept
         { return this->operator<<(v.c_str()); }
 
         LOGHARD_LHB_OP(void *,, "%p")
 
-        inline LogHelperBase & operator<<(void const * const v) noexcept
+        LogHelperBase & operator<<(void const * const v) noexcept
         { return this->operator<<(const_cast<void *>(v)); }
 
-        inline LogHelperBase & operator<<(sharemind::Uuid const & v) noexcept {
+        LogHelperBase & operator<<(sharemind::Uuid const & v) noexcept {
 #define LOGHARD_UUID_V(i) Logger::HexByte{v.data[i]}
             return (*this)
                 << LOGHARD_UUID_V(0u)  << LOGHARD_UUID_V(1u)
@@ -262,26 +262,25 @@ public: /* Types: */
     private: /* Methods: */
 
         template <typename BackendPtr>
-        inline LogHelperBase(::timeval theTime,
-                             BackendPtr && backendPtr) noexcept
+        LogHelperBase(::timeval theTime, BackendPtr && backendPtr) noexcept
             : m_time(std::move(theTime))
             , m_backend(std::forward<BackendPtr>(backendPtr))
             , m_offset(0u)
         {}
 
         template <typename BackendPtr>
-        inline LogHelperBase(::timeval theTime,
-                             BackendPtr && backendPtr,
-                             std::string const & prefix) noexcept
+        LogHelperBase(::timeval theTime,
+                      BackendPtr && backendPtr,
+                      std::string const & prefix) noexcept
             : LogHelperBase(std::move(theTime),
                             std::forward<BackendPtr>(backendPtr),
                             prefix.c_str())
         {}
 
         template <typename BackendPtr>
-        inline LogHelperBase(::timeval theTime,
-                             BackendPtr && backendPtr,
-                             char const * prefix) noexcept
+        LogHelperBase(::timeval theTime,
+                      BackendPtr && backendPtr,
+                      char const * prefix) noexcept
             : m_time(std::move(theTime))
             , m_backend(std::forward<BackendPtr>(backendPtr))
         {
@@ -297,7 +296,7 @@ public: /* Types: */
             }
         }
 
-        inline LogHelperBase & elide() noexcept {
+        LogHelperBase & elide() noexcept {
             using namespace ::LogHard::Detail;
             assert(m_offset <= MAX_MESSAGE_SIZE);
             assert(m_backend);
@@ -329,10 +328,8 @@ public: /* Types: */
     private: /* Methods: */
 
         template <typename BackendPtr, typename ... Args>
-        inline LogHelper(
-                ::timeval theTime,
-                BackendPtr && backend,
-                Args && ... args) noexcept
+        LogHelper(::timeval theTime, BackendPtr && backend, Args && ... args)
+                noexcept
             : std::conditional<priority <= LOGHARD_LOGLEVEL_MAXDEBUG,
                                LogHelperBase<priority>,
                                NullLogHelperBase>::type(
@@ -369,35 +366,33 @@ public: /* Types: */
 
 public: /* Methods: */
 
-    inline Logger(std::shared_ptr<Backend> backend)
-            noexcept
+    Logger(std::shared_ptr<Backend> backend) noexcept
         : m_backend(std::move(backend))
     {}
 
     template <typename Arg, typename ... Args>
-    inline Logger(std::shared_ptr<Backend> backend,
-                  Arg && arg,
-                  Args && ... args) noexcept
+    Logger(std::shared_ptr<Backend> backend, Arg && arg, Args && ... args)
+            noexcept
         : m_backend(std::move(backend))
         , m_prefix(sharemind::concat(std::forward<Arg>(arg),
                                      std::forward<Args>(args)...,
                                      ' '))
     {}
 
-    inline Logger(Logger && move) noexcept
+    Logger(Logger && move) noexcept
         : m_backend(std::move(move.m_backend))
         , m_prefix(std::move(move.m_prefix))
         , m_basePrefix(std::move(move.m_prefix))
     {}
 
-    inline Logger(Logger const & copy) noexcept
+    Logger(Logger const & copy) noexcept
         : m_backend(copy.m_backend)
         , m_prefix(copy.m_prefix)
         , m_basePrefix(copy.m_prefix)
     {}
 
     template <typename Arg, typename ... Args>
-    inline Logger(Logger const & logger, Arg && arg, Args && ... args) noexcept
+    Logger(Logger const & logger, Arg && arg, Args && ... args) noexcept
         : m_backend(logger.m_backend)
         , m_prefix(logger.m_prefix.empty()
                    ? sharemind::concat(std::forward<Arg>(arg),
@@ -420,14 +415,13 @@ public: /* Methods: */
     Logger & operator=(Logger &&) = delete;
     Logger & operator=(Logger const &) = delete;
 
-    inline std::shared_ptr<Backend> backend() const noexcept
-    { return m_backend; }
+    std::shared_ptr<Backend> backend() const noexcept { return m_backend; }
 
-    inline std::string const & prefix() const noexcept { return m_prefix; }
+    std::string const & prefix() const noexcept { return m_prefix; }
 
-    inline std::string const & basePrefix() const noexcept { return m_prefix; }
+    std::string const & basePrefix() const noexcept { return m_prefix; }
 
-    inline Backend::Lock retrieveBackendLock() const noexcept
+    Backend::Lock retrieveBackendLock() const noexcept
     { return m_backend->retrieveLock(); }
 
     template <typename ... Args> void setPrefix(Args && ... args) {
@@ -437,56 +431,56 @@ public: /* Methods: */
     }
 
     template <Priority PRIORITY, bool usePrefix = true>
-    inline LogHelper<PRIORITY> logHelper() const noexcept
+    LogHelper<PRIORITY> logHelper() const noexcept
     { return logHelper<PRIORITY, usePrefix>(now()); }
 
     template <Priority PRIORITY, bool usePrefix = true>
-    inline LogHelper<PRIORITY> logHelper(::timeval theTime) const noexcept {
+    LogHelper<PRIORITY> logHelper(::timeval theTime) const noexcept {
         return usePrefix
                ? LogHelper<PRIORITY>(std::move(theTime), m_backend, m_prefix)
                : LogHelper<PRIORITY>(std::move(theTime), m_backend);
     }
 
-    inline LogHelper<Priority::Fatal> fatal() const noexcept
+    LogHelper<Priority::Fatal> fatal() const noexcept
     { return logHelper<Priority::Fatal>(); }
 
-    inline LogHelper<Priority::Error> error() const noexcept
+    LogHelper<Priority::Error> error() const noexcept
     { return logHelper<Priority::Error>(); }
 
-    inline LogHelper<Priority::Warning> warning() const noexcept
+    LogHelper<Priority::Warning> warning() const noexcept
     { return logHelper<Priority::Warning>(); }
 
-    inline LogHelper<Priority::Normal> info() const noexcept
+    LogHelper<Priority::Normal> info() const noexcept
     { return logHelper<Priority::Normal>(); }
 
-    inline LogHelper<Priority::Debug> debug() const noexcept
+    LogHelper<Priority::Debug> debug() const noexcept
     { return logHelper<Priority::Debug>(); }
 
-    inline LogHelper<Priority::FullDebug> fullDebug() const noexcept
+    LogHelper<Priority::FullDebug> fullDebug() const noexcept
     { return logHelper<Priority::FullDebug>(); }
 
     template <typename T>
-    inline static Hex<T> hex(T const value) noexcept { return {value}; }
+    static Hex<T> hex(T const value) noexcept { return {value}; }
 
     template <Priority PRIORITY = Priority::Error>
-    inline void printCurrentException() const noexcept
+    void printCurrentException() const noexcept
     { printCurrentException<PRIORITY>(now(), StandardFormatter()); }
 
     template <Priority PRIORITY = Priority::Error>
-    inline void printCurrentException(::timeval theTime) const noexcept {
+    void printCurrentException(::timeval theTime) const noexcept {
         printCurrentException<PRIORITY>(std::move(theTime),
                                         StandardFormatter());
     }
 
     template <Priority PRIORITY = Priority::Error, typename Formatter>
-    inline void printCurrentException(Formatter && formatter) const noexcept {
+    void printCurrentException(Formatter && formatter) const noexcept {
         return printCurrentException<PRIORITY, Formatter>(
                        now(),
                        std::forward<Formatter>(formatter));
     }
 
     template <Priority PRIORITY = Priority::Error, typename Formatter>
-    inline void printCurrentException(::timeval theTime, Formatter && formatter)
+    void printCurrentException(::timeval theTime, Formatter && formatter)
             const noexcept
     {
         if (auto e = std::current_exception()) {
@@ -506,7 +500,7 @@ public: /* Methods: */
         }
     }
 
-    inline static ::timeval now() noexcept {
+    static ::timeval now() noexcept {
         ::timeval theTime;
         SHAREMIND_DEBUG_ONLY(auto const r =) ::gettimeofday(&theTime, nullptr);
         assert(r == 0);
@@ -516,10 +510,10 @@ public: /* Methods: */
 private: /* Methods: */
 
     template <typename Printer>
-    inline void printException_(std::exception_ptr e,
-                                std::size_t const levelNow,
-                                std::size_t & totalLevels,
-                                Printer && printer) const noexcept
+    void printException_(std::exception_ptr e,
+                         std::size_t const levelNow,
+                         std::size_t & totalLevels,
+                         Printer && printer) const noexcept
     {
         assert(e);
         try {

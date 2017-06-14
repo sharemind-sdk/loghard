@@ -36,7 +36,7 @@ public: /* Methods: */
                      Priority priority,
                      char const * message) noexcept = 0;
 
-    inline static char const * priorityString(Priority const priority)
+    static char const * priorityString(Priority const priority)
             noexcept
     {
         static char const strings[][8u] =
@@ -44,8 +44,8 @@ public: /* Methods: */
         return &strings[static_cast<unsigned>(priority)][0u];
     }
 
-    inline static char const * priorityStringRightPadded(
-            Priority const priority) noexcept
+    static char const * priorityStringRightPadded(Priority const priority)
+            noexcept
     {
         static char const strings[][8u] = {
             "FATAL  ", "ERROR  ", "WARNING", "INFO   ", "DEBUG  ", "DEBUG2 "

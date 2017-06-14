@@ -108,12 +108,12 @@ LOGHARD_LASTERROR_PRIVATE_FUNCTIONS_DECLARE(LogHardBackend)
 
 struct LogHardLogger {
 
-    inline LogHardLogger(LogHardBackend * const b, const char * const prefix)
+    LogHardLogger(LogHardBackend * const b, const char * const prefix)
         : inner(b->inner, prefix)
         , backend(b)
     {}
 
-    inline LogHardLogger(const LogHardLogger * const l,
+    LogHardLogger(const LogHardLogger * const l,
                          const char * const prefix)
         : inner(l->inner, prefix)
         , backend(l->backend)

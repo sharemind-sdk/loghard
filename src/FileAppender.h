@@ -72,11 +72,11 @@ public: /* Methods: */
         }
     }
 
-    inline ~FileAppender() noexcept override { ::close(m_fd); }
+    ~FileAppender() noexcept override { ::close(m_fd); }
 
-    inline void log(::timeval time,
-                    Priority const priority,
-                    char const * message) noexcept override
+    void log(::timeval time,
+             Priority const priority,
+             char const * message) noexcept override
     { CFileAppender::logToFile(m_fd, time, priority, message); }
 
 private: /* Fields: */

@@ -32,9 +32,9 @@ class StdAppender: public Appender {
 
 public: /* Methods: */
 
-    inline void log(::timeval time,
-                    Priority const priority,
-                    char const * message) noexcept override
+    void log(::timeval time,
+             Priority const priority,
+             char const * message) noexcept override
     {
         int const fn = (priority <= Priority::Warning)
                         ? STDERR_FILENO

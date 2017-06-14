@@ -59,42 +59,40 @@ public: /* Methods: */
         }
     }
 
-    inline void log(::timeval time,
-                    Priority const priority,
-                    char const * message) noexcept override
+    void log(::timeval time,
+             Priority const priority,
+             char const * message) noexcept override
     { logToFileSync(m_fd, time, priority, message); }
 
-    static inline void logToFile(int const fd,
-                                 ::timeval time,
-                                 Priority const priority,
-                                 char const * const message) noexcept
+    static void logToFile(int const fd,
+                          ::timeval time,
+                          Priority const priority,
+                          char const * const message) noexcept
     { logToFile_(fd, time, priority, message, [](int const){}); }
 
-    static inline void logToFileSync(
-            int const fd,
-            ::timeval time,
-            Priority const priority,
-            char const * const message) noexcept
+    static void logToFileSync(int const fd,
+                              ::timeval time,
+                              Priority const priority,
+                              char const * const message) noexcept
     {
         logToFile_(fd, time, priority, message,
                    [](int const f){ ::fsync(f); });
     }
 
-    static inline void logToFile(std::FILE * file,
-                                 ::timeval time,
-                                 Priority const priority,
-                                 char const * const message) noexcept
+    static void logToFile(std::FILE * file,
+                          ::timeval time,
+                          Priority const priority,
+                          char const * const message) noexcept
     {
         int const fd = ::fileno(file);
         assert(fd != -1);
         logToFile(fd, time, priority, message);
     }
 
-    static inline void logToFileSync(
-            std::FILE * file,
-            ::timeval time,
-            Priority const priority,
-            char const * const message) noexcept
+    static void logToFileSync(std::FILE * file,
+                              ::timeval time,
+                              Priority const priority,
+                              char const * const message) noexcept
     {
         int const fd = ::fileno(file);
         assert(fd != -1);
@@ -104,11 +102,11 @@ public: /* Methods: */
 private: /* Methods: */
 
     template <typename Sync>
-    static inline void logToFile_(int const fd,
-                                  ::timeval time,
-                                  Priority const priority,
-                                  char const * const message,
-                                  Sync && sync) noexcept
+    static void logToFile_(int const fd,
+                           ::timeval time,
+                           Priority const priority,
+                           char const * const message,
+                           Sync && sync) noexcept
     {
         assert(fd != -1);
         assert(message);

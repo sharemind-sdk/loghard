@@ -69,9 +69,9 @@ public: /* Methods: */
 
     LogEntries const & entries() const noexcept { return m_entries; }
 
-    inline void log(::timeval time,
-                    Priority const priority,
-                    char const * message) noexcept override
+    void log(::timeval time,
+             Priority const priority,
+             char const * message) noexcept override
     {
         if (m_freeMessages.empty()) {
             if (!m_oom) {
@@ -108,12 +108,12 @@ public: /* Methods: */
         }
     }
 
-    inline void logToAppender(Appender & appender) const noexcept {
+    void logToAppender(Appender & appender) const noexcept {
         for (LogEntry const & entry : m_entries)
             appender.log(entry.time, entry.priority, entry.message.c_str());
     }
 
-    inline void clear() noexcept {
+    void clear() noexcept {
         if (m_oom)
             m_oomMessage = std::move(m_entries.back().message);
         m_entries.pop_back();

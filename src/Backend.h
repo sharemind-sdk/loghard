@@ -45,15 +45,15 @@ public: /* Types: */
 
     public: /* Methods: */
 
-        inline Appender(std::shared_ptr<Backend> backend)
+        Appender(std::shared_ptr<Backend> backend)
             : m_backend(std::move(backend))
         {}
 
         /// \todo Check for backend loops.
 
-        inline void log(::timeval time,
-                        Priority const priority,
-                        char const * message) noexcept override
+        void log(::timeval time,
+                 Priority const priority,
+                 char const * message) noexcept override
         { m_backend->doLog(time, priority, message); }
 
     private: /* Fields: */
@@ -64,14 +64,13 @@ public: /* Types: */
 
 public: /* Methods: */
 
-    inline void addAppender(std::shared_ptr<LogHard::Appender> appenderPtr) {
+    void addAppender(std::shared_ptr<LogHard::Appender> appenderPtr) {
         assert(appenderPtr);
         std::lock_guard<std::recursive_mutex> const guard(m_mutex);
         m_appenders.insert(appenderPtr);
     }
 
-    inline void removeAppender(std::shared_ptr<LogHard::Appender> appenderPtr)
-            noexcept
+    void removeAppender(std::shared_ptr<LogHard::Appender> appenderPtr) noexcept
     {
         std::lock_guard<std::recursive_mutex> const guard(m_mutex);
         m_appenders.erase(appenderPtr);
@@ -79,11 +78,11 @@ public: /* Methods: */
 
 private: /* Methods: */
 
-    inline Lock retrieveLock() noexcept { return Lock(m_mutex); }
+    Lock retrieveLock() noexcept { return Lock(m_mutex); }
 
-    inline void doLog(::timeval const time,
-                      Priority const priority,
-                      char const * const message) noexcept
+    void doLog(::timeval const time,
+               Priority const priority,
+               char const * const message) noexcept
     {
         std::lock_guard<std::recursive_mutex> const guard(m_mutex);
         for (auto const & a : m_appenders)
