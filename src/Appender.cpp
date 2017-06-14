@@ -17,32 +17,26 @@
  * For further information, please contact us at sharemind@cyber.ee.
  */
 
-#ifndef LOGHARD_APPENDER_H
-#define LOGHARD_APPENDER_H
-
-#include <sys/time.h>
-#include "Priority.h"
+#include "Appender.h"
 
 
 namespace LogHard {
 
-class Appender {
+Appender::~Appender() noexcept {}
 
-public: /* Methods: */
+char const * Appender::priorityString(Priority const priority) noexcept {
+    static char const strings[][8u] =
+            { "FATAL", "ERROR", "WARNING", "INFO", "DEBUG", "DEBUG2" };
+    return &strings[static_cast<unsigned>(priority)][0u];
+}
 
-    virtual ~Appender() noexcept;
-
-    virtual void log(::timeval time,
-                     Priority priority,
-                     char const * message) noexcept = 0;
-
-    static char const * priorityString(Priority const priority) noexcept;
-
-    static char const * priorityStringRightPadded(Priority const priority)
-            noexcept;
-
-}; /* class Appender { */
+char const * Appender::priorityStringRightPadded(Priority const priority)
+        noexcept
+{
+    static char const strings[][8u] = {
+        "FATAL  ", "ERROR  ", "WARNING", "INFO   ", "DEBUG  ", "DEBUG2 "
+    };
+    return &strings[static_cast<unsigned>(priority)][0u];
+}
 
 } /* namespace LogHard { */
-
-#endif /* LOGHARD_APPENDER_H */
