@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015 Cybernetica
+ * Copyright (C) 2015-2017 Cybernetica
  *
  * Research/Commercial License Usage
  * Licensees holding a valid Research License or Commercial License
@@ -20,7 +20,6 @@
 #ifndef LOGHARD_BACKEND_H
 #define LOGHARD_BACKEND_H
 
-#include <cassert>
 #include <memory>
 #include <mutex>
 #include <set>
@@ -64,17 +63,10 @@ public: /* Types: */
 
 public: /* Methods: */
 
-    void addAppender(std::shared_ptr<LogHard::Appender> appenderPtr) {
-        assert(appenderPtr);
-        std::lock_guard<std::recursive_mutex> const guard(m_mutex);
-        m_appenders.insert(appenderPtr);
-    }
+    void addAppender(std::shared_ptr<LogHard::Appender> appenderPtr);
 
-    void removeAppender(std::shared_ptr<LogHard::Appender> appenderPtr) noexcept
-    {
-        std::lock_guard<std::recursive_mutex> const guard(m_mutex);
-        m_appenders.erase(appenderPtr);
-    }
+    void removeAppender(std::shared_ptr<LogHard::Appender> appenderPtr)
+            noexcept;
 
 private: /* Methods: */
 
@@ -82,12 +74,7 @@ private: /* Methods: */
 
     void doLog(::timeval const time,
                Priority const priority,
-               char const * const message) noexcept
-    {
-        std::lock_guard<std::recursive_mutex> const guard(m_mutex);
-        for (auto const & a : m_appenders)
-            a->log(time, priority, message);
-    }
+               char const * const message) noexcept;
 
 private: /* Fields: */
 
