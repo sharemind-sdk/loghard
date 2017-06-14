@@ -41,6 +41,8 @@ EarlyAppender::EarlyAppender(std::size_t const reserveEntries,
         msg.reserve(maxMessageSize);
 }
 
+EarlyAppender::~EarlyAppender() noexcept {}
+
 void EarlyAppender::log(::timeval time,
                         Priority const priority,
                         char const * message) noexcept

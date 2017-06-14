@@ -90,6 +90,8 @@ CFileAppender::CFileAppender(std::FILE * const file)
     }
 }
 
+CFileAppender::~CFileAppender() noexcept {}
+
 void CFileAppender::log(::timeval time,
                         Priority const priority,
                         char const * message) noexcept

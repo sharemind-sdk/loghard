@@ -29,6 +29,8 @@ class StdAppender: public Appender {
 
 public: /* Methods: */
 
+    ~StdAppender() noexcept override;
+
     void log(::timeval time,
              Priority const priority,
              char const * message) noexcept override;

@@ -41,6 +41,7 @@ public: /* Types: */
 public: /* Methods: */
 
     CFileAppender(std::FILE * const file);
+    ~CFileAppender() noexcept override;
 
     void log(::timeval time,
              Priority const priority,

@@ -25,6 +25,8 @@
 
 namespace LogHard {
 
+StdAppender::~StdAppender() noexcept {}
+
 void StdAppender::log(::timeval time,
                       Priority const priority,
                       char const * message) noexcept

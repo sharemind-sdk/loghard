@@ -52,6 +52,7 @@ public: /* Methods: */
 
     EarlyAppender(std::size_t const reserveEntries = 1024u,
                   std::size_t const maxMessageSize = 1024u);
+    ~EarlyAppender() noexcept override;
 
     LogEntries const & entries() const noexcept { return m_entries; }
 
