@@ -33,11 +33,10 @@ class SyslogAppender: public Appender {
 
 public: /* Types: */
 
-    SHAREMIND_DEFINE_EXCEPTION(std::exception, Exception);
-    SHAREMIND_DEFINE_EXCEPTION_CONST_MSG(
+    SHAREMIND_DECLARE_EXCEPTION_NOINLINE(std::exception, Exception);
+    SHAREMIND_DECLARE_EXCEPTION_CONST_MSG_NOINLINE(
             Exception,
-            MultipleSyslogAppenderException,
-            "Multiple Syslog active appenders per process not allowed!");
+            MultipleSyslogAppenderException);
 
 public: /* Methods: */
 

@@ -26,6 +26,13 @@
 
 namespace LogHard {
 
+SHAREMIND_DEFINE_EXCEPTION_NOINLINE(std::exception, SyslogAppender::, Exception);
+SHAREMIND_DEFINE_EXCEPTION_CONST_MSG_NOINLINE(
+        SyslogAppender::Exception,
+        SyslogAppender::,
+        MultipleSyslogAppenderException,
+        "Multiple Syslog active appenders per process not allowed!");
+
 SyslogAppender const * SyslogAppender::m_singleInstance = nullptr;
 
 SyslogAppender::SyslogAppender(std::string ident,

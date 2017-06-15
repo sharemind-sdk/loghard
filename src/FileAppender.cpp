@@ -24,6 +24,13 @@
 
 namespace LogHard {
 
+SHAREMIND_DEFINE_EXCEPTION_NOINLINE(std::exception, FileAppender::, Exception);
+SHAREMIND_DEFINE_EXCEPTION_CONST_MSG_NOINLINE(
+        FileAppender::Exception,
+        FileAppender::,
+        FileOpenException,
+        "Failed to open file for logging!");
+
 FileAppender::FileAppender(std::string const & path,
                            OpenMode const openMode,
                            ::mode_t const flags)

@@ -39,11 +39,9 @@ public: /* Types: */
 
     enum OpenMode { APPEND, OVERWRITE };
 
-    SHAREMIND_DEFINE_EXCEPTION(std::exception, Exception);
-    SHAREMIND_DEFINE_EXCEPTION_CONST_MSG(
-            Exception,
-            FileOpenException,
-            "Failed to open file for logging!");
+    SHAREMIND_DECLARE_EXCEPTION_NOINLINE(std::exception, Exception);
+    SHAREMIND_DECLARE_EXCEPTION_CONST_MSG_NOINLINE(Exception,
+                                                   FileOpenException);
 
 public: /* Methods: */
 

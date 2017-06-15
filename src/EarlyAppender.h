@@ -35,11 +35,9 @@ class EarlyAppender: public Appender {
 
 public: /* Types: */
 
-    SHAREMIND_DEFINE_EXCEPTION(std::exception, Exception);
-    SHAREMIND_DEFINE_EXCEPTION_CONST_MSG(
-            Exception,
-            TooManyEntriesException,
-            "Maximum log entry reservation size exceeded!");
+    SHAREMIND_DECLARE_EXCEPTION_NOINLINE(std::exception, Exception);
+    SHAREMIND_DECLARE_EXCEPTION_CONST_MSG_NOINLINE(Exception,
+                                                   TooManyEntriesException);
 
     struct LogEntry {
         ::timeval time;

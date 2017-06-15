@@ -25,6 +25,13 @@
 
 namespace LogHard {
 
+SHAREMIND_DEFINE_EXCEPTION_NOINLINE(std::exception, EarlyAppender::, Exception);
+SHAREMIND_DEFINE_EXCEPTION_CONST_MSG_NOINLINE(
+        EarlyAppender::Exception,
+        EarlyAppender::,
+        TooManyEntriesException,
+        "Maximum log entry reservation size exceeded!");
+
 EarlyAppender::EarlyAppender(std::size_t const reserveEntries,
                              std::size_t const maxMessageSize)
     : m_oomMessage("Early log buffer full, messages skipped!")

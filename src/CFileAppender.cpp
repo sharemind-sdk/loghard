@@ -79,6 +79,13 @@ void logToFile_(int const fd,
 
 } // anonymous namespace
 
+SHAREMIND_DEFINE_EXCEPTION_NOINLINE(std::exception, CFileAppender::, Exception);
+SHAREMIND_DEFINE_EXCEPTION_CONST_MSG_NOINLINE(
+        CFileAppender::Exception,
+        CFileAppender::,
+        InvalidFileException,
+        "Invalid FILE handle given for logging!");
+
 CFileAppender::CFileAppender(std::FILE * const file)
     : m_fd(::fileno(file))
 {
