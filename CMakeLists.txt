@@ -118,7 +118,7 @@ SET(CPACK_DEBIAN_LIB_PACKAGE_NAME "libloghard")
 SET(CPACK_COMPONENT_DEV_DESCRIPTION "LogHard development headers")
 SET(CPACK_COMPONENT_LIB_DESCRIPTION "LogHard logging library")
 SET(CPACK_DEBIAN_DEV_PACKAGE_DEPENDS
-    "libloghard (= ${LOGHARD_VERSION}), sharemind-cheaders (>= 0.1.0), sharemind-cxxheaders (>= 0.1.0), libc6-dev (>= 2.19), libstdc++-dev")
+    "libloghard (= ${LOGHARD_VERSION}), sharemind-cheaders (>= 0.1.0), sharemind-cxxheaders (>= 0.1.0), libc6-dev (>= 2.19), libstdc++-dev, libgcc-4.8-dev | libgcc-4.9-dev | libgcc-5-dev | libgcc-6-dev | libgcc-7-dev")
 SET(CPACK_DEBIAN_LIB_PACKAGE_DEPENDS "libstdc++6 (>= 4.8.0), libc6 (>= 2.19)")
 SET(CPACK_DEBIAN_DEV_PACKAGE_SECTION "libdevel")
 SET(CPACK_DEBIAN_LIB_PACKAGE_SECTION "libs")
