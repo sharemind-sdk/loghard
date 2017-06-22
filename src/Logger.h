@@ -146,20 +146,10 @@ public: /* Types: */
             : m_contents(std::forward<Args>(args)...)
         {}
 
-        LogHelperBase(LogHelperBase<priority> const &) = delete;
-        LogHelperBase<priority> & operator=(LogHelperBase<priority> const &) =
-                delete;
-
-        LogHelperBase(LogHelperBase<priority> && move) noexcept
-            : m_contents(std::move(move.m_contents))
-        {}
-
-        LogHelperBase<priority> & operator=(LogHelperBase<priority> && move)
-                noexcept
-        {
-            m_contents = std::move(move.m_contents);
-            return *this;
-        }
+        LogHelperBase(LogHelperBase &&) noexcept = default;
+        LogHelperBase(LogHelperBase const &) = delete;
+        LogHelperBase & operator=(LogHelperBase &&) noexcept = default;
+        LogHelperBase & operator=(LogHelperBase const &) = delete;
 
         ~LogHelperBase() noexcept { m_contents.finish(priority); }
 
