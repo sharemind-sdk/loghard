@@ -78,11 +78,10 @@ private: /* Types: */
 
     /* Methods: */
 
-        LogHelperContents(LogHelperContents const &) = delete;
-        LogHelperContents & operator=(LogHelperContents const &) = delete;
-
         LogHelperContents(LogHelperContents &&) noexcept = default;
+        LogHelperContents(LogHelperContents const &) = delete;
         LogHelperContents & operator=(LogHelperContents &&) noexcept = default;
+        LogHelperContents & operator=(LogHelperContents const &) = delete;
 
         LogHelperContents(::timeval, std::shared_ptr<Backend>) noexcept;
         LogHelperContents(::timeval,
@@ -135,33 +134,24 @@ private: /* Types: */
 public: /* Types: */
 
     template <Priority priority>
-    class LogHelperBase {
-
-        template <Priority> friend class LogHelper;
+    class LogHelperBase: private LogHelperContents {
 
     public: /* Methods: */
 
-        template <typename ... Args>
-        LogHelperBase(Args && ... args)
-            : m_contents(std::forward<Args>(args)...)
-        {}
+        using LogHelperContents::LogHelperContents;
 
         LogHelperBase(LogHelperBase &&) noexcept = default;
         LogHelperBase(LogHelperBase const &) = delete;
         LogHelperBase & operator=(LogHelperBase &&) noexcept = default;
         LogHelperBase & operator=(LogHelperBase const &) = delete;
 
-        ~LogHelperBase() noexcept { m_contents.finish(priority); }
+        ~LogHelperBase() noexcept { finish(priority); }
 
         template <typename T>
         LogHelperBase & operator<<(T && v) noexcept {
-            m_contents.log(std::forward<T>(v));
+            log(std::forward<T>(v));
             return *this;
         }
-
-    private: /* Fields: */
-
-        LogHelperContents m_contents;
 
     }; /* class LogHelperBase { */
 
@@ -175,6 +165,11 @@ public: /* Types: */
         friend class Logger;
 
     private: /* Methods: */
+
+        LogHelper(LogHelper &&) noexcept = default;
+        LogHelper(LogHelper const &) = delete;
+        LogHelper & operator=(LogHelper &&) noexcept = default;
+        LogHelper & operator=(LogHelper const &) = delete;
 
         template <typename BackendPtr, typename ... Args>
         LogHelper(::timeval theTime, BackendPtr && backend, Args && ... args)
