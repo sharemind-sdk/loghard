@@ -154,9 +154,12 @@ public: /* Types: */
             : m_contents(std::move(move.m_contents))
         {}
 
-        LogHelperBase<priority> & operator=(
-                LogHelperBase<priority> const && move) noexcept
-        { m_contents = std::move(move.m_contents); }
+        LogHelperBase<priority> & operator=(LogHelperBase<priority> && move)
+                noexcept
+        {
+            m_contents = std::move(move.m_contents);
+            return *this;
+        }
 
         ~LogHelperBase() noexcept { m_contents.finish(priority); }
 
