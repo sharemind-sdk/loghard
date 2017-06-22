@@ -265,10 +265,12 @@ Logger::LogHelper<Priority::FullDebug> Logger::fullDebug() const noexcept
     LOGHARD_TCN(void Logger::printCurrentException<Priority::pri>()) \
     LOGHARD_TCN(void Logger::printCurrentException<Priority::pri>(::timeval)) \
     LOGHARD_TCN( \
-        void Logger::printCurrentException<Priority::pri, Logger::StandardFormatter>( \
+        void Logger::printCurrentException<Priority::pri, \
+                                           Logger::StandardFormatter>( \
                 StandardFormatter &&)) \
     LOGHARD_TCN( \
-        void Logger::printCurrentException<Priority::pri, Logger::StandardFormatter>( \
+        void Logger::printCurrentException<Priority::pri, \
+                                           Logger::StandardFormatter>( \
                 ::timeval, StandardFormatter &&))
 
 LOGHARD_EXTERN(Fatal)

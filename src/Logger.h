@@ -394,10 +394,12 @@ private: /* Fields: */
     LOGHARD_ETCN(void Logger::printCurrentException<Priority::pri>()) \
     LOGHARD_ETCN(void Logger::printCurrentException<Priority::pri>(::timeval)) \
     LOGHARD_ETCN( \
-        void Logger::printCurrentException<Priority::pri, Logger::StandardFormatter>( \
+        void Logger::printCurrentException<Priority::pri, \
+                                           Logger::StandardFormatter>( \
                 StandardFormatter &&)) \
     LOGHARD_ETCN( \
-        void Logger::printCurrentException<Priority::pri, Logger::StandardFormatter>( \
+        void Logger::printCurrentException<Priority::pri, \
+                                           Logger::StandardFormatter>( \
                 ::timeval, StandardFormatter &&))
 
 LOGHARD_EXTERN(Fatal)
