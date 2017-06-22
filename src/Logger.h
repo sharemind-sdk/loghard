@@ -207,7 +207,7 @@ public: /* Types: */
         void operator()(std::size_t const exceptionNumber,
                         std::size_t const totalExceptions,
                         std::exception_ptr exception,
-                        OutStream out) noexcept
+                        OutStream out) const noexcept
         {
             assert(exception);
             out << "  * Exception " << exceptionNumber << " of "
