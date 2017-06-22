@@ -138,12 +138,12 @@ public: /* Types: */
 
     public: /* Methods: */
 
-        using LogHelperContents::LogHelperContents;
-
         LogHelperBase(LogHelperBase &&) noexcept = default;
         LogHelperBase(LogHelperBase const &) = delete;
         LogHelperBase & operator=(LogHelperBase &&) noexcept = default;
         LogHelperBase & operator=(LogHelperBase const &) = delete;
+
+        using LogHelperContents::LogHelperContents;
 
         ~LogHelperBase() noexcept { finish(priority); }
 
@@ -164,12 +164,14 @@ public: /* Types: */
 
         friend class Logger;
 
-    private: /* Methods: */
+    public: /* Methods: */
 
         LogHelper(LogHelper &&) noexcept = default;
         LogHelper(LogHelper const &) = delete;
         LogHelper & operator=(LogHelper &&) noexcept = default;
         LogHelper & operator=(LogHelper const &) = delete;
+
+    private: /* Methods: */
 
         template <typename BackendPtr, typename ... Args>
         LogHelper(::timeval theTime, BackendPtr && backend, Args && ... args)
