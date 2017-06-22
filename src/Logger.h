@@ -261,6 +261,8 @@ public: /* Methods: */
         , m_basePrefix(logger.m_prefix)
     {}
 
+    ~Logger() noexcept;
+
     Logger & operator=(Logger &&) = delete;
     Logger & operator=(Logger const &) = delete;
 
@@ -290,23 +292,12 @@ public: /* Methods: */
                : LogHelper<PRIORITY>(std::move(theTime), m_backend);
     }
 
-    LogHelper<Priority::Fatal> fatal() const noexcept
-    { return logHelper<Priority::Fatal>(); }
-
-    LogHelper<Priority::Error> error() const noexcept
-    { return logHelper<Priority::Error>(); }
-
-    LogHelper<Priority::Warning> warning() const noexcept
-    { return logHelper<Priority::Warning>(); }
-
-    LogHelper<Priority::Normal> info() const noexcept
-    { return logHelper<Priority::Normal>(); }
-
-    LogHelper<Priority::Debug> debug() const noexcept
-    { return logHelper<Priority::Debug>(); }
-
-    LogHelper<Priority::FullDebug> fullDebug() const noexcept
-    { return logHelper<Priority::FullDebug>(); }
+    LogHelper<Priority::Fatal> fatal() const noexcept;
+    LogHelper<Priority::Error> error() const noexcept;
+    LogHelper<Priority::Warning> warning() const noexcept;
+    LogHelper<Priority::Normal> info() const noexcept;
+    LogHelper<Priority::Debug> debug() const noexcept;
+    LogHelper<Priority::FullDebug> fullDebug() const noexcept;
 
     template <typename T>
     static Hex<T> hex(T const value) noexcept { return {value}; }
@@ -380,6 +371,43 @@ private: /* Fields: */
     std::string m_basePrefix;
 
 }; /* class Logger { */
+
+#define LOGHARD_ETCN(...) extern template __VA_ARGS__ const noexcept;
+#define LOGHARD_EXTERN_LH(pri,usePrefix,...) \
+    LOGHARD_ETCN(Logger::LogHelper<Priority::pri> \
+                 Logger::logHelper<Priority::pri, usePrefix>(__VA_ARGS__))
+#define LOGHARD_EXTERN(pri) \
+    extern template class Logger::LogHelperBase<Priority::pri>; \
+    extern template class Logger::LogHelper<Priority::pri>; \
+    LOGHARD_ETCN( \
+        void Logger::StandardFormatter::operator()( \
+                std::size_t const, \
+                std::size_t const, \
+                std::exception_ptr, \
+                Logger::LogHelper<Priority::pri>)) \
+    LOGHARD_EXTERN_LH(pri, true,) \
+    LOGHARD_EXTERN_LH(pri, false,) \
+    LOGHARD_EXTERN_LH(pri, true, ::timeval) \
+    LOGHARD_EXTERN_LH(pri, false, ::timeval) \
+    LOGHARD_ETCN(void Logger::printCurrentException<Priority::pri>()) \
+    LOGHARD_ETCN(void Logger::printCurrentException<Priority::pri>(::timeval)) \
+    LOGHARD_ETCN( \
+        void Logger::printCurrentException<Priority::pri, Logger::StandardFormatter>( \
+                StandardFormatter &&)) \
+    LOGHARD_ETCN( \
+        void Logger::printCurrentException<Priority::pri, Logger::StandardFormatter>( \
+                ::timeval, StandardFormatter &&))
+
+LOGHARD_EXTERN(Fatal)
+LOGHARD_EXTERN(Error)
+LOGHARD_EXTERN(Warning)
+LOGHARD_EXTERN(Normal)
+LOGHARD_EXTERN(Debug)
+LOGHARD_EXTERN(FullDebug)
+
+#undef LOGHARD_EXTERN
+#undef LOGHARD_EXTERN_LH
+#undef LOGHARD_ETCN
 
 } /* namespace LogHard { */
 

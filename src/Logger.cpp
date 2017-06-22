@@ -216,11 +216,66 @@ Logger::Logger(Logger const & copy) noexcept
     , m_basePrefix(copy.m_prefix)
 {}
 
+Logger::~Logger() noexcept {}
+
 ::timeval Logger::now() noexcept {
     ::timeval theTime;
     SHAREMIND_DEBUG_ONLY(auto const r =) ::gettimeofday(&theTime, nullptr);
     assert(r == 0);
     return theTime;
 }
+
+Logger::LogHelper<Priority::Fatal> Logger::fatal() const noexcept
+{ return logHelper<Priority::Fatal>(); }
+
+Logger::LogHelper<Priority::Error> Logger::error() const noexcept
+{ return logHelper<Priority::Error>(); }
+
+Logger::LogHelper<Priority::Warning> Logger::warning() const noexcept
+{ return logHelper<Priority::Warning>(); }
+
+Logger::LogHelper<Priority::Normal> Logger::info() const noexcept
+{ return logHelper<Priority::Normal>(); }
+
+Logger::LogHelper<Priority::Debug> Logger::debug() const noexcept
+{ return logHelper<Priority::Debug>(); }
+
+Logger::LogHelper<Priority::FullDebug> Logger::fullDebug() const noexcept
+{ return logHelper<Priority::FullDebug>(); }
+
+// Extern template instantiations:
+
+#define LOGHARD_TCN(...) template __VA_ARGS__ const noexcept;
+#define LOGHARD_EXTERN_LH(pri,usePrefix,...) \
+    LOGHARD_TCN(Logger::LogHelper<Priority::pri> \
+                Logger::logHelper<Priority::pri, usePrefix>(__VA_ARGS__))
+#define LOGHARD_EXTERN(pri) \
+    template class Logger::LogHelperBase<Priority::pri>; \
+    template class Logger::LogHelper<Priority::pri>; \
+    LOGHARD_TCN( \
+        void Logger::StandardFormatter::operator()( \
+                std::size_t const, \
+                std::size_t const, \
+                std::exception_ptr, \
+                Logger::LogHelper<Priority::pri>)) \
+    LOGHARD_EXTERN_LH(pri, true,) \
+    LOGHARD_EXTERN_LH(pri, false,) \
+    LOGHARD_EXTERN_LH(pri, true, ::timeval) \
+    LOGHARD_EXTERN_LH(pri, false, ::timeval) \
+    LOGHARD_TCN(void Logger::printCurrentException<Priority::pri>()) \
+    LOGHARD_TCN(void Logger::printCurrentException<Priority::pri>(::timeval)) \
+    LOGHARD_TCN( \
+        void Logger::printCurrentException<Priority::pri, Logger::StandardFormatter>( \
+                StandardFormatter &&)) \
+    LOGHARD_TCN( \
+        void Logger::printCurrentException<Priority::pri, Logger::StandardFormatter>( \
+                ::timeval, StandardFormatter &&))
+
+LOGHARD_EXTERN(Fatal)
+LOGHARD_EXTERN(Error)
+LOGHARD_EXTERN(Warning)
+LOGHARD_EXTERN(Normal)
+LOGHARD_EXTERN(Debug)
+LOGHARD_EXTERN(FullDebug)
 
 } // namespace LogHard {
