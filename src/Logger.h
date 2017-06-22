@@ -372,6 +372,8 @@ private: /* Fields: */
 
 }; /* class Logger { */
 
+// Extern template declarations:
+
 #define LOGHARD_ETCN(...) extern template __VA_ARGS__ const noexcept;
 #define LOGHARD_EXTERN_LH(pri,usePrefix,...) \
     LOGHARD_ETCN(Logger::LogHelper<Priority::pri> \
