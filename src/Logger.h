@@ -53,22 +53,21 @@ public: /* Types: */
 
     struct HexByte { uint8_t const value; };
 
-    template <Priority> class LogHelper;
-
     class NullLogHelperBase {
 
-        template <Priority> friend class LogHelper;
-
     public : /* Methods: */
+
+        NullLogHelperBase(NullLogHelperBase &&) noexcept = default;
+        NullLogHelperBase(NullLogHelperBase const &) = delete;
+        NullLogHelperBase & operator=(NullLogHelperBase &&) noexcept = default;
+        NullLogHelperBase & operator=(NullLogHelperBase const &) = delete;
+
+        template <typename ... Args>
+        NullLogHelperBase(Args && ...) noexcept {}
 
         template <class T>
         NullLogHelperBase & operator<<(T &&) noexcept
         { return *this; }
-
-    private: /* Methods: */
-
-        template <typename ... Args>
-        NullLogHelperBase(Args && ...) noexcept {}
 
     }; /* class NullLogHelperBase { */
 
@@ -83,12 +82,9 @@ private: /* Types: */
         LogHelperContents & operator=(LogHelperContents &&) noexcept = default;
         LogHelperContents & operator=(LogHelperContents const &) = delete;
 
-        LogHelperContents(::timeval, std::shared_ptr<Backend>) noexcept;
         LogHelperContents(::timeval,
                           std::shared_ptr<Backend>,
                           std::string const &) noexcept;
-        LogHelperContents(::timeval, std::shared_ptr<Backend>, char const *)
-                noexcept;
 
         void finish(Priority priority) noexcept;
 
@@ -156,35 +152,12 @@ public: /* Types: */
     }; /* class LogHelperBase { */
 
     template <Priority priority = Priority::Debug>
-    class LogHelper
-            : public std::conditional<priority <= LOGHARD_LOGLEVEL_MAXDEBUG,
-                                      LogHelperBase<priority>,
-                                      NullLogHelperBase>::type
-    {
-
-        friend class Logger;
-
-    public: /* Methods: */
-
-        LogHelper(LogHelper &&) noexcept = default;
-        LogHelper(LogHelper const &) = delete;
-        LogHelper & operator=(LogHelper &&) noexcept = default;
-        LogHelper & operator=(LogHelper const &) = delete;
-
-    private: /* Methods: */
-
-        template <typename BackendPtr, typename ... Args>
-        LogHelper(::timeval theTime, BackendPtr && backend, Args && ... args)
-                noexcept
-            : std::conditional<priority <= LOGHARD_LOGLEVEL_MAXDEBUG,
-                               LogHelperBase<priority>,
-                               NullLogHelperBase>::type(
-                                    std::move(theTime),
-                                    std::forward<BackendPtr>(backend),
-                                    std::forward<Args>(args)...)
-        {}
-
-    }; /* class LogHelper */
+    using LogHelper =
+            typename std::conditional<
+                priority <= LOGHARD_LOGLEVEL_MAXDEBUG,
+                LogHelperBase<priority>,
+                NullLogHelperBase
+            >::type;
 
     template <Priority> friend class LogHelper;
 
@@ -268,15 +241,24 @@ public: /* Methods: */
                                      ' ');
     }
 
-    template <Priority PRIORITY, bool usePrefix = true>
-    LogHelper<PRIORITY> logHelper() const noexcept
-    { return logHelper<PRIORITY, usePrefix>(now()); }
+    template <Priority PRIORITY>
+    LogHelper<PRIORITY> logHelper() const noexcept {
+        using R = LogHelper<PRIORITY>;
+        static_assert(!std::is_nothrow_copy_assignable<R>::value, "");
+        static_assert(!std::is_nothrow_copy_constructible<R>::value, "");
+        static_assert(std::is_nothrow_move_assignable<R>::value, "");
+        static_assert(std::is_nothrow_move_constructible<R>::value, "");
+        return R(now(), m_backend, m_prefix);
+    }
 
-    template <Priority PRIORITY, bool usePrefix = true>
+    template <Priority PRIORITY>
     LogHelper<PRIORITY> logHelper(::timeval theTime) const noexcept {
-        return usePrefix
-               ? LogHelper<PRIORITY>(std::move(theTime), m_backend, m_prefix)
-               : LogHelper<PRIORITY>(std::move(theTime), m_backend);
+        using R = LogHelper<PRIORITY>;
+        static_assert(!std::is_nothrow_copy_assignable<R>::value, "");
+        static_assert(!std::is_nothrow_copy_constructible<R>::value, "");
+        static_assert(std::is_nothrow_move_assignable<R>::value, "");
+        static_assert(std::is_nothrow_move_constructible<R>::value, "");
+        return R(std::move(theTime), m_backend, m_prefix);
     }
 
     LogHelper<Priority::Fatal> fatal() const noexcept;
@@ -362,22 +344,19 @@ private: /* Fields: */
 // Extern template declarations:
 
 #define LOGHARD_ETCN(...) extern template __VA_ARGS__ const noexcept;
-#define LOGHARD_EXTERN_LH(pri,usePrefix,...) \
+#define LOGHARD_EXTERN_LH(pri,...) \
     LOGHARD_ETCN(Logger::LogHelper<Priority::pri> \
-                 Logger::logHelper<Priority::pri, usePrefix>(__VA_ARGS__))
+                 Logger::logHelper<Priority::pri>(__VA_ARGS__))
 #define LOGHARD_EXTERN(pri) \
     extern template class Logger::LogHelperBase<Priority::pri>; \
-    extern template class Logger::LogHelper<Priority::pri>; \
     LOGHARD_ETCN( \
         void Logger::StandardFormatter::operator()( \
                 std::size_t const, \
                 std::size_t const, \
                 std::exception_ptr, \
                 Logger::LogHelper<Priority::pri>)) \
-    LOGHARD_EXTERN_LH(pri, true,) \
-    LOGHARD_EXTERN_LH(pri, false,) \
-    LOGHARD_EXTERN_LH(pri, true, ::timeval) \
-    LOGHARD_EXTERN_LH(pri, false, ::timeval) \
+    LOGHARD_EXTERN_LH(pri,) \
+    LOGHARD_EXTERN_LH(pri, ::timeval) \
     LOGHARD_ETCN(void Logger::printCurrentException<Priority::pri>()) \
     LOGHARD_ETCN(void Logger::printCurrentException<Priority::pri>(::timeval)) \
     LOGHARD_ETCN( \

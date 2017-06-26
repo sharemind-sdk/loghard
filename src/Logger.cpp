@@ -39,38 +39,18 @@ thread_local std::size_t tl_offset = 0u;
 
 } // namespace Detail {
 
-Logger::LogHelperContents::LogHelperContents(
-        ::timeval theTime,
-        std::shared_ptr<Backend> backendPtr) noexcept
-    : m_backend(std::move(backendPtr))
-{
-    Detail::tl_time = std::move(theTime);
-    Detail::tl_offset = 0u;
-}
 
 Logger::LogHelperContents::LogHelperContents(
         ::timeval theTime,
         std::shared_ptr<Backend> backendPtr,
         std::string const & prefix) noexcept
-    : LogHelperContents(std::move(theTime),
-                    std::move(backendPtr),
-                    prefix.c_str())
-{}
-
-Logger::LogHelperContents::LogHelperContents(
-        ::timeval theTime,
-        std::shared_ptr<Backend> backendPtr,
-        char const * prefix) noexcept
     : m_backend(std::move(backendPtr))
 {
     Detail::tl_time = std::move(theTime);
     using namespace ::LogHard::Detail;
-    if (prefix && *prefix) {
-        std::size_t o = 0u;
-        do {
-            Detail::tl_message[o] = *prefix;
-        } while ((++o < MAX_MESSAGE_SIZE) && (*++prefix));
-        Detail::tl_offset = o;
+    if (!prefix.empty()) {
+        Detail::tl_offset = std::min(MAX_MESSAGE_SIZE, prefix.size());
+        std::memcpy(Detail::tl_message, prefix.c_str(), Detail::tl_offset);
     } else {
         Detail::tl_offset = 0u;
     }
@@ -246,22 +226,19 @@ Logger::LogHelper<Priority::FullDebug> Logger::fullDebug() const noexcept
 // Extern template instantiations:
 
 #define LOGHARD_TCN(...) template __VA_ARGS__ const noexcept;
-#define LOGHARD_EXTERN_LH(pri,usePrefix,...) \
+#define LOGHARD_EXTERN_LH(pri,...) \
     LOGHARD_TCN(Logger::LogHelper<Priority::pri> \
-                Logger::logHelper<Priority::pri, usePrefix>(__VA_ARGS__))
+                Logger::logHelper<Priority::pri>(__VA_ARGS__))
 #define LOGHARD_EXTERN(pri) \
     template class Logger::LogHelperBase<Priority::pri>; \
-    template class Logger::LogHelper<Priority::pri>; \
     LOGHARD_TCN( \
         void Logger::StandardFormatter::operator()( \
                 std::size_t const, \
                 std::size_t const, \
                 std::exception_ptr, \
                 Logger::LogHelper<Priority::pri>)) \
-    LOGHARD_EXTERN_LH(pri, true,) \
-    LOGHARD_EXTERN_LH(pri, false,) \
-    LOGHARD_EXTERN_LH(pri, true, ::timeval) \
-    LOGHARD_EXTERN_LH(pri, false, ::timeval) \
+    LOGHARD_EXTERN_LH(pri,) \
+    LOGHARD_EXTERN_LH(pri, ::timeval) \
     LOGHARD_TCN(void Logger::printCurrentException<Priority::pri>()) \
     LOGHARD_TCN(void Logger::printCurrentException<Priority::pri>(::timeval)) \
     LOGHARD_TCN( \
