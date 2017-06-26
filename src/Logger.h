@@ -244,14 +244,8 @@ public: /* Methods: */
     }
 
     template <Priority PRIORITY>
-    LogHelper<PRIORITY> logHelper() const noexcept {
-        using R = LogHelper<PRIORITY>;
-        static_assert(!std::is_nothrow_copy_assignable<R>::value, "");
-        static_assert(!std::is_nothrow_copy_constructible<R>::value, "");
-        static_assert(std::is_nothrow_move_assignable<R>::value, "");
-        static_assert(std::is_nothrow_move_constructible<R>::value, "");
-        return R(now(), sharemind::assertReturn(m_backend), m_prefix);
-    }
+    LogHelper<PRIORITY> logHelper() const noexcept
+    { return logHelper<PRIORITY>(now()); }
 
     template <Priority PRIORITY>
     LogHelper<PRIORITY> logHelper(::timeval theTime) const noexcept {
