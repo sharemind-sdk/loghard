@@ -159,8 +159,6 @@ public: /* Types: */
                 NullLogHelperBase
             >::type;
 
-    template <Priority> friend class LogHelper;
-
     struct StandardFormatter {
 
         template <typename OutStream>
