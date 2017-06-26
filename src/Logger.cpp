@@ -145,8 +145,24 @@ void Logger::LogHelperContents::log(char const * v) noexcept {
     }
 }
 
-void Logger::LogHelperContents::log(std::string const & v) noexcept
-{ return log(v.c_str()); }
+void Logger::LogHelperContents::log(std::string const & v) noexcept {
+    assert(m_backend);
+    auto const s = v.size();
+    if (s <= 0u)
+        return;
+    if (tl_offset <= MAX_MESSAGE_SIZE) {
+        auto const freeSpace = MAX_MESSAGE_SIZE - tl_offset;
+        if (freeSpace == 0u)
+            return elide();
+        if (s <= freeSpace) {
+            std::memcpy(&tl_message[tl_offset], v.c_str(), s);
+            tl_offset += s;
+        } else {
+            std::memcpy(&tl_message[tl_offset], v.c_str(), freeSpace);
+            return elide();
+        }
+    }
+}
 
 LOGHARD_LHC_OP(void *,, "%p")
 
