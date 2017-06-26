@@ -25,8 +25,7 @@
 
 namespace LogHard {
 
-
-namespace Detail {
+namespace {
 
 static constexpr std::size_t MAX_MESSAGE_SIZE = 1024u * 16u;
 static_assert(MAX_MESSAGE_SIZE >= 1u, "Invalid MAX_MESSAGE_SIZE");
@@ -37,8 +36,7 @@ thread_local char tl_message[STACK_BUFFER_SIZE] = {};
 thread_local ::timeval tl_time = {};
 thread_local std::size_t tl_offset = 0u;
 
-} // namespace Detail {
-
+} // anonymous namespace
 
 Logger::LogHelperContents::LogHelperContents(
         ::timeval theTime,
@@ -46,36 +44,33 @@ Logger::LogHelperContents::LogHelperContents(
         std::string const & prefix) noexcept
     : m_backend(std::move(backendPtr))
 {
-    Detail::tl_time = std::move(theTime);
-    using namespace ::LogHard::Detail;
+    tl_time = std::move(theTime);
     if (!prefix.empty()) {
-        Detail::tl_offset = std::min(MAX_MESSAGE_SIZE, prefix.size());
-        std::memcpy(Detail::tl_message, prefix.c_str(), Detail::tl_offset);
+        tl_offset = std::min(MAX_MESSAGE_SIZE, prefix.size());
+        std::memcpy(tl_message, prefix.c_str(), tl_offset);
     } else {
-        Detail::tl_offset = 0u;
+        tl_offset = 0u;
     }
 }
 
 void Logger::LogHelperContents::finish(Priority priority) noexcept {
     if (!m_backend)
         return;
-    using namespace ::LogHard::Detail;
-    assert(Detail::tl_offset <= STACK_BUFFER_SIZE);
-    assert(Detail::tl_offset < STACK_BUFFER_SIZE
-           || Detail::tl_message[STACK_BUFFER_SIZE - 1u] == '\0');
-    if (Detail::tl_offset < STACK_BUFFER_SIZE)
-        Detail::tl_message[Detail::tl_offset] = '\0';
-    m_backend->doLog(std::move(Detail::tl_time), priority, Detail::tl_message);
+    assert(tl_offset <= STACK_BUFFER_SIZE);
+    assert(tl_offset < STACK_BUFFER_SIZE
+           || tl_message[STACK_BUFFER_SIZE - 1u] == '\0');
+    if (tl_offset < STACK_BUFFER_SIZE)
+        tl_message[tl_offset] = '\0';
+    m_backend->doLog(std::move(tl_time), priority, tl_message);
 }
 
 void Logger::LogHelperContents::log(char const v) noexcept {
     assert(m_backend);
-    using namespace ::LogHard::Detail;
-    if (Detail::tl_offset <= MAX_MESSAGE_SIZE) {
-        if (Detail::tl_offset == MAX_MESSAGE_SIZE)
+    if (tl_offset <= MAX_MESSAGE_SIZE) {
+        if (tl_offset == MAX_MESSAGE_SIZE)
             return elide();
-        Detail::tl_message[Detail::tl_offset] = v;
-        Detail::tl_offset++;
+        tl_message[tl_offset] = v;
+        tl_offset++;
     }
 }
 
@@ -85,25 +80,24 @@ void Logger::LogHelperContents::log(bool const v) noexcept
 #define LOGHARD_LHC_OP(valueType,valueGetter,formatString) \
     void Logger::LogHelperContents::log(valueType const v) noexcept { \
         assert(m_backend); \
-        using namespace ::LogHard::Detail; \
-        if (Detail::tl_offset > MAX_MESSAGE_SIZE) { \
-            assert(Detail::tl_offset == STACK_BUFFER_SIZE); \
+        if (tl_offset > MAX_MESSAGE_SIZE) { \
+            assert(tl_offset == STACK_BUFFER_SIZE); \
             return; \
         } \
-        std::size_t const spaceLeft = MAX_MESSAGE_SIZE - Detail::tl_offset; \
+        std::size_t const spaceLeft = MAX_MESSAGE_SIZE - tl_offset; \
         if (!spaceLeft) \
             return elide(); \
-        int const r = snprintf(&Detail::tl_message[Detail::tl_offset], \
+        int const r = snprintf(&tl_message[tl_offset], \
                                spaceLeft, \
                                (formatString), \
                                v valueGetter); \
         if (r < 0) \
             return elide(); \
         if (static_cast<std::size_t>(r) > spaceLeft) { \
-            Detail::tl_offset = MAX_MESSAGE_SIZE; \
+            tl_offset = MAX_MESSAGE_SIZE; \
             return elide(); \
         } \
-        Detail::tl_offset += static_cast<unsigned>(r); \
+        tl_offset += static_cast<unsigned>(r); \
     }
 
 LOGHARD_LHC_OP(signed char,, "%hhd")
@@ -134,8 +128,7 @@ void Logger::LogHelperContents::log(float const v) noexcept
 void Logger::LogHelperContents::log(char const * v) noexcept {
     assert(v);
     assert(m_backend);
-    using namespace ::LogHard::Detail;
-    auto o = Detail::tl_offset;
+    auto o = tl_offset;
     if (o > MAX_MESSAGE_SIZE) {
         assert(o == STACK_BUFFER_SIZE);
         return;
@@ -143,12 +136,12 @@ void Logger::LogHelperContents::log(char const * v) noexcept {
     if (*v) {
         do {
             if (o == MAX_MESSAGE_SIZE) {
-                Detail::tl_offset = o;
+                tl_offset = o;
                 return elide();
             }
-            Detail::tl_message[o] = *v;
+            tl_message[o] = *v;
         } while ((++o, *++v));
-        Detail::tl_offset = o;
+        tl_offset = o;
     }
 }
 
@@ -173,11 +166,10 @@ void Logger::LogHelperContents::log(sharemind::Uuid const & v) noexcept {
 }
 
 void Logger::LogHelperContents::elide() noexcept {
-    using namespace ::LogHard::Detail;
-    assert(Detail::tl_offset <= MAX_MESSAGE_SIZE);
+    assert(tl_offset <= MAX_MESSAGE_SIZE);
     assert(m_backend);
-    std::memcpy(&Detail::tl_message[Detail::tl_offset], "...", 4u);
-    Detail::tl_offset = STACK_BUFFER_SIZE;
+    std::memcpy(&tl_message[tl_offset], "...", 4u);
+    tl_offset = STACK_BUFFER_SIZE;
 }
 
 Logger::Logger(std::shared_ptr<Backend> backend) noexcept
