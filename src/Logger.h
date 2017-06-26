@@ -226,7 +226,8 @@ public: /* Methods: */
     Logger & operator=(Logger &&) = delete;
     Logger & operator=(Logger const &) = delete;
 
-    std::shared_ptr<Backend> backend() const noexcept { return m_backend; }
+    std::shared_ptr<Backend> const & backend() const noexcept
+    { return m_backend; }
 
     std::string const & prefix() const noexcept { return m_prefix; }
 
