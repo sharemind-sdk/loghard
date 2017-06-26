@@ -25,7 +25,6 @@
 #include <cstdint>
 #include <exception>
 #include <memory>
-#include <sharemind/AssertReturn.h>
 #include <sharemind/Concat.h>
 #include <sharemind/Uuid.h>
 #include <string>
@@ -254,9 +253,8 @@ public: /* Methods: */
         static_assert(!std::is_nothrow_copy_constructible<R>::value, "");
         static_assert(std::is_nothrow_move_assignable<R>::value, "");
         static_assert(std::is_nothrow_move_constructible<R>::value, "");
-        return R(std::move(theTime),
-                 sharemind::assertReturn(m_backend),
-                 m_prefix);
+        assert(m_backend);
+        return R(std::move(theTime), m_backend, m_prefix);
     }
 
     LogHelper<Priority::Fatal> fatal() const noexcept;
