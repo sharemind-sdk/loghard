@@ -253,6 +253,13 @@ public: /* Methods: */
         static_assert(!std::is_nothrow_copy_constructible<R>::value, "");
         static_assert(std::is_nothrow_move_assignable<R>::value, "");
         static_assert(std::is_nothrow_move_constructible<R>::value, "");
+        static_assert(
+                    std::is_nothrow_constructible<
+                        R,
+                        ::timeval &&,
+                        decltype(m_backend) const &,
+                        decltype(m_prefix) const &>::value, "");
+        static_assert(std::is_nothrow_destructible<R>::value, "");
         assert(m_backend);
         return R(std::move(theTime), m_backend, m_prefix);
     }
