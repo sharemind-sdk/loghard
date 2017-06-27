@@ -39,12 +39,17 @@ thread_local std::size_t tl_offset = 0u;
 } // anonymous namespace
 
 Logger::LogHelperContents::LogHelperContents(
+        Logger const & logger) noexcept
+    : LogHelperContents(Logger::now(), logger)
+{}
+
+Logger::LogHelperContents::LogHelperContents(
         ::timeval theTime,
-        std::shared_ptr<Backend> backendPtr,
-        std::string const & prefix) noexcept
-    : m_backend(sharemind::assertReturn(std::move(backendPtr)))
+        Logger const & logger) noexcept
+    : m_backend(sharemind::assertReturn(logger.backend()))
 {
     tl_time = std::move(theTime);
+    auto const & prefix = logger.prefix();
     if (!prefix.empty()) {
         tl_offset = std::min(MAX_MESSAGE_SIZE, prefix.size());
         std::memcpy(tl_message, prefix.c_str(), tl_offset);

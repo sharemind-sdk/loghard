@@ -64,8 +64,11 @@ public: /* Types: */
         NullLogHelperBase & operator=(NullLogHelperBase &&) noexcept = default;
         NullLogHelperBase & operator=(NullLogHelperBase const &) = delete;
 
-        template <typename ... Args>
-        NullLogHelperBase(Args && ...) noexcept {}
+        NullLogHelperBase(Logger const & logger) noexcept
+        { assert(logger.backend()); }
+
+        NullLogHelperBase(::timeval, Logger const & logger) noexcept
+        { assert(logger.backend()); }
 
         template <class T>
         NullLogHelperBase & operator<<(T &&) noexcept
@@ -84,9 +87,8 @@ private: /* Types: */
         LogHelperContents & operator=(LogHelperContents &&) noexcept = default;
         LogHelperContents & operator=(LogHelperContents const &) = delete;
 
-        LogHelperContents(::timeval,
-                          std::shared_ptr<Backend>,
-                          std::string const &) noexcept;
+        LogHelperContents(Logger const &) noexcept;
+        LogHelperContents(::timeval, Logger const &) noexcept;
 
         void finish(Priority priority) noexcept;
 
@@ -243,8 +245,17 @@ public: /* Methods: */
     }
 
     template <Priority PRIORITY>
-    LogHelper<PRIORITY> logHelper() const noexcept
-    { return logHelper<PRIORITY>(now()); }
+    LogHelper<PRIORITY> logHelper() const noexcept {
+        using R = LogHelper<PRIORITY>;
+        static_assert(!std::is_nothrow_copy_assignable<R>::value, "");
+        static_assert(!std::is_nothrow_copy_constructible<R>::value, "");
+        static_assert(std::is_nothrow_move_assignable<R>::value, "");
+        static_assert(std::is_nothrow_move_constructible<R>::value, "");
+        static_assert(std::is_nothrow_constructible<R, decltype(*this)>::value,
+                      "");
+        static_assert(std::is_nothrow_destructible<R>::value, "");
+        return R(*this);
+    }
 
     template <Priority PRIORITY>
     LogHelper<PRIORITY> logHelper(::timeval theTime) const noexcept {
@@ -256,12 +267,10 @@ public: /* Methods: */
         static_assert(
                     std::is_nothrow_constructible<
                         R,
-                        ::timeval &&,
-                        decltype(m_backend) const &,
-                        decltype(m_prefix) const &>::value, "");
+                        decltype(std::move(theTime)),
+                        decltype(*this)>::value, "");
         static_assert(std::is_nothrow_destructible<R>::value, "");
-        assert(m_backend);
-        return R(std::move(theTime), m_backend, m_prefix);
+        return R(std::move(theTime), *this);
     }
 
     /* The following shorthands MUST stay inline as long as the user of this
