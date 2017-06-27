@@ -25,6 +25,7 @@
 #include <cstdint>
 #include <exception>
 #include <memory>
+#include <sharemind/AssertReturn.h>
 #include <sharemind/Concat.h>
 #include <sharemind/Uuid.h>
 #include <string>
@@ -188,7 +189,7 @@ public: /* Methods: */
     template <typename Arg, typename ... Args>
     Logger(std::shared_ptr<Backend> backend, Arg && arg, Args && ... args)
             noexcept
-        : m_backend(std::move(backend))
+        : m_backend(sharemind::assertReturn(std::move(backend)))
         , m_prefix(sharemind::concat(std::forward<Arg>(arg),
                                      std::forward<Args>(args)...,
                                      ' '))
@@ -200,7 +201,7 @@ public: /* Methods: */
 
     template <typename Arg, typename ... Args>
     Logger(Logger const & logger, Arg && arg, Args && ... args) noexcept
-        : m_backend(logger.m_backend)
+        : m_backend(sharemind::assertReturn(logger.m_backend))
         , m_prefix(logger.m_prefix.empty()
                    ? sharemind::concat(std::forward<Arg>(arg),
                                        std::forward<Args>(args)...,

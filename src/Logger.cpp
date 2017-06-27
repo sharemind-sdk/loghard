@@ -42,7 +42,7 @@ Logger::LogHelperContents::LogHelperContents(
         ::timeval theTime,
         std::shared_ptr<Backend> backendPtr,
         std::string const & prefix) noexcept
-    : m_backend(std::move(backendPtr))
+    : m_backend(sharemind::assertReturn(std::move(backendPtr)))
 {
     tl_time = std::move(theTime);
     if (!prefix.empty()) {
@@ -189,17 +189,17 @@ void Logger::LogHelperContents::elide() noexcept {
 }
 
 Logger::Logger(std::shared_ptr<Backend> backend) noexcept
-    : m_backend(std::move(backend))
+    : m_backend(sharemind::assertReturn(std::move(backend)))
 {}
 
 Logger::Logger(Logger && move) noexcept
-    : m_backend(std::move(move.m_backend))
+    : m_backend(sharemind::assertReturn(std::move(move.m_backend)))
     , m_prefix(std::move(move.m_prefix))
     , m_basePrefix(std::move(move.m_prefix))
 {}
 
 Logger::Logger(Logger const & copy) noexcept
-    : m_backend(copy.m_backend)
+    : m_backend(sharemind::assertReturn(copy.m_backend))
     , m_prefix(copy.m_prefix)
     , m_basePrefix(copy.m_prefix)
 {}
