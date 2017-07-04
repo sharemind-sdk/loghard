@@ -243,7 +243,7 @@ Logger::LogHelper<Priority::FullDebug> Logger::fullDebug() const noexcept
     LOGHARD_TCN(Logger::LogHelper<Priority::pri> \
                 Logger::logHelper<Priority::pri>(__VA_ARGS__))
 #define LOGHARD_EXTERN(pri) \
-    template class Logger::LogHelperBase<Priority::pri>; \
+    template class Logger::LogHelper<Priority::pri>; \
     LOGHARD_TCN( \
         void Logger::StandardFormatter::operator()( \
                 std::size_t const, \

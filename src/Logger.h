@@ -146,29 +146,26 @@ private: /* Types: */
 public: /* Types: */
 
     template <Priority priority>
-    class LogHelperBase: private LogHelperContents {
+    class LogHelper: private LogHelperContents {
 
     public: /* Methods: */
 
-        LogHelperBase(LogHelperBase &&) noexcept = default;
-        LogHelperBase(LogHelperBase const &) = delete;
-        LogHelperBase & operator=(LogHelperBase &&) noexcept = default;
-        LogHelperBase & operator=(LogHelperBase const &) = delete;
+        LogHelper(LogHelper &&) noexcept = default;
+        LogHelper(LogHelper const &) = delete;
+        LogHelper & operator=(LogHelper &&) noexcept = default;
+        LogHelper & operator=(LogHelper const &) = delete;
 
         using LogHelperContents::LogHelperContents;
 
-        ~LogHelperBase() noexcept { finish(priority); }
+        ~LogHelper() noexcept { finish(priority); }
 
         template <typename T>
-        LogHelperBase & operator<<(T && v) noexcept {
+        LogHelper & operator<<(T && v) noexcept {
             log(std::forward<T>(v));
             return *this;
         }
 
-    }; /* class LogHelperBase { */
-
-    template <Priority priority = Priority::Debug>
-    using LogHelper = LogHelperBase<priority>;
+    }; /* class LogHelper { */
 
     struct StandardFormatter {
 
@@ -370,7 +367,7 @@ private: /* Fields: */
     LOGHARD_ETCN(Logger::LogHelper<Priority::pri> \
                  Logger::logHelper<Priority::pri>(__VA_ARGS__))
 #define LOGHARD_EXTERN(pri) \
-    extern template class Logger::LogHelperBase<Priority::pri>; \
+    extern template class Logger::LogHelper<Priority::pri>; \
     LOGHARD_ETCN( \
         void Logger::StandardFormatter::operator()( \
                 std::size_t const, \
