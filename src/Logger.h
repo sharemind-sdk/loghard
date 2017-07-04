@@ -36,6 +36,23 @@
 #include "Priority.h"
 
 
+/*
+    LOGHARD_DEVMSG is a macro which may be used for debug-build-only messages
+    with hope that the compiler will optimize to remove the whole statement if
+    the NDEBUG macro is defined. Usage example:
+
+        m_logger.LOGHARD_DEVMSG() << "Here";
+
+    Note that any side-effects of expressions passed to it will still execute.
+*/
+#ifndef LOGHARD_DEVMSG
+#ifndef NDEBUG
+#define LOGHARD_DEVMSG fullDebug
+#else
+#define LOGHARD_DEVMSG discard
+#endif
+#endif
+
 #ifndef LOGHARD_LOGLEVEL_MAXDEBUG
 /// \todo Remove LOGHARD_LOGLEVEL_MAXDEBUG macro.
 #define LOGHARD_LOGLEVEL_MAXDEBUG ::LogHard::Priority::Debug
@@ -305,6 +322,9 @@ public: /* Methods: */
 
     LogHelper<Priority::FullDebug> fullDebug() const noexcept
     { return logHelper<Priority::FullDebug>(); }
+
+    NullLogHelperBase discard() const noexcept
+    { return NullLogHelperBase(*this); }
 
     template <typename T>
     static Hex<T> hex(T const value) noexcept { return {value}; }
