@@ -218,6 +218,24 @@ Logger::~Logger() noexcept {}
     return theTime;
 }
 
+Logger::LogHelper<Priority::Fatal> Logger::fatal() const noexcept
+{ return logHelper<Priority::Fatal>(); }
+
+Logger::LogHelper<Priority::Error> Logger::error() const noexcept
+{ return logHelper<Priority::Error>(); }
+
+Logger::LogHelper<Priority::Warning> Logger::warning() const noexcept
+{ return logHelper<Priority::Warning>(); }
+
+Logger::LogHelper<Priority::Normal> Logger::info() const noexcept
+{ return logHelper<Priority::Normal>(); }
+
+Logger::LogHelper<Priority::Debug> Logger::debug() const noexcept
+{ return logHelper<Priority::Debug>(); }
+
+Logger::LogHelper<Priority::FullDebug> Logger::fullDebug() const noexcept
+{ return logHelper<Priority::FullDebug>(); }
+
 // Extern template instantiations:
 
 #define LOGHARD_TCN(...) template __VA_ARGS__ const noexcept;
