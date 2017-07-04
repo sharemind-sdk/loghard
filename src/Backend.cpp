@@ -24,6 +24,15 @@
 
 namespace LogHard {
 
+Backend::Appender::Appender(std::shared_ptr<Backend> backend) noexcept
+    : m_backend(std::move(backend))
+{}
+
+void Backend::Appender::log(::timeval time,
+                            Priority const priority,
+                            char const * message) noexcept
+{ m_backend->doLog(time, priority, message); }
+
 void Backend::addAppender(std::shared_ptr<LogHard::Appender> appenderPtr) {
     assert(appenderPtr);
     std::lock_guard<std::recursive_mutex> const guard(m_mutex);

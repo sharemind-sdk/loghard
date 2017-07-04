@@ -44,16 +44,13 @@ public: /* Types: */
 
     public: /* Methods: */
 
-        Appender(std::shared_ptr<Backend> backend)
-            : m_backend(std::move(backend))
-        {}
+        Appender(std::shared_ptr<Backend> backend) noexcept;
 
         /// \todo Check for backend loops.
 
         void log(::timeval time,
                  Priority const priority,
-                 char const * message) noexcept override
-        { m_backend->doLog(time, priority, message); }
+                 char const * message) noexcept override;
 
     private: /* Fields: */
 
