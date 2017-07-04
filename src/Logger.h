@@ -67,26 +67,26 @@ public: /* Types: */
 
     struct HexByte { uint8_t const value; };
 
-    class NullLogHelperBase {
+    class NullLogHelper {
 
     public : /* Methods: */
 
-        NullLogHelperBase(NullLogHelperBase &&) noexcept = default;
-        NullLogHelperBase(NullLogHelperBase const &) = delete;
-        NullLogHelperBase & operator=(NullLogHelperBase &&) noexcept = default;
-        NullLogHelperBase & operator=(NullLogHelperBase const &) = delete;
+        NullLogHelper(NullLogHelper &&) noexcept = default;
+        NullLogHelper(NullLogHelper const &) = delete;
+        NullLogHelper & operator=(NullLogHelper &&) noexcept = default;
+        NullLogHelper & operator=(NullLogHelper const &) = delete;
 
-        NullLogHelperBase(Logger const & logger) noexcept
+        NullLogHelper(Logger const & logger) noexcept
         { assert(logger.backend()); }
 
-        NullLogHelperBase(::timeval, Logger const & logger) noexcept
+        NullLogHelper(::timeval, Logger const & logger) noexcept
         { assert(logger.backend()); }
 
         template <class T>
-        NullLogHelperBase & operator<<(T &&) noexcept
+        NullLogHelper & operator<<(T &&) noexcept
         { return *this; }
 
-    }; /* class NullLogHelperBase { */
+    }; /* class NullLogHelper { */
 
 private: /* Types: */
 
@@ -287,8 +287,8 @@ public: /* Methods: */
     LogHelper<Priority::Debug> debug() const noexcept;
     LogHelper<Priority::FullDebug> fullDebug() const noexcept;
 
-    NullLogHelperBase discard() const noexcept
-    { return NullLogHelperBase(*this); }
+    NullLogHelper discard() const noexcept
+    { return NullLogHelper(*this); }
 
     template <typename T>
     static Hex<T> hex(T const value) noexcept { return {value}; }
