@@ -20,9 +20,23 @@
 #include "Backend.h"
 
 #include <cassert>
+#include <type_traits>
 
 
 namespace LogHard {
+
+namespace {
+
+struct MockAppender final: Appender {
+    using Appender::Appender;
+    void log(::timeval time, Priority priority, char const * message)
+            noexcept final override; // Mock
+};
+static_assert(
+        std::is_nothrow_default_constructible<MockAppender>::value,
+        "Invalid exception specification for Backend::Appender constructor!");
+
+} // anonymous namespace
 
 Backend::Appender::Appender(std::shared_ptr<Backend> backend) noexcept
     : m_backend(std::move(backend))
