@@ -90,17 +90,17 @@ public: /* Types: */
 
 private: /* Types: */
 
-    struct LogHelperContents {
+    struct LogHelperBase {
 
     /* Methods: */
 
-        LogHelperContents(LogHelperContents &&) noexcept = default;
-        LogHelperContents(LogHelperContents const &) = delete;
-        LogHelperContents & operator=(LogHelperContents &&) noexcept = default;
-        LogHelperContents & operator=(LogHelperContents const &) = delete;
+        LogHelperBase(LogHelperBase &&) noexcept = default;
+        LogHelperBase(LogHelperBase const &) = delete;
+        LogHelperBase & operator=(LogHelperBase &&) noexcept = default;
+        LogHelperBase & operator=(LogHelperBase const &) = delete;
 
-        LogHelperContents(Logger const &) noexcept;
-        LogHelperContents(::timeval, Logger const &) noexcept;
+        LogHelperBase(Logger const &) noexcept;
+        LogHelperBase(::timeval, Logger const &) noexcept;
 
         void finish(Priority priority) noexcept;
 
@@ -137,16 +137,14 @@ private: /* Types: */
 
         std::shared_ptr<Backend> m_backend;
 
-    }; /* struct LogHelperContents { */
-    static_assert(std::is_nothrow_move_assignable<LogHelperContents>::value,
-                  "");
-    static_assert(std::is_nothrow_move_constructible<LogHelperContents>::value,
-                  "");
+    }; /* struct LogHelperBase { */
+    static_assert(std::is_nothrow_move_assignable<LogHelperBase>::value, "");
+    static_assert(std::is_nothrow_move_constructible<LogHelperBase>::value, "");
 
 public: /* Types: */
 
     template <Priority priority>
-    class LogHelper: private LogHelperContents {
+    class LogHelper: private LogHelperBase {
 
     public: /* Methods: */
 
@@ -155,7 +153,7 @@ public: /* Types: */
         LogHelper & operator=(LogHelper &&) noexcept = default;
         LogHelper & operator=(LogHelper const &) = delete;
 
-        using LogHelperContents::LogHelperContents;
+        using LogHelperBase::LogHelperBase;
 
         ~LogHelper() noexcept { finish(priority); }
 

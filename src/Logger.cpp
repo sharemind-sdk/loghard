@@ -38,14 +38,12 @@ thread_local std::size_t tl_offset = 0u;
 
 } // anonymous namespace
 
-Logger::LogHelperContents::LogHelperContents(
-        Logger const & logger) noexcept
-    : LogHelperContents(Logger::now(), logger)
+Logger::LogHelperBase::LogHelperBase(Logger const & logger) noexcept
+    : LogHelperBase(Logger::now(), logger)
 {}
 
-Logger::LogHelperContents::LogHelperContents(
-        ::timeval theTime,
-        Logger const & logger) noexcept
+Logger::LogHelperBase::LogHelperBase(::timeval theTime,
+                                     Logger const & logger) noexcept
     : m_backend(sharemind::assertReturn(logger.backend()))
 {
     tl_time = std::move(theTime);
@@ -58,7 +56,7 @@ Logger::LogHelperContents::LogHelperContents(
     }
 }
 
-void Logger::LogHelperContents::finish(Priority priority) noexcept {
+void Logger::LogHelperBase::finish(Priority priority) noexcept {
     if (!m_backend)
         return;
     assert(tl_offset <= STACK_BUFFER_SIZE);
@@ -69,7 +67,7 @@ void Logger::LogHelperContents::finish(Priority priority) noexcept {
     m_backend->doLog(std::move(tl_time), priority, tl_message);
 }
 
-void Logger::LogHelperContents::log(char const v) noexcept {
+void Logger::LogHelperBase::log(char const v) noexcept {
     assert(m_backend);
     if (tl_offset <= MAX_MESSAGE_SIZE) {
         if (tl_offset == MAX_MESSAGE_SIZE)
@@ -79,11 +77,11 @@ void Logger::LogHelperContents::log(char const v) noexcept {
     }
 }
 
-void Logger::LogHelperContents::log(bool const v) noexcept
+void Logger::LogHelperBase::log(bool const v) noexcept
 { return log(v ? '1' : '0'); }
 
 #define LOGHARD_LHC_OP(valueType,valueGetter,formatString) \
-    void Logger::LogHelperContents::log(valueType const v) noexcept { \
+    void Logger::LogHelperBase::log(valueType const v) noexcept { \
         assert(m_backend); \
         if (tl_offset > MAX_MESSAGE_SIZE) { \
             assert(tl_offset == STACK_BUFFER_SIZE); \
@@ -127,10 +125,10 @@ LOGHARD_LHC_OP(Logger::HexByte,.value,"%02hhx")
 LOGHARD_LHC_OP(double,, "%f")
 LOGHARD_LHC_OP(long double,, "%Lf")
 
-void Logger::LogHelperContents::log(float const v) noexcept
+void Logger::LogHelperBase::log(float const v) noexcept
 { return log(static_cast<double const>(v)); }
 
-void Logger::LogHelperContents::log(char const * v) noexcept {
+void Logger::LogHelperBase::log(char const * v) noexcept {
     assert(v);
     assert(m_backend);
     auto o = tl_offset;
@@ -150,7 +148,7 @@ void Logger::LogHelperContents::log(char const * v) noexcept {
     }
 }
 
-void Logger::LogHelperContents::log(std::string const & v) noexcept {
+void Logger::LogHelperBase::log(std::string const & v) noexcept {
     assert(m_backend);
     auto const s = v.size();
     if (s <= 0u)
@@ -171,10 +169,10 @@ void Logger::LogHelperContents::log(std::string const & v) noexcept {
 
 LOGHARD_LHC_OP(void *,, "%p")
 
-void Logger::LogHelperContents::log(void const * const v) noexcept
+void Logger::LogHelperBase::log(void const * const v) noexcept
 { return log(const_cast<void *>(v)); }
 
-void Logger::LogHelperContents::log(sharemind::Uuid const & v) noexcept {
+void Logger::LogHelperBase::log(sharemind::Uuid const & v) noexcept {
 #define LOGHARD_UUID_V(i) Logger::HexByte{v.data[i]}
     log(LOGHARD_UUID_V(0u)); log(LOGHARD_UUID_V(1u));
     log(LOGHARD_UUID_V(2u)); log(LOGHARD_UUID_V(3u)); log('-');
@@ -186,7 +184,7 @@ void Logger::LogHelperContents::log(sharemind::Uuid const & v) noexcept {
     log(LOGHARD_UUID_V(14u)); log(LOGHARD_UUID_V(15u));
 }
 
-void Logger::LogHelperContents::elide() noexcept {
+void Logger::LogHelperBase::elide() noexcept {
     assert(tl_offset <= MAX_MESSAGE_SIZE);
     assert(m_backend);
     std::memcpy(&tl_message[tl_offset], "...", 4u);
