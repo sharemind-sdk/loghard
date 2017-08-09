@@ -71,6 +71,8 @@ public: /* Types: */
 
     public : /* Methods: */
 
+        NullLogHelper() noexcept {}
+
         NullLogHelper(NullLogHelper &&) noexcept = default;
         NullLogHelper(NullLogHelper const &) = delete;
         NullLogHelper & operator=(NullLogHelper &&) noexcept = default;
