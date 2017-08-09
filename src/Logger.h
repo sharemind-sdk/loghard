@@ -26,6 +26,7 @@
 #include <exception>
 #include <memory>
 #include <sharemind/AssertReturn.h>
+#include <sharemind/DebugOnly.h>
 #include <sharemind/Concat.h>
 #include <sharemind/Uuid.h>
 #include <string>
@@ -78,10 +79,11 @@ public: /* Types: */
         NullLogHelper & operator=(NullLogHelper &&) noexcept = default;
         NullLogHelper & operator=(NullLogHelper const &) = delete;
 
-        NullLogHelper(Logger const & logger) noexcept
+        NullLogHelper(Logger const & SHAREMIND_DEBUG_ONLY(logger)) noexcept
         { assert(logger.backend()); }
 
-        NullLogHelper(::timeval, Logger const & logger) noexcept
+        NullLogHelper(::timeval,
+                      Logger const & SHAREMIND_DEBUG_ONLY(logger)) noexcept
         { assert(logger.backend()); }
 
         template <class T>
