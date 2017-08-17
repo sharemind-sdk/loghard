@@ -23,9 +23,9 @@ PROJECT(LogHard CXX)
 SET(CPACK_PACKAGE_VERSION_MAJOR "0")
 SET(CPACK_PACKAGE_VERSION_MINOR "1")
 SET(CPACK_PACKAGE_VERSION_PATCH "0")
-SET(LOGHARD_VERSION
+SET(LogHard_VERSION
     "${CPACK_PACKAGE_VERSION_MAJOR}.${CPACK_PACKAGE_VERSION_MINOR}.${CPACK_PACKAGE_VERSION_PATCH}")
-SET(LOGHARD_COMPAT_VERSION "${LOGHARD_VERSION}")
+SET(LogHard_COMPAT_VERSION "${LogHard_VERSION}")
 
 INCLUDE("${CMAKE_CURRENT_SOURCE_DIR}/config.local" OPTIONAL)
 INCLUDE("${CMAKE_CURRENT_BINARY_DIR}/config.local" OPTIONAL)
@@ -86,12 +86,12 @@ FILE(GLOB_RECURSE LogHard_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp")
 ADD_LIBRARY(LogHard SHARED ${LogHard_SOURCES})
 TARGET_LINK_LIBRARIES(LogHard ${SharemindCHeaders_LIBRARIES}
                               ${SharemindCxxHeaders_LIBRARIES})
-STRING(REGEX REPLACE "(([^\\.]+\\.[^\\.]+)\\.).*" "\\2" LOGHARD_SOVERSION
+STRING(REGEX REPLACE "(([^\\.]+\\.[^\\.]+)\\.).*" "\\2" LogHard_SOVERSION
                      "${LOGHARD_VERSION}")
 SET_TARGET_PROPERTIES(LogHard PROPERTIES
                       OUTPUT_NAME "LogHard"
-                      VERSION "${LOGHARD_VERSION}"
-                      SOVERSION "${LOGHARD_SOVERSION}")
+                      VERSION "${LogHard_VERSION}"
+                      SOVERSION "${LogHard_SOVERSION}")
 INSTALL(TARGETS LogHard LIBRARY DESTINATION "lib" COMPONENT "lib")
 
 ADD_CUSTOM_COMMAND(TARGET LogHard POST_BUILD
@@ -139,9 +139,9 @@ SET(CPACK_COMPONENT_DEV_DESCRIPTION "LogHard development headers")
 SET(CPACK_COMPONENT_LIB_DESCRIPTION "LogHard logging library")
 SET(CPACK_COMPONENT_DEBUG_DESCRIPTION "LogHard logging library debug symbols")
 SET(CPACK_DEBIAN_DEV_PACKAGE_DEPENDS
-    "libloghard (= ${LOGHARD_VERSION}), libsharemind-cheaders-dev (>= 0.1.0), libsharemind-cxxheaders-dev (>= 0.1.0), libc6-dev (>= 2.19), libstdc++-dev, libgcc-4.8-dev | libgcc-4.9-dev | libgcc-5-dev | libgcc-6-dev | libgcc-7-dev")
+    "libloghard (= ${LogHard_VERSION}), libsharemind-cheaders-dev (>= 0.1.0), libsharemind-cxxheaders-dev (>= 0.1.0), libc6-dev (>= 2.19), libstdc++-dev, libgcc-4.8-dev | libgcc-4.9-dev | libgcc-5-dev | libgcc-6-dev | libgcc-7-dev")
 SET(CPACK_DEBIAN_LIB_PACKAGE_DEPENDS "libstdc++6 (>= 4.8.0), libc6 (>= 2.19)")
-SET(CPACK_DEBIAN_DEBUG_PACKAGE_DEPENDS "libloghard (= ${LOGHARD_VERSION})")
+SET(CPACK_DEBIAN_DEBUG_PACKAGE_DEPENDS "libloghard (= ${LogHard_VERSION})")
 SET(CPACK_DEBIAN_DEV_PACKAGE_SECTION "libdevel")
 SET(CPACK_DEBIAN_LIB_PACKAGE_SECTION "libs")
 SET(CPACK_DEBIAN_DEBUG_PACKAGE_SECTION "debug")
