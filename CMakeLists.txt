@@ -31,30 +31,6 @@ SET(LogHard_COMPAT_VERSION "${LogHard_VERSION}")
 FIND_PACKAGE(SharemindCHeaders REQUIRED)
 FIND_PACKAGE(SharemindCxxHeaders REQUIRED)
 
-SET(LOGHARD_INSTALL_LINK_LIBRARIES "")
-LIST(APPEND LOGHARD_INSTALL_LINK_LIBRARIES
-    ${SharemindCxxHeaders_LIBRARIES}
-    "-L${CMAKE_INSTALL_PREFIX}/lib" "-lLogHard"
-)
-LIST(REMOVE_DUPLICATES LOGHARD_INSTALL_LINK_LIBRARIES)
-
-SET(LOGHARD_INSTALL_INCLUDE_DIRS "")
-LIST(APPEND LOGHARD_INSTALL_INCLUDE_DIRS
-    "${CMAKE_INSTALL_PREFIX}/include"
-    ${SharemindCHeaders_INCLUDE_DIRS}
-    ${SharemindCxxHeaders_INCLUDE_DIRS}
-)
-LIST(REMOVE_DUPLICATES LOGHARD_INSTALL_INCLUDE_DIRS)
-
-SET(LOGHARD_INSTALL_DEFINITIONS "")
-LIST(APPEND LOGHARD_INSTALL_DEFINITIONS
-    ${SharemindCHeaders_DEFINITIONS}
-    ${SharemindCxxHeaders_DEFINITIONS}
-)
-IF(APPLE)
-    LIST(APPEND LOGHARD_INSTALL_DEFINITIONS "-D_DARWIN_C_SOURCE")
-ENDIF()
-LIST(REMOVE_DUPLICATES LOGHARD_INSTALL_DEFINITIONS)
 
 SharemindSetCxx11CompileOptions()
 INCLUDE_DIRECTORIES(${SharemindCHeaders_INCLUDE_DIRS}
@@ -73,7 +49,26 @@ SharemindAddSharedLibrary(LogHard SOURCES ${LogHard_SOURCES})
 TARGET_LINK_LIBRARIES(LogHard ${SharemindCHeaders_LIBRARIES}
                               ${SharemindCxxHeaders_LIBRARIES})
 
-SharemindUseCMakeFindFiles()
+# Install CMake files:
+SharemindNewUniqueList(LOGHARD_INSTALL_DEFINITIONS
+    ${SharemindCHeaders_DEFINITIONS}
+    ${SharemindCxxHeaders_DEFINITIONS}
+)
+IF(APPLE)
+    SharemindListAppendUnique(LOGHARD_INSTALL_DEFINITIONS "-D_DARWIN_C_SOURCE")
+ENDIF()
+SharemindCreateCMakeFindFiles(
+    LIBRARIES
+        ${SharemindCxxHeaders_LIBRARIES}
+        "-L${CMAKE_INSTALL_PREFIX}/lib"
+        "-lLogHard"
+    INCLUDE_DIRS
+        "${CMAKE_INSTALL_PREFIX}/include"
+        ${SharemindCHeaders_INCLUDE_DIRS}
+        ${SharemindCxxHeaders_INCLUDE_DIRS}
+    DEFINITIONS
+        ${LOGHARD_INSTALL_DEFINITIONS}
+)
 
 
 # Packaging:
