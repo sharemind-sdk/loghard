@@ -48,9 +48,9 @@ public: /* Types: */
 
         /// \todo Check for backend loops.
 
-        void log(::timeval time,
-                 Priority const priority,
-                 char const * message) noexcept override;
+        void doLog(::timeval time,
+                   Priority const priority,
+                   char const * message) noexcept override;
 
     private: /* Fields: */
 

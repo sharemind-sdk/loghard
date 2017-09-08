@@ -44,9 +44,9 @@ public: /* Methods: */
 
     ~SyslogAppender() noexcept override;
 
-    void log(::timeval,
-             Priority const priority,
-             char const * message) noexcept override;
+    void doLog(::timeval,
+               Priority const priority,
+               char const * message) noexcept override;
 
 private: /* Methods: */
 

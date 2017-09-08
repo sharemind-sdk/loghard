@@ -99,9 +99,9 @@ CFileAppender::CFileAppender(std::FILE * const file)
 
 CFileAppender::~CFileAppender() noexcept {}
 
-void CFileAppender::log(::timeval time,
-                        Priority const priority,
-                        char const * message) noexcept
+void CFileAppender::doLog(::timeval time,
+                          Priority const priority,
+                          char const * message) noexcept
 { logToFileSync(m_fd, time, priority, message); }
 
 void CFileAppender::logToFile(int const fd,

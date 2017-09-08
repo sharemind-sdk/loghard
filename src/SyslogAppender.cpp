@@ -45,9 +45,9 @@ SyslogAppender::SyslogAppender(std::string ident,
 
 SyslogAppender::~SyslogAppender() noexcept { setEnabled_(false); }
 
-void SyslogAppender::log(::timeval,
-                         Priority const priority,
-                         char const * message) noexcept
+void SyslogAppender::doLog(::timeval,
+                           Priority const priority,
+                           char const * message) noexcept
 {
     constexpr static int priorities[] =
         { LOG_EMERG, LOG_ERR, LOG_WARNING, LOG_INFO, LOG_DEBUG, LOG_DEBUG };

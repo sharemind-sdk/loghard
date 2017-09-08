@@ -31,9 +31,9 @@ public: /* Methods: */
 
     ~StdAppender() noexcept override;
 
-    void log(::timeval time,
-             Priority const priority,
-             char const * message) noexcept override;
+    void doLog(::timeval time,
+               Priority const priority,
+               char const * message) noexcept override;
 
 }; /* class StdAppender */
 

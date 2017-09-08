@@ -29,7 +29,7 @@ namespace {
 
 struct MockAppender final: Appender {
     using Appender::Appender;
-    void log(::timeval time, Priority priority, char const * message)
+    void doLog(::timeval time, Priority priority, char const * message)
             noexcept final override; // Mock
 };
 static_assert(
@@ -42,9 +42,9 @@ Backend::Appender::Appender(std::shared_ptr<Backend> backend) noexcept
     : m_backend(std::move(backend))
 {}
 
-void Backend::Appender::log(::timeval time,
-                            Priority const priority,
-                            char const * message) noexcept
+void Backend::Appender::doLog(::timeval time,
+                              Priority const priority,
+                              char const * message) noexcept
 { m_backend->doLog(time, priority, message); }
 
 void Backend::addAppender(std::shared_ptr<LogHard::Appender> appenderPtr) {

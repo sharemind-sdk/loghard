@@ -28,18 +28,31 @@ namespace LogHard {
 
 class Appender {
 
+protected: /* Methods: */
+
+    Appender(Priority const priority = Priority::FullDebug) noexcept;
+
 public: /* Methods: */
 
     virtual ~Appender() noexcept;
 
-    virtual void log(::timeval time,
-                     Priority priority,
-                     char const * message) noexcept = 0;
+    void log(::timeval time,
+             Priority priority,
+             char const * message) noexcept;
 
     static char const * priorityString(Priority const priority) noexcept;
 
     static char const * priorityStringRightPadded(Priority const priority)
             noexcept;
+
+private: /* Methods: */
+    virtual void doLog(::timeval time,
+                       Priority priority,
+                       char const * message) noexcept = 0;
+
+protected: /* Fields: */
+
+    const Priority m_priority;
 
 }; /* class Appender { */
 

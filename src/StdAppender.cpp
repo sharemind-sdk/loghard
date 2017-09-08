@@ -27,9 +27,9 @@ namespace LogHard {
 
 StdAppender::~StdAppender() noexcept {}
 
-void StdAppender::log(::timeval time,
-                      Priority const priority,
-                      char const * message) noexcept
+void StdAppender::doLog(::timeval time,
+                        Priority const priority,
+                        char const * message) noexcept
 {
     int const fn = (priority <= Priority::Warning)
                     ? STDERR_FILENO

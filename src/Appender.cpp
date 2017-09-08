@@ -22,9 +22,21 @@
 
 namespace LogHard {
 
+Appender::Appender(Priority const priority) noexcept
+    : m_priority(priority) {}
+
 Appender::~Appender() noexcept {}
 
-char const * Appender::priorityString(Priority const priority) noexcept {
+void Appender::log(::timeval time,
+                   Priority priority,
+                   char const * message) noexcept
+{
+    if (priority <= m_priority)
+        doLog(time, priority, message);
+}
+
+char const * Appender::priorityString(Priority const priority) noexcept
+{
     static char const strings[][8u] =
             { "FATAL", "ERROR", "WARNING", "INFO", "DEBUG", "DEBUG2" };
     return &strings[static_cast<unsigned>(priority)][0u];

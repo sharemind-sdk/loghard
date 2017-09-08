@@ -58,9 +58,9 @@ FileAppender::FileAppender(char const * const path,
 
 FileAppender::~FileAppender() noexcept { ::close(m_fd); }
 
-void FileAppender::log(::timeval time,
-                       Priority const priority,
-                       char const * message) noexcept
+void FileAppender::doLog(::timeval time,
+                         Priority const priority,
+                         char const * message) noexcept
 { CFileAppender::logToFile(m_fd, time, priority, message); }
 
 } /* namespace LogHard { */

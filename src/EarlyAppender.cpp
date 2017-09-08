@@ -50,9 +50,9 @@ EarlyAppender::EarlyAppender(std::size_t const reserveEntries,
 
 EarlyAppender::~EarlyAppender() noexcept {}
 
-void EarlyAppender::log(::timeval time,
-                        Priority const priority,
-                        char const * message) noexcept
+void EarlyAppender::doLog(::timeval time,
+                          Priority const priority,
+                          char const * message) noexcept
 {
     if (m_freeMessages.empty()) {
         if (!m_oom) {
