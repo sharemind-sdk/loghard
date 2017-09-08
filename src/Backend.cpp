@@ -39,13 +39,18 @@ static_assert(
 } // anonymous namespace
 
 Backend::Appender::Appender(std::shared_ptr<Backend> backend) noexcept
-    : m_backend(std::move(backend))
+    : LogHard::Appender(backend->m_priority)
+    , m_backend(std::move(backend))
 {}
 
 void Backend::Appender::doLog(::timeval time,
                               Priority const priority,
                               char const * message) noexcept
 { m_backend->doLog(time, priority, message); }
+
+Backend::Backend(Priority const priority) noexcept
+    : m_priority(priority)
+{}
 
 void Backend::addAppender(std::shared_ptr<LogHard::Appender> appenderPtr) {
     assert(appenderPtr);
@@ -63,6 +68,9 @@ void Backend::doLog(::timeval const time,
                     Priority const priority,
                     char const * const message) noexcept
 {
+    if (priority > m_priority)
+        return;
+
     std::lock_guard<std::recursive_mutex> const guard(m_mutex);
     for (auto const & a : m_appenders)
         a->log(time, priority, message);

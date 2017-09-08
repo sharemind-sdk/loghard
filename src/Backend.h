@@ -60,6 +60,8 @@ public: /* Types: */
 
 public: /* Methods: */
 
+    Backend(Priority const priority = Priority::Normal) noexcept;
+
     void addAppender(std::shared_ptr<LogHard::Appender> appenderPtr);
 
     void removeAppender(std::shared_ptr<LogHard::Appender> appenderPtr)
@@ -77,6 +79,7 @@ private: /* Fields: */
 
     std::recursive_mutex m_mutex;
     std::set<std::shared_ptr<LogHard::Appender> > m_appenders;
+    Priority const m_priority;
 
 }; /* class Backend { */
 
