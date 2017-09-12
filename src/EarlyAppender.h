@@ -55,6 +55,8 @@ public: /* Methods: */
     LogEntries const & entries() const noexcept { return m_entries; }
 
     void logToAppender(Appender & appender) const noexcept;
+    void logToAppender(Appender & appender,
+                       Priority const priority) const noexcept;
 
     void clear() noexcept;
 

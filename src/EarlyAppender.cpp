@@ -55,6 +55,14 @@ void EarlyAppender::logToAppender(Appender & appender) const noexcept {
         appender.log(entry.time, entry.priority, entry.message.c_str());
 }
 
+void EarlyAppender::logToAppender(Appender & appender,
+                                  Priority const priority) const noexcept
+{
+    for (LogEntry const & entry : m_entries)
+        if (entry.priority <= priority)
+            appender.log(entry.time, entry.priority, entry.message.c_str());
+}
+
 void EarlyAppender::clear() noexcept {
     if (m_oom)
         m_oomMessage = std::move(m_entries.back().message);
