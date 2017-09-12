@@ -41,10 +41,6 @@ public: /* Methods: */
     CFileAppender(std::FILE * const file);
     ~CFileAppender() noexcept override;
 
-    void doLog(::timeval time,
-               Priority const priority,
-               char const * message) noexcept override;
-
     static void logToFile(int const fd,
                           ::timeval time,
                           Priority const priority,
@@ -64,6 +60,12 @@ public: /* Methods: */
                               ::timeval time,
                               Priority const priority,
                               char const * const message) noexcept;
+
+private: /* Methods: */
+
+    void doLog(::timeval time,
+               Priority const priority,
+               char const * message) noexcept override;
 
 private: /* Fields: */
 

@@ -99,11 +99,6 @@ CFileAppender::CFileAppender(std::FILE * const file)
 
 CFileAppender::~CFileAppender() noexcept {}
 
-void CFileAppender::doLog(::timeval time,
-                          Priority const priority,
-                          char const * message) noexcept
-{ logToFileSync(m_fd, time, priority, message); }
-
 void CFileAppender::logToFile(int const fd,
                               ::timeval time,
                               Priority const priority,
@@ -138,5 +133,10 @@ void CFileAppender::logToFileSync(std::FILE * file,
     assert(fd != -1);
     logToFileSync(fd, time, priority, message);
 }
+
+void CFileAppender::doLog(::timeval time,
+                          Priority const priority,
+                          char const * message) noexcept
+{ logToFileSync(m_fd, time, priority, message); }
 
 } /* namespace LogHard { */

@@ -44,11 +44,11 @@ public: /* Methods: */
 
     ~SyslogAppender() noexcept override;
 
+private: /* Methods: */
+
     void doLog(::timeval,
                Priority const priority,
                char const * message) noexcept override;
-
-private: /* Methods: */
 
     void setEnabled_(bool const enable) const;
 

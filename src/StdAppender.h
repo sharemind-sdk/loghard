@@ -31,6 +31,8 @@ public: /* Methods: */
 
     ~StdAppender() noexcept override;
 
+private: /* Methods: */
+
     void doLog(::timeval time,
                Priority const priority,
                char const * message) noexcept override;

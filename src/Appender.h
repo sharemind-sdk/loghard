@@ -46,13 +46,14 @@ public: /* Methods: */
             noexcept;
 
 private: /* Methods: */
+
     virtual void doLog(::timeval time,
                        Priority priority,
                        char const * message) noexcept = 0;
 
 protected: /* Fields: */
 
-    const Priority m_priority;
+    Priority const m_priority;
 
 }; /* class Appender { */
 

@@ -54,13 +54,15 @@ public: /* Methods: */
 
     LogEntries const & entries() const noexcept { return m_entries; }
 
-    void doLog(::timeval time,
-               Priority const priority,
-               char const * message) noexcept override;
-
     void logToAppender(Appender & appender) const noexcept;
 
     void clear() noexcept;
+
+private: /* Methods: */
+
+    void doLog(::timeval time,
+               Priority const priority,
+               char const * message) noexcept override;
 
 private: /* Fields: */
 

@@ -50,6 +50,20 @@ EarlyAppender::EarlyAppender(std::size_t const reserveEntries,
 
 EarlyAppender::~EarlyAppender() noexcept {}
 
+void EarlyAppender::logToAppender(Appender & appender) const noexcept {
+    for (LogEntry const & entry : m_entries)
+        appender.log(entry.time, entry.priority, entry.message.c_str());
+}
+
+void EarlyAppender::clear() noexcept {
+    if (m_oom)
+        m_oomMessage = std::move(m_entries.back().message);
+    m_entries.pop_back();
+    for (LogEntry & entry : m_entries)
+        m_freeMessages.emplace_back(std::move(entry.message));
+    m_entries.clear();
+}
+
 void EarlyAppender::doLog(::timeval time,
                           Priority const priority,
                           char const * message) noexcept
@@ -87,20 +101,6 @@ void EarlyAppender::doLog(::timeval time,
         m_entries.emplace_back(LogEntry{time, priority, std::move(s)});
         m_freeMessages.pop_back();
     }
-}
-
-void EarlyAppender::logToAppender(Appender & appender) const noexcept {
-    for (LogEntry const & entry : m_entries)
-        appender.log(entry.time, entry.priority, entry.message.c_str());
-}
-
-void EarlyAppender::clear() noexcept {
-    if (m_oom)
-        m_oomMessage = std::move(m_entries.back().message);
-    m_entries.pop_back();
-    for (LogEntry & entry : m_entries)
-        m_freeMessages.emplace_back(std::move(entry.message));
-    m_entries.clear();
 }
 
 } /* namespace LogHard { */
