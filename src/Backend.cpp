@@ -43,6 +43,12 @@ Backend::Appender::Appender(std::shared_ptr<Backend> backend) noexcept
     , m_backend(std::move(backend))
 {}
 
+Backend::Appender::Appender(std::shared_ptr<Backend> backend,
+                            Priority const priority) noexcept
+    : LogHard::Appender(priority)
+    , m_backend(std::move(backend))
+{}
+
 void Backend::Appender::doLog(::timeval time,
                               Priority const priority,
                               char const * message) noexcept

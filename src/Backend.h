@@ -45,6 +45,8 @@ public: /* Types: */
     public: /* Methods: */
 
         Appender(std::shared_ptr<Backend> backend) noexcept;
+        Appender(std::shared_ptr<Backend> backend,
+                 Priority const priority) noexcept;
 
         /// \todo Check for backend loops.
 
