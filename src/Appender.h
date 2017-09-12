@@ -20,6 +20,7 @@
 #ifndef LOGHARD_APPENDER_H
 #define LOGHARD_APPENDER_H
 
+#include <atomic>
 #include <sys/time.h>
 #include "Priority.h"
 
@@ -36,6 +37,9 @@ protected: /* Methods: */
 public: /* Methods: */
 
     virtual ~Appender() noexcept;
+
+    void setPriority(Priority const priority) noexcept
+    { m_priority.store(priority, std::memory_order_relaxed);  }
 
     void log(::timeval time,
              Priority priority,
@@ -54,7 +58,7 @@ private: /* Methods: */
 
 protected: /* Fields: */
 
-    Priority const m_priority = Priority::FullDebug;
+    std::atomic<Priority> m_priority{Priority::FullDebug};
 
 }; /* class Appender { */
 

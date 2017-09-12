@@ -34,7 +34,7 @@ void Appender::log(::timeval time,
                    Priority priority,
                    char const * message) noexcept
 {
-    if (priority <= m_priority)
+    if (priority <= m_priority.load(std::memory_order_relaxed))
         doLog(time, priority, message);
 }
 
