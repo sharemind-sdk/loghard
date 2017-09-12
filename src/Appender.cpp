@@ -22,8 +22,11 @@
 
 namespace LogHard {
 
+Appender::Appender() noexcept {}
+
 Appender::Appender(Priority const priority) noexcept
-    : m_priority(priority) {}
+    : m_priority(priority)
+{}
 
 Appender::~Appender() noexcept {}
 

@@ -30,7 +30,8 @@ class Appender {
 
 protected: /* Methods: */
 
-    Appender(Priority const priority = Priority::FullDebug) noexcept;
+    Appender() noexcept;
+    Appender(Priority const priority) noexcept;
 
 public: /* Methods: */
 
@@ -53,7 +54,7 @@ private: /* Methods: */
 
 protected: /* Fields: */
 
-    Priority const m_priority;
+    Priority const m_priority = Priority::FullDebug;
 
 }; /* class Appender { */
 
