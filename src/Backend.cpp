@@ -48,6 +48,8 @@ void Backend::Appender::doLog(::timeval time,
                               char const * message) noexcept
 { m_backend->doLog(time, priority, message); }
 
+Backend::Backend() noexcept {}
+
 Backend::Backend(Priority const priority) noexcept
     : m_priority(priority)
 {}
