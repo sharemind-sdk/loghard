@@ -60,6 +60,11 @@ Backend::Backend(Priority const priority) noexcept
     : m_priority(priority)
 {}
 
+void Backend::setPriority(Priority const priority) noexcept {
+    std::lock_guard<std::recursive_mutex> const guard(m_mutex);
+    m_priority = priority;
+}
+
 void Backend::addAppender(std::shared_ptr<LogHard::Appender> appenderPtr) {
     assert(appenderPtr);
     std::lock_guard<std::recursive_mutex> const guard(m_mutex);
@@ -76,12 +81,10 @@ void Backend::doLog(::timeval const time,
                     Priority const priority,
                     char const * const message) noexcept
 {
-    if (priority > m_priority)
-        return;
-
     std::lock_guard<std::recursive_mutex> const guard(m_mutex);
-    for (auto const & a : m_appenders)
-        a->log(time, priority, message);
+    if (priority <= m_priority)
+        for (auto const & a : m_appenders)
+            a->log(time, priority, message);
 }
 
 } /* namespace LogHard { */
