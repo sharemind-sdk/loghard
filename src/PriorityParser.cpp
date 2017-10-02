@@ -24,6 +24,25 @@
 
 namespace LogHard {
 
+namespace {
+
+constexpr char asciiToLower(char const v) noexcept {
+    return (v == 'A') ? 'a' : (v == 'B') ? 'b' : (v == 'C') ? 'c'
+         : (v == 'D') ? 'd' : (v == 'E') ? 'e' : (v == 'F') ? 'f'
+         : (v == 'G') ? 'g' : (v == 'H') ? 'h' : (v == 'I') ? 'i'
+         : (v == 'J') ? 'j' : (v == 'K') ? 'k' : (v == 'L') ? 'l'
+         : (v == 'M') ? 'm' : (v == 'N') ? 'n' : (v == 'O') ? 'o'
+         : (v == 'P') ? 'p' : (v == 'Q') ? 'q' : (v == 'R') ? 'r'
+         : (v == 'S') ? 's' : (v == 'T') ? 't' : (v == 'U') ? 'u'
+         : (v == 'V') ? 'v' : (v == 'W') ? 'w' : (v == 'X') ? 'x'
+         : (v == 'Y') ? 'y' : (v == 'Z') ? 'z' : v;
+};
+
+constexpr bool charIs(char const v, char const a) noexcept
+{ return (v == a) || (v == asciiToLower(a)); };
+
+} // anonymous namespace
+
 SHAREMIND_DEFINE_EXCEPTION_CONST_MSG_NOINLINE(
         std::exception,,
         PriorityParseException,
@@ -60,24 +79,6 @@ Priority parsePriority(char const * c) {
         default: throw PriorityParseException();
         }
     }
-    // convert to lowercase
-    static constexpr auto const asciiToLower =
-        [](char v) noexcept -> char {
-            switch (v) {
-            case 'A': return 'a'; case 'B': return 'b'; case 'C': return 'c';
-            case 'D': return 'd'; case 'E': return 'e'; case 'F': return 'f';
-            case 'G': return 'g'; case 'H': return 'h'; case 'I': return 'i';
-            case 'J': return 'j'; case 'K': return 'k'; case 'L': return 'l';
-            case 'M': return 'm'; case 'N': return 'n'; case 'O': return 'o';
-            case 'P': return 'p'; case 'Q': return 'q'; case 'R': return 'r';
-            case 'S': return 's'; case 'T': return 't'; case 'U': return 'u';
-            case 'V': return 'v'; case 'W': return 'w'; case 'X': return 'x';
-            case 'Y': return 'y'; case 'Z': return 'z'; default:  return v;
-            }
-        };
-    static constexpr auto const charIs =
-            [](char const v, char const a) noexcept
-            { return (v == a) || (v == asciiToLower(a)); };
     switch (*c) {
     case 'F': case 'f': // "fatal" or "fulldebug" or "full"
         switch (*++c) {
