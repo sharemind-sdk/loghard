@@ -20,7 +20,8 @@
 #ifndef LOGHARD_PRIORITY_PARSER_H
 #define LOGHARD_PRIORITY_PARSER_H
 
-#include <sharemind/Exception.h>
+#include <exception>
+#include <sharemind/ExceptionMacros.h>
 #include <string>
 #include "Priority.h"
 
