@@ -20,6 +20,7 @@
 #include <algorithm>
 #include <cctype>
 #include <string>
+#include <type_traits>
 #include "PriorityParser.h"
 
 namespace LogHard {
@@ -31,11 +32,31 @@ SHAREMIND_DEFINE_EXCEPTION_CONST_MSG_NOINLINE(
 
 Priority parsePriority(std::string s) {
     // check if it is a single digit
-    if (s.size() == 1 && std::isdigit(s[0])) {
-        unsigned l = s[0] - '0';
-        if (l > LOGHARD_PRIORITY_FULLDEBUG)
-            throw PriorityParseException{};
-        return static_cast<Priority>(l);
+    if (s.size() == 1) {
+        using U = std::underlying_type<Priority>::type;
+        U input;
+        switch (s[0u]) {
+        case '0': input = 0u; break;
+        case '1': input = 1u; break;
+        case '2': input = 2u; break;
+        case '3': input = 3u; break;
+        case '4': input = 4u; break;
+        case '5': input = 5u; break;
+        case '6': input = 6u; break;
+        case '7': input = 7u; break;
+        case '8': input = 8u; break;
+        case '9': input = 9u; break;
+        default: throw PriorityParseException();
+        }
+        switch (input) {
+        case static_cast<U>(Priority::Fatal): return Priority::Fatal;
+        case static_cast<U>(Priority::Error): return Priority::Error;
+        case static_cast<U>(Priority::Warning): return Priority::Warning;
+        case static_cast<U>(Priority::Normal): return Priority::Normal;
+        case static_cast<U>(Priority::Debug): return Priority::Debug;
+        case static_cast<U>(Priority::FullDebug): return Priority::FullDebug;
+        default: throw PriorityParseException();
+        }
     }
     // convert to lowercase
     std::transform(s.begin(), s.end(), s.begin(),
