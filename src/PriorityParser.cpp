@@ -17,6 +17,7 @@
  * For further information, please contact us at sharemind@cyber.ee.
  */
 
+#include <cassert>
 #include <string>
 #include <type_traits>
 #include "PriorityParser.h"
@@ -28,12 +29,15 @@ SHAREMIND_DEFINE_EXCEPTION_CONST_MSG_NOINLINE(
         PriorityParseException,
         "Failed to parse LogHard priority!");
 
-Priority parsePriority(std::string const & s) {
+Priority parsePriority(char const * c) {
+    assert(c);
+    if (!*c)
+        throw PriorityParseException();
     // check if it is a single digit
-    if (s.size() == 1) {
+    if (c[1u] == '\0') {
         using U = std::underlying_type<Priority>::type;
         U input;
-        switch (s[0u]) {
+        switch (*c) {
         case '0': input = 0u; break;
         case '1': input = 1u; break;
         case '2': input = 2u; break;
@@ -74,8 +78,6 @@ Priority parsePriority(std::string const & s) {
     static constexpr auto const charIs =
             [](char const v, char const a) noexcept
             { return (v == a) || (v == asciiToLower(a)); };
-
-    auto const * c = s.c_str();
     switch (*c) {
     case 'F': case 'f': // "fatal" or "fulldebug" or "full"
         switch (*++c) {
@@ -126,5 +128,8 @@ Priority parsePriority(std::string const & s) {
     }
     throw PriorityParseException();
 }
+
+Priority parsePriority(std::string const & s)
+{ return parsePriority(s.c_str()); }
 
 } /* namespace LogHard { */

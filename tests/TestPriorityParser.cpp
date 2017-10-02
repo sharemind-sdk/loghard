@@ -28,12 +28,18 @@ using LogHard::Priority;
 using sharemind::concat;
 using U = std::underlying_type<Priority>::type;
 
-void test(std::string const & str, Priority const match) noexcept
-{ SHAREMIND_TESTASSERT(LogHard::parsePriority(str) == match); }
+void test(std::string const & str, Priority const match) noexcept {
+    SHAREMIND_TESTASSERT(LogHard::parsePriority(str) == match);
+    SHAREMIND_TESTASSERT(LogHard::parsePriority(str.c_str()) == match);
+}
 
 void testNegative(std::string const & str) noexcept {
     try {
         LogHard::parsePriority(str);
+        SHAREMIND_TEST_UNREACHABLE;
+    } catch (LogHard::PriorityParseException const &) {}
+    try {
+        LogHard::parsePriority(str.c_str());
         SHAREMIND_TEST_UNREACHABLE;
     } catch (LogHard::PriorityParseException const &) {}
 }
