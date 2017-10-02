@@ -49,7 +49,8 @@ SharemindAddSharedLibrary(LogHard SOURCES ${LogHard_SOURCES})
 TARGET_LINK_LIBRARIES(LogHard ${SharemindCHeaders_LIBRARIES}
                               ${SharemindCxxHeaders_LIBRARIES})
 
-# Install CMake files:
+
+# Tests:
 SharemindNewUniqueList(LOGHARD_INSTALL_DEFINITIONS
     ${SharemindCHeaders_DEFINITIONS}
     ${SharemindCxxHeaders_DEFINITIONS}
@@ -57,6 +58,19 @@ SharemindNewUniqueList(LOGHARD_INSTALL_DEFINITIONS
 IF(APPLE)
     SharemindListAppendUnique(LOGHARD_INSTALL_DEFINITIONS "-D_DARWIN_C_SOURCE")
 ENDIF()
+SharemindSetCxx11CompileOptions()
+SharemindAddSimpleTests("${CMAKE_CURRENT_SOURCE_DIR}/tests/Test*.cpp"
+    LEGACY_DEFINITIONS
+        ${LOGHARD_INSTALL_DEFINITIONS}
+    INCLUDE_DIRECTORIES
+        ${SharemindCHeaders_INCLUDE_DIRS}
+        ${SharemindCxxHeaders_INCLUDE_DIRS}
+    LINK_LIBRARIES
+        ${SharemindCxxHeaders_LINK_LIBRARIES}
+        "LogHard"
+)
+
+# Install CMake files:
 SharemindCreateCMakeFindFiles(
     LIBRARIES
         ${SharemindCxxHeaders_LIBRARIES}

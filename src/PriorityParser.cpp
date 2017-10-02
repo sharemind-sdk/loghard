@@ -17,7 +17,6 @@
  * For further information, please contact us at sharemind@cyber.ee.
  */
 
-#include <algorithm>
 #include <string>
 #include <type_traits>
 #include "PriorityParser.h"
@@ -29,7 +28,7 @@ SHAREMIND_DEFINE_EXCEPTION_CONST_MSG_NOINLINE(
         PriorityParseException,
         "Failed to parse LogHard priority!");
 
-Priority parsePriority(std::string s) {
+Priority parsePriority(std::string const & s) {
     // check if it is a single digit
     if (s.size() == 1) {
         using U = std::underlying_type<Priority>::type;
@@ -58,7 +57,7 @@ Priority parsePriority(std::string s) {
         }
     }
     // convert to lowercase
-    static auto const asciiToLower =
+    static constexpr auto const asciiToLower =
         [](char v) noexcept -> char {
             switch (v) {
             case 'A': return 'a'; case 'B': return 'b'; case 'C': return 'c';
@@ -72,23 +71,60 @@ Priority parsePriority(std::string s) {
             case 'Y': return 'y'; case 'Z': return 'z'; default:  return v;
             }
         };
-    std::transform(s.begin(), s.end(), s.begin(), asciiToLower);
+    static constexpr auto const charIs =
+            [](char const v, char const a) noexcept
+            { return (v == a) || (v == asciiToLower(a)); };
 
-    if (s == "fatal") {
-        return Priority::Fatal;
-    } else if (s == "error") {
-        return Priority::Error;
-    } else if ((s == "warn") || (s == "warning")) {
-        return Priority::Warning;
-    } else if ((s == "normal") || (s == "info")) {
-        return Priority::Normal;
-    } else if (s == "debug") {
-        return Priority::Debug;
-    } else if ((s == "fulldebug") || (s == "full")) {
-        return Priority::FullDebug;
-    } else {
-        throw PriorityParseException{};
+    auto const * c = s.c_str();
+    switch (*c) {
+    case 'F': case 'f': // "fatal" or "fulldebug" or "full"
+        switch (*++c) {
+        case 'A': case 'a': // "fatal"
+            if (charIs(*++c, 'T') && charIs(*++c, 'A') && charIs(*++c, 'L')
+                && ((*++c) == '\0'))
+                return Priority::Fatal;
+            break;
+        case 'U': case 'u': // "fulldebug" or "full"
+            if (charIs(*++c, 'L') && charIs(*++c, 'L')
+                && (((*++c) == '\0')
+                    || (charIs(*c, 'D') && charIs(*++c, 'E')
+                        && charIs(*++c, 'B') && charIs(*++c, 'U')
+                        && charIs(*++c, 'G') && ((*++c) == '\0'))))
+                return Priority::FullDebug;
+            break;
+        default: break;
+        }
+        break;
+    case 'E': case 'e': // "error"
+        if (charIs(*++c, 'R') && charIs(*++c, 'R') && charIs(*++c, 'O')
+            && charIs(*++c, 'R') && ((*++c) == '\0'))
+            return Priority::Error;
+        break;
+    case 'W': case 'w': // "warn" or "warning"
+        if (charIs(*++c, 'A') && charIs(*++c, 'R') && charIs(*++c, 'N')
+            && (((*++c) == '\0')
+                || (charIs(*c, 'I') && charIs(*++c, 'N')
+                    && charIs(*++c, 'G') && ((*++c) == '\0'))))
+            return Priority::Warning;
+        break;
+    case 'N': case 'n': // "normal"
+        if (charIs(*++c, 'O') && charIs(*++c, 'R') && charIs(*++c, 'M')
+            && charIs(*++c, 'A') && charIs(*++c, 'L') && ((*++c) == '\0'))
+            return Priority::Normal;
+        break;
+    case 'I': case 'i': // "info"
+        if (charIs(*++c, 'N') && charIs(*++c, 'F') && charIs(*++c, 'O')
+            && ((*++c) == '\0'))
+            return Priority::Normal;
+        break;
+    case 'D': case 'd': // "debug"
+        if (charIs(*++c, 'E') && charIs(*++c, 'B') && charIs(*++c, 'U')
+            && charIs(*++c, 'G') && ((*++c) == '\0'))
+            return Priority::Debug;
+        break;
+    default: break;
     }
+    throw PriorityParseException();
 }
 
 } /* namespace LogHard { */

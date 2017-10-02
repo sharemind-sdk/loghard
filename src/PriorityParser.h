@@ -32,7 +32,7 @@ namespace LogHard {
             std::exception,
             PriorityParseException);
 
-    Priority parsePriority(std::string s);
+    Priority parsePriority(std::string const & s);
 
 } /* namespace LogHard { */
 
