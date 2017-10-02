@@ -22,6 +22,7 @@
 #include <type_traits>
 #include "PriorityParser.h"
 
+
 namespace LogHard {
 
 namespace {
