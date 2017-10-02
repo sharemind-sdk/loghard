@@ -18,7 +18,6 @@
  */
 
 #include <algorithm>
-#include <cctype>
 #include <string>
 #include <type_traits>
 #include "PriorityParser.h"
@@ -59,8 +58,21 @@ Priority parsePriority(std::string s) {
         }
     }
     // convert to lowercase
-    std::transform(s.begin(), s.end(), s.begin(),
-                   [](unsigned char c){ return std::tolower(c); });
+    static auto const asciiToLower =
+        [](char v) noexcept -> char {
+            switch (v) {
+            case 'A': return 'a'; case 'B': return 'b'; case 'C': return 'c';
+            case 'D': return 'd'; case 'E': return 'e'; case 'F': return 'f';
+            case 'G': return 'g'; case 'H': return 'h'; case 'I': return 'i';
+            case 'J': return 'j'; case 'K': return 'k'; case 'L': return 'l';
+            case 'M': return 'm'; case 'N': return 'n'; case 'O': return 'o';
+            case 'P': return 'p'; case 'Q': return 'q'; case 'R': return 'r';
+            case 'S': return 's'; case 'T': return 't'; case 'U': return 'u';
+            case 'V': return 'v'; case 'W': return 'w'; case 'X': return 'x';
+            case 'Y': return 'y'; case 'Z': return 'z'; default:  return v;
+            }
+        };
+    std::transform(s.begin(), s.end(), s.begin(), asciiToLower);
 
     if (s == "fatal") {
         return Priority::Fatal;
