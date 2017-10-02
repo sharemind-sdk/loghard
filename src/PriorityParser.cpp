@@ -62,20 +62,21 @@ Priority parsePriority(std::string s) {
     std::transform(s.begin(), s.end(), s.begin(),
                    [](unsigned char c){ return std::tolower(c); });
 
-    if (!s.compare("fatal"))
+    if (s == "fatal") {
         return Priority::Fatal;
-    else if (!s.compare("error"))
+    } else if (s == "error") {
         return Priority::Error;
-    else if (!s.compare("warn") || !s.compare("warning"))
+    } else if ((s == "warn") || (s == "warning")) {
         return Priority::Warning;
-    else if (!s.compare("normal") || !s.compare("info"))
+    } else if ((s == "normal") || (s == "info")) {
         return Priority::Normal;
-    else if (!s.compare("debug"))
+    } else if (s == "debug") {
         return Priority::Debug;
-    else if (!s.compare("fulldebug") || !s.compare("full"))
+    } else if ((s == "fulldebug") || (s == "full")) {
         return Priority::FullDebug;
-
-    throw PriorityParseException{};
+    } else {
+        throw PriorityParseException{};
+    }
 }
 
 } /* namespace LogHard { */
