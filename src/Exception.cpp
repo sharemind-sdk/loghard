@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 Cybernetica
+ * Copyright (C) Cybernetica
  *
  * Research/Commercial License Usage
  * Licensees holding a valid Research License or Commercial License
@@ -17,25 +17,11 @@
  * For further information, please contact us at sharemind@cyber.ee.
  */
 
-#ifndef LOGHARD_PRIORITY_PARSER_H
-#define LOGHARD_PRIORITY_PARSER_H
-
-#include <exception>
-#include <sharemind/ExceptionMacros.h>
-#include <string>
 #include "Exception.h"
-#include "Priority.h"
 
 
 namespace LogHard {
 
-    SHAREMIND_DECLARE_EXCEPTION_CONST_MSG_NOINLINE(
-            LogHard::Exception,
-            PriorityParseException);
-
-    Priority parsePriority(char const * s);
-    Priority parsePriority(std::string const & s);
+SHAREMIND_DEFINE_EXCEPTION_NOINLINE(std::exception,, Exception);
 
 } /* namespace LogHard { */
-
-#endif /* LOGHARD_PRIORITY_PARSER_H */

@@ -25,7 +25,9 @@
 
 namespace LogHard {
 
-SHAREMIND_DEFINE_EXCEPTION_NOINLINE(std::exception, EarlyAppender::, Exception);
+SHAREMIND_DEFINE_EXCEPTION_NOINLINE(LogHard::Exception,
+                                    EarlyAppender::,
+                                    Exception);
 SHAREMIND_DEFINE_EXCEPTION_CONST_MSG_NOINLINE(
         EarlyAppender::Exception,
         EarlyAppender::,

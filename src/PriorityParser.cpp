@@ -45,7 +45,7 @@ constexpr bool charIs(char const v, char const a) noexcept
 } // anonymous namespace
 
 SHAREMIND_DEFINE_EXCEPTION_CONST_MSG_NOINLINE(
-        std::exception,,
+        LogHard::Exception,,
         PriorityParseException,
         "Failed to parse LogHard priority!");
 

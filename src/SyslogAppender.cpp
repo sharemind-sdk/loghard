@@ -26,7 +26,9 @@
 
 namespace LogHard {
 
-SHAREMIND_DEFINE_EXCEPTION_NOINLINE(std::exception, SyslogAppender::, Exception);
+SHAREMIND_DEFINE_EXCEPTION_NOINLINE(LogHard::Exception,
+                                    SyslogAppender::,
+                                    Exception);
 SHAREMIND_DEFINE_EXCEPTION_CONST_MSG_NOINLINE(
         SyslogAppender::Exception,
         SyslogAppender::,

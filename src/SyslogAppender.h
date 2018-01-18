@@ -23,8 +23,9 @@
 #include "Appender.h"
 
 #include <exception>
-#include <sharemind/Exception.h>
+#include <sharemind/ExceptionMacros.h>
 #include <string>
+#include "Exception.h"
 
 
 namespace LogHard {
@@ -33,7 +34,7 @@ class SyslogAppender: public Appender {
 
 public: /* Types: */
 
-    SHAREMIND_DECLARE_EXCEPTION_NOINLINE(std::exception, Exception);
+    SHAREMIND_DECLARE_EXCEPTION_NOINLINE(LogHard::Exception, Exception);
     SHAREMIND_DECLARE_EXCEPTION_CONST_MSG_NOINLINE(
             Exception,
             MultipleSyslogAppenderException);

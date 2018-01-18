@@ -23,7 +23,8 @@
 #include "Appender.h"
 
 #include <cstdio>
-#include <sharemind/Exception.h>
+#include <sharemind/ExceptionMacros.h>
+#include "Exception.h"
 
 
 namespace LogHard {
@@ -32,7 +33,7 @@ class CFileAppender: public Appender {
 
 public: /* Types: */
 
-    SHAREMIND_DECLARE_EXCEPTION_NOINLINE(std::exception, Exception);
+    SHAREMIND_DECLARE_EXCEPTION_NOINLINE(LogHard::Exception, Exception);
     SHAREMIND_DECLARE_EXCEPTION_CONST_MSG_NOINLINE(Exception,
                                                    InvalidFileException);
 
