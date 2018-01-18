@@ -38,14 +38,15 @@ INCLUDE_DIRECTORIES(${SharemindCHeaders_INCLUDE_DIRS}
 ADD_DEFINITIONS(${SharemindCHeaders_DEFINITIONS}
                 ${SharemindCxxHeaders_DEFINITIONS})
 
-FILE(GLOB_RECURSE AllHeaders "${CMAKE_CURRENT_SOURCE_DIR}/src/*.h")
-ADD_CUSTOM_TARGET("include_AllHeaders_in_IDE" SOURCES ${AllHeaders})
-SET(AllHeaders_P "${CMAKE_CURRENT_SOURCE_DIR}/src/CAPI.h")
-LIST(REMOVE_ITEM AllHeaders ${AllHeaders_P})
-INSTALL(FILES ${AllHeaders} DESTINATION "include/LogHard" COMPONENT "dev")
+FILE(GLOB_RECURSE LogHard_HEADERS "${CMAKE_CURRENT_SOURCE_DIR}/src/*.h")
+SET(LogHard_HEADERS_P "${CMAKE_CURRENT_SOURCE_DIR}/src/CAPI.h")
+SET(LogHard_HEADERS_INSTALL "${LogHard_HEADERS}")
+LIST(REMOVE_ITEM LogHard_HEADERS_INSTALL ${LogHard_HEADERS_P})
+INSTALL(FILES ${LogHard_HEADERS_INSTALL} DESTINATION "include/LogHard"
+        COMPONENT "dev")
 
 FILE(GLOB_RECURSE LogHard_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp")
-SharemindAddSharedLibrary(LogHard SOURCES ${LogHard_SOURCES})
+SharemindAddSharedLibrary(LogHard SOURCES ${LogHard_SOURCES} ${LogHard_HEADERS})
 TARGET_LINK_LIBRARIES(LogHard ${SharemindCHeaders_LIBRARIES}
                               ${SharemindCxxHeaders_LIBRARIES})
 
