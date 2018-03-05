@@ -294,26 +294,64 @@ public: /* Methods: */
 
     template <Priority PRIORITY = Priority::Error>
     void printCurrentException() const noexcept
-    { printCurrentException<PRIORITY>(now(), StandardFormatter()); }
+    {
+        printException<PRIORITY>(std::current_exception(),
+                                 now(),
+                                 StandardFormatter());
+    }
 
     template <Priority PRIORITY = Priority::Error>
     void printCurrentException(::timeval theTime) const noexcept {
-        printCurrentException<PRIORITY>(std::move(theTime),
-                                        StandardFormatter());
+        printException<PRIORITY>(std::current_exception(),
+                                 std::move(theTime),
+                                 StandardFormatter());
     }
 
     template <Priority PRIORITY = Priority::Error, typename Formatter>
     void printCurrentException(Formatter && formatter) const noexcept {
-        return printCurrentException<PRIORITY, Formatter>(
-                       now(),
-                       std::forward<Formatter>(formatter));
+        return printException<PRIORITY, Formatter>(
+                    std::current_exception(),
+                    now(),
+                    std::forward<Formatter>(formatter));
     }
 
     template <Priority PRIORITY = Priority::Error, typename Formatter>
     void printCurrentException(::timeval theTime, Formatter && formatter)
             const noexcept
     {
-        if (auto e = std::current_exception()) {
+        return printException<PRIORITY>(std::current_exception(),
+                                        std::move(theTime),
+                                        std::move(formatter));
+    }
+
+    template <Priority PRIORITY = Priority::Error>
+    void printException(std::exception_ptr e) const noexcept
+    { printException<PRIORITY>(std::move(e), now(), StandardFormatter()); }
+
+    template <Priority PRIORITY = Priority::Error>
+    void printException(std::exception_ptr e, ::timeval theTime) const noexcept
+    {
+        printException<PRIORITY>(std::move(e),
+                                 std::move(theTime),
+                                 StandardFormatter());
+    }
+
+    template <Priority PRIORITY = Priority::Error, typename Formatter>
+    void printException(std::exception_ptr e, Formatter && formatter)
+            const noexcept
+    {
+        return printCurrentException<PRIORITY, Formatter>(
+                    std::move(e),
+                    now(),
+                    std::forward<Formatter>(formatter));
+    }
+
+    template <Priority PRIORITY = Priority::Error, typename Formatter>
+    void printException(std::exception_ptr e,
+                        ::timeval theTime,
+                        Formatter && formatter) const noexcept
+    {
+        if (e) {
             auto printer =
                 [this, &formatter, theTime](std::size_t const exceptionNumber,
                                             std::size_t const totalExceptions,
