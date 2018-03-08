@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015 Cybernetica
+ * Copyright (C) Cybernetica
  *
  * Research/Commercial License Usage
  * Licensees holding a valid Research License or Commercial License
@@ -17,37 +17,29 @@
  * For further information, please contact us at sharemind@cyber.ee.
  */
 
-#ifndef LOGHARD_PRIORITY_H
-#define LOGHARD_PRIORITY_H
+#include "Priority.h"
 
-#include "PriorityC.h"
-
-#include <boost/any.hpp>
-#include <string>
-#include <vector>
-
-
-namespace LogHard {
-
-/// \todo Use syslog levels
-enum class Priority : unsigned {
-    Fatal = LOGHARD_PRIORITY_FATAL,
-    Error = LOGHARD_PRIORITY_ERROR,
-    Warning = LOGHARD_PRIORITY_WARNING,
-    Normal = LOGHARD_PRIORITY_NORMAL,
-    Debug = LOGHARD_PRIORITY_DEBUG,
-    FullDebug = LOGHARD_PRIORITY_FULLDEBUG
-};
-
-} /* namespace LogHard { */
+#include <boost/program_options.hpp>
+#include <exception>
+#include "PriorityParser.h"
 
 namespace boost {
 
-// For use with boost::program_options:
+namespace po = program_options;
+
+// See http://www.boost.org/doc/libs/1_55_0/doc/html/program_options/howto.html:
 void validate(boost::any & v,
               std::vector<std::string> const & values,
-              LogHard::Priority * target_type, int);
+              LogHard::Priority * /* target_type */, int)
+{
+    po::validators::check_first_occurrence(v);
+    try {
+        v = LogHard::parsePriority(po::validators::get_single_string(values));
+    } catch (LogHard::PriorityParseException const &) {
+        std::throw_with_nested(
+                    po::validation_error(
+                        po::validation_error::invalid_option_value));
+    }
+}
 
-} /* namespace boost { */
-
-#endif /* LOGHARD_PRIORITY_H */
+} // namespace boost {
