@@ -26,6 +26,7 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include "ErrorC.h"
+#include "PriorityC.h"
 
 
 SHAREMIND_EXTERN_C_BEGIN
@@ -60,6 +61,10 @@ bool LogHardBackend_addFileAppender(LogHardBackend * backend,
                                     const char * filename,
                                     bool append)
          SHAREMIND_NDEBUG_ONLY(__attribute__ ((nonnull(1, 2))));
+
+void LogHardBackend_setPriority(LogHardBackend * backend,
+                                const LogHardPriority priority)
+         SHAREMIND_NDEBUG_ONLY(__attribute__ ((nonnull(1))));
 
 LogHardLogger * LogHardBackend_newLogger(LogHardBackend * backend,
                                          const char * prefix)

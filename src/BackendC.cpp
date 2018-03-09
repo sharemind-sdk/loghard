@@ -94,4 +94,22 @@ bool LogHardBackend_addFileAppender(LogHardBackend * backend,
     LOGHARD_EXCEPTIONS_TO_C_END(LogHardBackend,backend, false)
 }
 
+void LogHardBackend_setPriority(LogHardBackend * backend,
+                                const LogHardPriority priority)
+{
+    assert(backend);
+    LOGHARD_NOEXCEPT_BEGIN
+    LogHard::Priority p = LogHard::Priority::Normal;
+    switch (priority) {
+        case LOGHARD_PRIORITY_FATAL: p = LogHard::Priority::Fatal; break;
+        case LOGHARD_PRIORITY_ERROR: p = LogHard::Priority::Error; break;
+        case LOGHARD_PRIORITY_WARNING: p = LogHard::Priority::Warning; break;
+        case LOGHARD_PRIORITY_NORMAL: p = LogHard::Priority::Normal; break;
+        case LOGHARD_PRIORITY_DEBUG: p = LogHard::Priority::Debug; break;
+        case LOGHARD_PRIORITY_FULLDEBUG: p = LogHard::Priority::FullDebug; break;
+    }
+    backend->inner->setPriority(p);
+    LOGHARD_NOEXCEPT_END("LHB setPriority")
+}
+
 } // extern "C" {
