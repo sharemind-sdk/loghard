@@ -46,7 +46,7 @@ LogHardBackend * LogHardBackend_new(LogHardError * error,
         if (SHAREMIND_RECURSIVE_LOCK_INIT(backend))
             return backend;
         setError(LOGHARD_MUTEX_ERROR, "Mutex initialization error!");
-    } catch (const std::bad_alloc & e) {
+    } catch (std::bad_alloc const &) {
         setError(LOGHARD_OUT_OF_MEMORY, "Out of memory!");
     } catch (...) {
         setError(LOGHARD_UNKNOWN_ERROR, "Unknown error!");
