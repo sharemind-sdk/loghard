@@ -143,7 +143,8 @@ void Logger::LogHelperBase::log(char const * v) noexcept {
                 return elide();
             }
             tl_message[o] = *v;
-        } while ((++o, *++v));
+            ++o;
+        } while (*++v);
         tl_offset = o;
     }
 }
