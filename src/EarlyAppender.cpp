@@ -38,7 +38,8 @@ EarlyAppender::EarlyAppender(std::size_t const reserveEntries,
                              std::size_t const maxMessageSize)
     : m_oomMessage("Early log buffer full, messages skipped!")
     #ifndef NDEBUG
-    , m_maxMessageSize((assert(maxMessageSize >= 5u), maxMessageSize))
+    , m_maxMessageSize((static_cast<void>(assert(maxMessageSize >= 5u)),
+                        maxMessageSize))
     #endif
 {
     std::size_t const size = reserveEntries + 1u;
