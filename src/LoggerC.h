@@ -17,8 +17,8 @@
  * For further information, please contact us at sharemind@cyber.ee.
  */
 
-#ifndef LOGHARD_BACKENDC_H
-#define LOGHARD_BACKENDC_H
+#ifndef LOGHARD_LOGGERC_H
+#define LOGHARD_LOGGERC_H
 
 #include <sharemind/DebugOnly.h>
 #include <sharemind/extern_c.h>
@@ -57,4 +57,4 @@ void LogHardLogger_log(const LogHardLogger * logger,
 
 SHAREMIND_EXTERN_C_END
 
-#endif /* LOGHARD_BACKENDC_H */
+#endif /* LOGHARD_LOGGERC_H */
