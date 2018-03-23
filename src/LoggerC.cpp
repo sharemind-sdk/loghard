@@ -20,6 +20,7 @@
 #include "LoggerC.h"
 
 #include <cassert>
+#include "BackendC.h"
 #include "CAPI.h"
 
 
