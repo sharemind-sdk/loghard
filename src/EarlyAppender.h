@@ -73,9 +73,7 @@ private: /* Fields: */
     std::vector<std::string> m_freeMessages;
     std::string m_oomMessage;
     bool m_oom = false;
-    #ifndef NDEBUG
     std::size_t const m_maxMessageSize;
-    #endif
 
 }; /* class EarlyAppender */
 

@@ -37,10 +37,8 @@ SHAREMIND_DEFINE_EXCEPTION_CONST_MSG_NOINLINE(
 EarlyAppender::EarlyAppender(std::size_t const reserveEntries,
                              std::size_t const maxMessageSize)
     : m_oomMessage("Early log buffer full, messages skipped!")
-    #ifndef NDEBUG
     , m_maxMessageSize((static_cast<void>(assert(maxMessageSize >= 5u)),
                         maxMessageSize))
-    #endif
 {
     std::size_t const size = reserveEntries + 1u;
     if (size < reserveEntries)
