@@ -386,10 +386,9 @@ private: /* Methods: */
             if (ne)
                 printException_(ne, levelNow + 1u, ++totalLevels, printer);
         } catch (...) {}
-        std::forward<Printer>(printer)(
-                       levelNow,
-                       static_cast<std::size_t const>(totalLevels),
-                       std::move(e));
+        std::forward<Printer>(printer)(levelNow,
+                                       std::size_t(totalLevels),
+                                       std::move(e));
     }
 
 private: /* Fields: */
