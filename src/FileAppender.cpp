@@ -45,10 +45,10 @@ FileAppender::FileAppender(char const * const path,
                            OpenMode const openMode,
                            ::mode_t const flags)
     : m_fd(::open(path,
-                // No O_SYNC since it would hurt performance badly
-                O_WRONLY | O_CREAT | O_APPEND | O_NOCTTY
-                | ((openMode == OVERWRITE) ? O_TRUNC : 0u),
-                flags))
+                  // No O_SYNC since it would hurt performance badly
+                  O_WRONLY | O_CREAT | O_APPEND | O_NOCTTY
+                  | ((openMode == OVERWRITE) ? O_TRUNC : 0u),
+                  flags))
 {
     try {
         if (m_fd == -1)
