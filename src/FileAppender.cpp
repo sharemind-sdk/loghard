@@ -19,6 +19,7 @@
 
 #include "FileAppender.h"
 
+#include <sharemind/Concat.h>
 #include "CFileAppender.h"
 
 
@@ -27,11 +28,10 @@ namespace LogHard {
 SHAREMIND_DEFINE_EXCEPTION_NOINLINE(LogHard::Exception,
                                     FileAppender::,
                                     Exception);
-SHAREMIND_DEFINE_EXCEPTION_CONST_MSG_NOINLINE(
+SHAREMIND_DEFINE_EXCEPTION_CONST_STDSTRING_NOINLINE(
         FileAppender::Exception,
         FileAppender::,
-        FileOpenException,
-        "Failed to open file for logging!");
+        FileOpenException);
 
 FileAppender::FileAppender(std::string const & path,
                            OpenMode const openMode,
@@ -54,7 +54,10 @@ FileAppender::FileAppender(char const * const path,
         if (m_fd == -1)
             throw sharemind::ErrnoException(errno);
     } catch (...) {
-        std::throw_with_nested(FileOpenException());
+        std::throw_with_nested(
+                    FileAppender::FileOpenException(
+                        sharemind::concat(
+                            "Failed to open file \"", path, "\"for logging!")));
     }
 }
 

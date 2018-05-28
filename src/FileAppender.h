@@ -41,8 +41,8 @@ public: /* Types: */
     enum OpenMode { APPEND, OVERWRITE };
 
     SHAREMIND_DECLARE_EXCEPTION_NOINLINE(LogHard::Exception, Exception);
-    SHAREMIND_DECLARE_EXCEPTION_CONST_MSG_NOINLINE(Exception,
-                                                   FileOpenException);
+    SHAREMIND_DECLARE_EXCEPTION_CONST_STDSTRING_NOINLINE(Exception,
+                                                         FileOpenException);
 
 public: /* Methods: */
 
