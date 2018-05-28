@@ -57,7 +57,9 @@ FileAppender::FileAppender(char const * const path,
         std::throw_with_nested(
                     FileAppender::FileOpenException(
                         sharemind::concat(
-                            "Failed to open file \"", path, "\"for logging!")));
+                            "Failed to open file \"",
+                            path,
+                            "\" for logging!")));
     }
 }
 
