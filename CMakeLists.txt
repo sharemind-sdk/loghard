@@ -103,7 +103,10 @@ SharemindCreateCMakeFindFiles(
 
 # Packaging:
 SharemindSetupPackaging()
-SET(BV "${Boost_MAJOR_VERSION}.${Boost_MINOR_VERSION}.${Boost_SUBMINOR_VERSION}")
+SET(BV
+    "${Boost_MAJOR_VERSION}.${Boost_MINOR_VERSION}.${Boost_SUBMINOR_VERSION}"
+)
+
 SharemindAddComponentPackage(lib
     NAME "libloghard"
     DESCRIPTION "LogHard logging library"
