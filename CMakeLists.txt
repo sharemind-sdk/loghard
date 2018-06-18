@@ -123,7 +123,7 @@ SharemindAddComponentPackage(dev
     DESCRIPTION "LogHard logging library development headers"
     DEB_SECTION "libdevel"
     DEB_DEPENDS
-        "libloghard (= ${LogHard_VERSION})"
+        "libloghard (= ${LogHard_DEB_lib_PACKAGE_VERSION})"
         "libboost-dev (>= 1.55)"
         "libsharemind-cheaders-dev (>= 0.1.0)"
         "libsharemind-cxxheaders-dev (>= 0.1.0)"
@@ -139,5 +139,5 @@ SharemindAddComponentPackage(debug
     NAME "libloghard-dbg"
     DESCRIPTION "LogHard logging library debug symbols"
     DEB_SECTION "debug"
-    DEB_DEPENDS "libloghard (= ${LogHard_VERSION})")
+    DEB_DEPENDS "libloghard (= ${LogHard_DEB_lib_PACKAGE_VERSION})")
 SharemindPackagingFinalize()
