@@ -31,7 +31,7 @@ SharemindSetProjectVersion()
 SET(Boost_USE_STATIC_RUNTIME OFF)
 FIND_PACKAGE(Boost COMPONENTS filesystem program_options system REQUIRED)
 FIND_PACKAGE(SharemindCHeaders 1.1.0 REQUIRED)
-FIND_PACKAGE(SharemindCxxHeaders REQUIRED)
+FIND_PACKAGE(SharemindCxxHeaders 0.4.0 REQUIRED)
 
 
 SharemindSetCxx11CompileOptions()
@@ -126,7 +126,7 @@ SharemindAddComponentPackage(dev
         "libloghard (= ${LogHard_DEB_lib_PACKAGE_VERSION})"
         "libboost-dev (>= 1.55)"
         "libsharemind-cheaders-dev (>= 1.1.0)"
-        "libsharemind-cxxheaders-dev (>= 0.1.0)"
+        "libsharemind-cxxheaders-dev (>= 0.4.0)"
         "libc6-dev (>= 2.19)"
         "libstdc++-dev"
         "libgcc-4.8-dev"
