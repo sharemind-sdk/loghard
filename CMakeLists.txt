@@ -30,7 +30,7 @@ SharemindSetProjectVersion()
 
 SET(Boost_USE_STATIC_RUNTIME OFF)
 FIND_PACKAGE(Boost COMPONENTS filesystem program_options system REQUIRED)
-FIND_PACKAGE(SharemindCHeaders REQUIRED)
+FIND_PACKAGE(SharemindCHeaders 1.1.0 REQUIRED)
 FIND_PACKAGE(SharemindCxxHeaders REQUIRED)
 
 
