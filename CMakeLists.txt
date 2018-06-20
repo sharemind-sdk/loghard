@@ -125,7 +125,7 @@ SharemindAddComponentPackage(dev
     DEB_DEPENDS
         "libloghard (= ${LogHard_DEB_lib_PACKAGE_VERSION})"
         "libboost-dev (>= 1.55)"
-        "libsharemind-cheaders-dev (>= 0.1.0)"
+        "libsharemind-cheaders-dev (>= 1.1.0)"
         "libsharemind-cxxheaders-dev (>= 0.1.0)"
         "libc6-dev (>= 2.19)"
         "libstdc++-dev"
