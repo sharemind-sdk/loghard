@@ -126,7 +126,7 @@ LOGHARD_LHC_OP(double,, "%f")
 LOGHARD_LHC_OP(long double,, "%Lf")
 
 void Logger::LogHelperBase::log(float const v) noexcept
-{ return log(static_cast<double const>(v)); }
+{ return log(static_cast<double>(v)); }
 
 void Logger::LogHelperBase::log(char const * v) noexcept {
     assert(v);
