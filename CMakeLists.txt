@@ -32,7 +32,7 @@ FIND_PACKAGE(SharemindCHeaders 1.1.0 REQUIRED)
 FIND_PACKAGE(SharemindCxxHeaders 0.4.0 REQUIRED)
 
 
-SharemindSetCxx11CompileOptions()
+SharemindSetCxx14CompileOptions()
 FILE(GLOB_RECURSE LogHard_HEADERS "${CMAKE_CURRENT_SOURCE_DIR}/src/*.h")
 SET(LogHard_HEADERS_P "${CMAKE_CURRENT_SOURCE_DIR}/src/CAPI.h")
 SET(LogHard_HEADERS_INSTALL "${LogHard_HEADERS}")
@@ -66,7 +66,6 @@ SharemindNewUniqueList(LOGHARD_INSTALL_DEFINITIONS
 IF(APPLE)
     SharemindListAppendUnique(LOGHARD_INSTALL_DEFINITIONS "-D_DARWIN_C_SOURCE")
 ENDIF()
-SharemindSetCxx11CompileOptions()
 SharemindAddSimpleTests("${CMAKE_CURRENT_SOURCE_DIR}/tests/Test*.cpp"
     LEGACY_DEFINITIONS
         ${LOGHARD_INSTALL_DEFINITIONS}
