@@ -66,7 +66,6 @@ SharemindNewUniqueList(LOGHARD_INSTALL_DEFINITIONS
 IF(APPLE)
     SharemindListAppendUnique(LOGHARD_INSTALL_DEFINITIONS "-D_DARWIN_C_SOURCE")
 ENDIF()
-SharemindSetCxx11CompileOptions()
 SharemindAddSimpleTests("${CMAKE_CURRENT_SOURCE_DIR}/tests/Test*.cpp"
     LEGACY_DEFINITIONS
         ${LOGHARD_INSTALL_DEFINITIONS}
