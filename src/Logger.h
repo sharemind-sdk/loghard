@@ -68,30 +68,6 @@ public: /* Types: */
 
     struct HexByte { uint8_t const value; };
 
-    class NullLogHelper {
-
-    public : /* Methods: */
-
-        NullLogHelper() noexcept {}
-
-        NullLogHelper(NullLogHelper &&) noexcept = default;
-        NullLogHelper(NullLogHelper const &) = delete;
-        NullLogHelper & operator=(NullLogHelper &&) noexcept = default;
-        NullLogHelper & operator=(NullLogHelper const &) = delete;
-
-        NullLogHelper(Logger const & SHAREMIND_DEBUG_ONLY(logger)) noexcept
-        { assert(logger.backend()); }
-
-        NullLogHelper(::timeval,
-                      Logger const & SHAREMIND_DEBUG_ONLY(logger)) noexcept
-        { assert(logger.backend()); }
-
-        template <class T>
-        NullLogHelper & operator<<(T &&) noexcept
-        { return *this; }
-
-    }; /* class NullLogHelper { */
-
 private: /* Types: */
 
     struct LogHelperBase {
@@ -286,8 +262,6 @@ public: /* Methods: */
     LogHelper<Priority::Debug> debug() const noexcept;
     LogHelper<Priority::FullDebug> fullDebug() const noexcept;
 
-    NullLogHelper discard() const noexcept
-    { return NullLogHelper(*this); }
 
     template <typename T>
     static Hex<T> hex(T const value) noexcept { return {value}; }
