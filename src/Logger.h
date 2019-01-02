@@ -26,9 +26,11 @@
 #include <exception>
 #include <memory>
 #include <sharemind/AssertReturn.h>
+#include <sharemind/Concepts.h>
 #include <sharemind/DebugOnly.h>
 #include <sharemind/Concat.h>
 #include <sharemind/Uuid.h>
+#include <sharemind/TemplateContainsType.h>
 #include <string>
 #include <sys/time.h>
 #include <type_traits>
@@ -68,100 +70,79 @@ public: /* Types: */
 
     struct HexByte { uint8_t const value; };
 
-private: /* Types: */
-
-    struct MessageBuilder {
-
-    /* Methods: */
-
-        MessageBuilder(MessageBuilder &&) noexcept = default;
-        MessageBuilder(MessageBuilder const &) = delete;
-        MessageBuilder & operator=(MessageBuilder &&) noexcept = default;
-        MessageBuilder & operator=(MessageBuilder const &) = delete;
-
-        MessageBuilder(Logger const &) noexcept;
-        MessageBuilder(::timeval, Logger const &) noexcept;
-
-        void finish(Priority priority) noexcept;
-
-        void log(char) noexcept;
-        void log(bool) noexcept;
-        void log(signed char) noexcept;
-        void log(unsigned char) noexcept;
-        void log(short) noexcept;
-        void log(unsigned short) noexcept;
-        void log(int) noexcept;
-        void log(unsigned int) noexcept;
-        void log(long) noexcept;
-        void log(unsigned long) noexcept;
-        void log(long long) noexcept;
-        void log(unsigned long long) noexcept;
-        void log(Logger::Hex<unsigned char>) noexcept;
-        void log(Logger::Hex<unsigned short>) noexcept;
-        void log(Logger::Hex<unsigned int>) noexcept;
-        void log(Logger::Hex<unsigned long>) noexcept;
-        void log(Logger::Hex<unsigned long long>) noexcept;
-        void log(Logger::HexByte) noexcept;
-        void log(double) noexcept;
-        void log(long double) noexcept;
-        void log(float) noexcept;
-        void log(char const *) noexcept;
-        void log(std::string const &) noexcept;
-        void log(void *) noexcept;
-        void log(void const * const) noexcept;
-        void log(sharemind::Uuid const &) noexcept;
-
-        void elide() noexcept;
-
-    /* Fields: */
-
-        std::shared_ptr<Backend> m_backend;
-
-    }; /* struct MessageBuilder { */
-    static_assert(std::is_nothrow_move_assignable<MessageBuilder>::value, "");
-    static_assert(std::is_nothrow_move_constructible<MessageBuilder>::value, "");
-
-public: /* Types: */
-
-    template <Priority priority>
-    class LogHelper: private MessageBuilder {
+    class MessageBuilder {
 
     public: /* Methods: */
 
-        LogHelper(LogHelper &&) noexcept = default;
-        LogHelper(LogHelper const &) = delete;
-        LogHelper & operator=(LogHelper &&) noexcept = default;
-        LogHelper & operator=(LogHelper const &) = delete;
+        MessageBuilder(MessageBuilder &&) noexcept = default;
+        MessageBuilder(MessageBuilder const &) = delete;
+        MessageBuilder & operator=(MessageBuilder &&) noexcept = delete;
+        MessageBuilder & operator=(MessageBuilder const &) = delete;
 
-        using MessageBuilder::MessageBuilder;
+        MessageBuilder(Priority priority, Logger const &) noexcept;
+        MessageBuilder(::timeval, Priority priority, Logger const &) noexcept;
 
-        ~LogHelper() noexcept { finish(priority); }
 
-        template <typename T>
-        LogHelper & operator<<(T && v) noexcept {
-            log(std::forward<T>(v));
-            return *this;
-        }
+        ~MessageBuilder() noexcept;
 
-    }; /* class LogHelper { */
+
+        #define LOGHARD_LOGGER_H_(...) \
+            MessageBuilder & operator<<(__VA_ARGS__) noexcept
+        LOGHARD_LOGGER_H_(char);
+        LOGHARD_LOGGER_H_(bool);
+        LOGHARD_LOGGER_H_(signed char);
+        LOGHARD_LOGGER_H_(unsigned char);
+        LOGHARD_LOGGER_H_(short);
+        LOGHARD_LOGGER_H_(unsigned short);
+        LOGHARD_LOGGER_H_(int);
+        LOGHARD_LOGGER_H_(unsigned int);
+        LOGHARD_LOGGER_H_(long);
+        LOGHARD_LOGGER_H_(unsigned long);
+        LOGHARD_LOGGER_H_(long long);
+        LOGHARD_LOGGER_H_(unsigned long long);
+        LOGHARD_LOGGER_H_(Logger::Hex<unsigned char>);
+        LOGHARD_LOGGER_H_(Logger::Hex<unsigned short>);
+        LOGHARD_LOGGER_H_(Logger::Hex<unsigned int>);
+        LOGHARD_LOGGER_H_(Logger::Hex<unsigned long>);
+        LOGHARD_LOGGER_H_(Logger::Hex<unsigned long long>);
+        LOGHARD_LOGGER_H_(Logger::HexByte);
+        LOGHARD_LOGGER_H_(double);
+        LOGHARD_LOGGER_H_(long double);
+        LOGHARD_LOGGER_H_(float);
+        LOGHARD_LOGGER_H_(char const *);
+        LOGHARD_LOGGER_H_(std::string const &);
+        LOGHARD_LOGGER_H_(void *);
+        LOGHARD_LOGGER_H_(void const * const);
+        LOGHARD_LOGGER_H_(sharemind::Uuid const &);
+        #undef LOGHARD_LOGGER_H_
+
+    private: /* Methods: */
+
+        MessageBuilder & elide() noexcept;
+
+    private: /* Fields: */
+
+        std::shared_ptr<Backend> m_backend;
+        Priority m_priority;
+
+    }; /* struct MessageBuilder { */
 
     struct StandardExceptionFormatter {
 
-        template <typename OutStream>
         void operator()(std::size_t const exceptionNumber,
                         std::size_t const totalExceptions,
                         std::exception_ptr exception,
-                        OutStream out) const noexcept
+                        MessageBuilder mb) const noexcept
         {
             assert(exception);
-            out << "  * Exception " << exceptionNumber << " of "
-                << totalExceptions;
+            mb << "  * Exception " << exceptionNumber << " of "
+               << totalExceptions;
             try {
                 std::rethrow_exception(std::move(exception));
             } catch (std::exception const & e) {
-                out << ": " << e.what();
+                mb << ": " << e.what();
             } catch (...) {
-                out << " is not an std::exception!";
+                mb << " is not an std::exception!";
             }
         }
 
@@ -226,42 +207,19 @@ public: /* Methods: */
                                      ' ');
     }
 
-    template <Priority PRIORITY>
-    LogHelper<PRIORITY> logHelper() const noexcept {
-        using R = LogHelper<PRIORITY>;
-        static_assert(!std::is_nothrow_copy_assignable<R>::value, "");
-        static_assert(!std::is_nothrow_copy_constructible<R>::value, "");
-        static_assert(std::is_nothrow_move_assignable<R>::value, "");
-        static_assert(std::is_nothrow_move_constructible<R>::value, "");
-        static_assert(std::is_nothrow_constructible<R, decltype(*this)>::value,
-                      "");
-        static_assert(std::is_nothrow_destructible<R>::value, "");
-        return R(*this);
-    }
+    MessageBuilder fatal() const noexcept;
+    MessageBuilder error() const noexcept;
+    MessageBuilder warning() const noexcept;
+    MessageBuilder info() const noexcept;
+    MessageBuilder debug() const noexcept;
+    MessageBuilder fullDebug() const noexcept;
 
-    template <Priority PRIORITY>
-    LogHelper<PRIORITY> logHelper(::timeval theTime) const noexcept {
-        using R = LogHelper<PRIORITY>;
-        static_assert(!std::is_nothrow_copy_assignable<R>::value, "");
-        static_assert(!std::is_nothrow_copy_constructible<R>::value, "");
-        static_assert(std::is_nothrow_move_assignable<R>::value, "");
-        static_assert(std::is_nothrow_move_constructible<R>::value, "");
-        static_assert(
-                    std::is_nothrow_constructible<
-                        R,
-                        decltype(std::move(theTime)),
-                        decltype(*this)>::value, "");
-        static_assert(std::is_nothrow_destructible<R>::value, "");
-        return R(std::move(theTime), *this);
-    }
-
-    LogHelper<Priority::Fatal> fatal() const noexcept;
-    LogHelper<Priority::Error> error() const noexcept;
-    LogHelper<Priority::Warning> warning() const noexcept;
-    LogHelper<Priority::Normal> info() const noexcept;
-    LogHelper<Priority::Debug> debug() const noexcept;
-    LogHelper<Priority::FullDebug> fullDebug() const noexcept;
-
+    MessageBuilder fatal(::timeval theTime) const noexcept;
+    MessageBuilder error(::timeval theTime) const noexcept;
+    MessageBuilder warning(::timeval theTime) const noexcept;
+    MessageBuilder info(::timeval theTime) const noexcept;
+    MessageBuilder debug(::timeval theTime) const noexcept;
+    MessageBuilder fullDebug(::timeval theTime) const noexcept;
 
     template <typename T>
     static Hex<T> hex(T const value) noexcept { return {value}; }
@@ -334,7 +292,7 @@ public: /* Methods: */
                     return formatter(std::move(exceptionNumber),
                                      std::move(totalExceptions),
                                      std::move(e_),
-                                     logHelper<PRIORITY>(theTime));
+                                     MessageBuilder(theTime, PRIORITY, *this));
                 };
 
             std::size_t levels = 1u;
@@ -376,19 +334,7 @@ private: /* Fields: */
 // Extern template declarations:
 
 #define LOGHARD_ETCN(...) extern template __VA_ARGS__ const noexcept;
-#define LOGHARD_EXTERN_LH(pri,...) \
-    LOGHARD_ETCN(Logger::LogHelper<Priority::pri> \
-                 Logger::logHelper<Priority::pri>(__VA_ARGS__))
 #define LOGHARD_EXTERN(pri) \
-    extern template class Logger::LogHelper<Priority::pri>; \
-    LOGHARD_ETCN( \
-        void Logger::StandardExceptionFormatter::operator()( \
-                std::size_t const, \
-                std::size_t const, \
-                std::exception_ptr, \
-                Logger::LogHelper<Priority::pri>)) \
-    LOGHARD_EXTERN_LH(pri,) \
-    LOGHARD_EXTERN_LH(pri, ::timeval) \
     LOGHARD_ETCN(void Logger::printCurrentException<Priority::pri>()) \
     LOGHARD_ETCN(void Logger::printCurrentException<Priority::pri>(::timeval)) \
     LOGHARD_ETCN( \

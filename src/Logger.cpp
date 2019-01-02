@@ -38,13 +38,16 @@ thread_local std::size_t tl_offset = 0u;
 
 } // anonymous namespace
 
-Logger::MessageBuilder::MessageBuilder(Logger const & logger) noexcept
-    : MessageBuilder(Logger::now(), logger)
+Logger::MessageBuilder::MessageBuilder(Priority priority, Logger const & logger)
+        noexcept
+    : MessageBuilder(Logger::now(), priority, logger)
 {}
 
 Logger::MessageBuilder::MessageBuilder(::timeval theTime,
+                                       Priority priority,
                                        Logger const & logger) noexcept
     : m_backend(sharemind::assertReturn(logger.backend()))
+    , m_priority(priority)
 {
     tl_time = std::move(theTime);
     auto const & prefix = logger.prefix();
@@ -56,7 +59,7 @@ Logger::MessageBuilder::MessageBuilder(::timeval theTime,
     }
 }
 
-void Logger::MessageBuilder::finish(Priority priority) noexcept {
+Logger::MessageBuilder::~MessageBuilder() noexcept {
     if (!m_backend)
         return;
     assert(tl_offset <= STACK_BUFFER_SIZE);
@@ -64,10 +67,11 @@ void Logger::MessageBuilder::finish(Priority priority) noexcept {
            || tl_message[STACK_BUFFER_SIZE - 1u] == '\0');
     if (tl_offset < STACK_BUFFER_SIZE)
         tl_message[tl_offset] = '\0';
-    m_backend->doLog(std::move(tl_time), priority, tl_message);
+    m_backend->doLog(std::move(tl_time), m_priority, tl_message);
 }
 
-void Logger::MessageBuilder::log(char const v) noexcept {
+Logger::MessageBuilder &
+Logger::MessageBuilder::operator<<(char const v) noexcept {
     assert(m_backend);
     if (tl_offset <= MAX_MESSAGE_SIZE) {
         if (tl_offset == MAX_MESSAGE_SIZE)
@@ -75,17 +79,20 @@ void Logger::MessageBuilder::log(char const v) noexcept {
         tl_message[tl_offset] = v;
         tl_offset++;
     }
+    return *this;
 }
 
-void Logger::MessageBuilder::log(bool const v) noexcept
-{ return log(v ? '1' : '0'); }
+Logger::MessageBuilder &
+Logger::MessageBuilder::operator<<(bool const v) noexcept
+{ return this->operator<<(v ? '1' : '0'); }
 
 #define LOGHARD_LHC_OP(valueType,valueGetter,formatString) \
-    void Logger::MessageBuilder::log(valueType const v) noexcept { \
+    Logger::MessageBuilder & \
+    Logger::MessageBuilder::operator<<(valueType const v) noexcept { \
         assert(m_backend); \
         if (tl_offset > MAX_MESSAGE_SIZE) { \
             assert(tl_offset == STACK_BUFFER_SIZE); \
-            return; \
+            return *this; \
         } \
         std::size_t const spaceLeft = MAX_MESSAGE_SIZE - tl_offset; \
         if (!spaceLeft) \
@@ -101,6 +108,7 @@ void Logger::MessageBuilder::log(bool const v) noexcept
             return elide(); \
         } \
         tl_offset += static_cast<unsigned>(r); \
+        return *this; \
     }
 
 LOGHARD_LHC_OP(signed char,, "%hhd")
@@ -125,16 +133,18 @@ LOGHARD_LHC_OP(Logger::HexByte,.value,"%02hhx")
 LOGHARD_LHC_OP(double,, "%f")
 LOGHARD_LHC_OP(long double,, "%Lf")
 
-void Logger::MessageBuilder::log(float const v) noexcept
-{ return log(static_cast<double>(v)); }
+Logger::MessageBuilder &
+Logger::MessageBuilder::operator<<(float const v) noexcept
+{ return this->operator<<(static_cast<double>(v)); }
 
-void Logger::MessageBuilder::log(char const * v) noexcept {
+Logger::MessageBuilder &
+Logger::MessageBuilder::operator<<(char const * v) noexcept {
     assert(v);
     assert(m_backend);
     auto o = tl_offset;
     if (o > MAX_MESSAGE_SIZE) {
         assert(o == STACK_BUFFER_SIZE);
-        return;
+        return *this;
     }
     if (*v) {
         do {
@@ -147,13 +157,15 @@ void Logger::MessageBuilder::log(char const * v) noexcept {
         } while (*++v);
         tl_offset = o;
     }
+    return *this;
 }
 
-void Logger::MessageBuilder::log(std::string const & v) noexcept {
+Logger::MessageBuilder &
+Logger::MessageBuilder::operator<<(std::string const & v) noexcept {
     assert(m_backend);
     auto const s = v.size();
     if (s <= 0u)
-        return;
+        return *this;
     if (tl_offset <= MAX_MESSAGE_SIZE) {
         auto const freeSpace = MAX_MESSAGE_SIZE - tl_offset;
         if (freeSpace == 0u)
@@ -166,30 +178,35 @@ void Logger::MessageBuilder::log(std::string const & v) noexcept {
             return elide();
         }
     }
+    return *this;
 }
 
 LOGHARD_LHC_OP(void *,, "%p")
 
-void Logger::MessageBuilder::log(void const * const v) noexcept
-{ return log(const_cast<void *>(v)); }
+Logger::MessageBuilder &
+Logger::MessageBuilder::operator<<(void const * const v) noexcept
+{ return this->operator<<(const_cast<void *>(v)); }
 
-void Logger::MessageBuilder::log(sharemind::Uuid const & v) noexcept {
-#define LOGHARD_UUID_V(i) Logger::HexByte{v.data[i]}
-    log(LOGHARD_UUID_V(0u)); log(LOGHARD_UUID_V(1u));
-    log(LOGHARD_UUID_V(2u)); log(LOGHARD_UUID_V(3u)); log('-');
-    log(LOGHARD_UUID_V(4u)); log(LOGHARD_UUID_V(5u)); log('-');
-    log(LOGHARD_UUID_V(6u)); log(LOGHARD_UUID_V(7u)); log('-');
-    log(LOGHARD_UUID_V(8u)); log(LOGHARD_UUID_V(9u)); log('-');
-    log(LOGHARD_UUID_V(10u)); log(LOGHARD_UUID_V(11u));
-    log(LOGHARD_UUID_V(12u)); log(LOGHARD_UUID_V(13u));
-    log(LOGHARD_UUID_V(14u)); log(LOGHARD_UUID_V(15u));
+Logger::MessageBuilder &
+Logger::MessageBuilder::operator<<(sharemind::Uuid const & v) noexcept {
+    #define LOGHARD_UUID_V(i) Logger::HexByte{v.data[i]}
+    return this->operator<<(LOGHARD_UUID_V(0u))
+           << LOGHARD_UUID_V(1u) << LOGHARD_UUID_V(2u) << LOGHARD_UUID_V(3u)
+           << '-' << LOGHARD_UUID_V(4u) << LOGHARD_UUID_V(5u)
+           << '-' << LOGHARD_UUID_V(6u) << LOGHARD_UUID_V(7u)
+           << '-' << LOGHARD_UUID_V(8u) << LOGHARD_UUID_V(9u)
+           << '-' << LOGHARD_UUID_V(10u) << LOGHARD_UUID_V(11u)
+           << LOGHARD_UUID_V(12u) << LOGHARD_UUID_V(13u)
+           << LOGHARD_UUID_V(14u) << LOGHARD_UUID_V(15u);
+    #undef LOGHARD_UUID_V
 }
 
-void Logger::MessageBuilder::elide() noexcept {
+Logger::MessageBuilder & Logger::MessageBuilder::elide() noexcept {
     assert(tl_offset <= MAX_MESSAGE_SIZE);
     assert(m_backend);
     std::memcpy(&tl_message[tl_offset], "...", 4u);
     tl_offset = STACK_BUFFER_SIZE;
+    return *this;
 }
 
 Logger::Logger(std::shared_ptr<Backend> backend) noexcept
@@ -217,40 +234,46 @@ Logger::~Logger() noexcept {}
     return theTime;
 }
 
-Logger::LogHelper<Priority::Fatal> Logger::fatal() const noexcept
-{ return logHelper<Priority::Fatal>(); }
+Logger::MessageBuilder Logger::fatal() const noexcept
+{ return MessageBuilder(Priority::Fatal, *this); }
 
-Logger::LogHelper<Priority::Error> Logger::error() const noexcept
-{ return logHelper<Priority::Error>(); }
+Logger::MessageBuilder Logger::error() const noexcept
+{ return MessageBuilder(Priority::Error, *this); }
 
-Logger::LogHelper<Priority::Warning> Logger::warning() const noexcept
-{ return logHelper<Priority::Warning>(); }
+Logger::MessageBuilder Logger::warning() const noexcept
+{ return MessageBuilder(Priority::Warning, *this); }
 
-Logger::LogHelper<Priority::Normal> Logger::info() const noexcept
-{ return logHelper<Priority::Normal>(); }
+Logger::MessageBuilder Logger::info() const noexcept
+{ return MessageBuilder(Priority::Normal, *this); }
 
-Logger::LogHelper<Priority::Debug> Logger::debug() const noexcept
-{ return logHelper<Priority::Debug>(); }
+Logger::MessageBuilder Logger::debug() const noexcept
+{ return MessageBuilder(Priority::Debug, *this); }
 
-Logger::LogHelper<Priority::FullDebug> Logger::fullDebug() const noexcept
-{ return logHelper<Priority::FullDebug>(); }
+Logger::MessageBuilder Logger::fullDebug() const noexcept
+{ return MessageBuilder(Priority::FullDebug, *this); }
+
+Logger::MessageBuilder Logger::fatal(::timeval t) const noexcept
+{ return MessageBuilder(std::move(t), Priority::Fatal, *this); }
+
+Logger::MessageBuilder Logger::error(::timeval t) const noexcept
+{ return MessageBuilder(std::move(t), Priority::Error, *this); }
+
+Logger::MessageBuilder Logger::warning(::timeval t) const noexcept
+{ return MessageBuilder(std::move(t), Priority::Warning, *this); }
+
+Logger::MessageBuilder Logger::info(::timeval t) const noexcept
+{ return MessageBuilder(std::move(t), Priority::Normal, *this); }
+
+Logger::MessageBuilder Logger::debug(::timeval t) const noexcept
+{ return MessageBuilder(std::move(t), Priority::Debug, *this); }
+
+Logger::MessageBuilder Logger::fullDebug(::timeval t) const noexcept
+{ return MessageBuilder(std::move(t), Priority::FullDebug, *this); }
 
 // Extern template instantiations:
 
 #define LOGHARD_TCN(...) template __VA_ARGS__ const noexcept;
-#define LOGHARD_EXTERN_LH(pri,...) \
-    LOGHARD_TCN(Logger::LogHelper<Priority::pri> \
-                Logger::logHelper<Priority::pri>(__VA_ARGS__))
 #define LOGHARD_EXTERN(pri) \
-    template class Logger::LogHelper<Priority::pri>; \
-    LOGHARD_TCN( \
-        void Logger::StandardExceptionFormatter::operator()( \
-                std::size_t const, \
-                std::size_t const, \
-                std::exception_ptr, \
-                Logger::LogHelper<Priority::pri>)) \
-    LOGHARD_EXTERN_LH(pri,) \
-    LOGHARD_EXTERN_LH(pri, ::timeval) \
     LOGHARD_TCN(void Logger::printCurrentException<Priority::pri>()) \
     LOGHARD_TCN(void Logger::printCurrentException<Priority::pri>(::timeval)) \
     LOGHARD_TCN( \
