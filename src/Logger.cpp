@@ -244,7 +244,7 @@ Logger::LogHelper<Priority::FullDebug> Logger::fullDebug() const noexcept
 #define LOGHARD_EXTERN(pri) \
     template class Logger::LogHelper<Priority::pri>; \
     LOGHARD_TCN( \
-        void Logger::StandardFormatter::operator()( \
+        void Logger::StandardExceptionFormatter::operator()( \
                 std::size_t const, \
                 std::size_t const, \
                 std::exception_ptr, \
@@ -255,12 +255,12 @@ Logger::LogHelper<Priority::FullDebug> Logger::fullDebug() const noexcept
     LOGHARD_TCN(void Logger::printCurrentException<Priority::pri>(::timeval)) \
     LOGHARD_TCN( \
         void Logger::printCurrentException<Priority::pri, \
-                                           Logger::StandardFormatter>( \
-                StandardFormatter &&)) \
+                                           Logger::StandardExceptionFormatter>(\
+                StandardExceptionFormatter &&)) \
     LOGHARD_TCN( \
         void Logger::printCurrentException<Priority::pri, \
-                                           Logger::StandardFormatter>( \
-                ::timeval, StandardFormatter &&))
+                                           Logger::StandardExceptionFormatter>(\
+                ::timeval, StandardExceptionFormatter &&))
 
 LOGHARD_EXTERN(Fatal)
 LOGHARD_EXTERN(Error)

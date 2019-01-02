@@ -145,7 +145,7 @@ public: /* Types: */
 
     }; /* class LogHelper { */
 
-    struct StandardFormatter {
+    struct StandardExceptionFormatter {
 
         template <typename OutStream>
         void operator()(std::size_t const exceptionNumber,
@@ -165,7 +165,7 @@ public: /* Types: */
             }
         }
 
-    };
+    }; /* StandardExceptionFormatter */
 
 public: /* Methods: */
 
@@ -271,14 +271,14 @@ public: /* Methods: */
     {
         printException<PRIORITY>(std::current_exception(),
                                  now(),
-                                 StandardFormatter());
+                                 StandardExceptionFormatter());
     }
 
     template <Priority PRIORITY = Priority::Error>
     void printCurrentException(::timeval theTime) const noexcept {
         printException<PRIORITY>(std::current_exception(),
                                  std::move(theTime),
-                                 StandardFormatter());
+                                 StandardExceptionFormatter());
     }
 
     template <Priority PRIORITY = Priority::Error, typename Formatter>
@@ -300,14 +300,14 @@ public: /* Methods: */
 
     template <Priority PRIORITY = Priority::Error>
     void printException(std::exception_ptr e) const noexcept
-    { printException<PRIORITY>(std::move(e), now(), StandardFormatter()); }
+    { printException<PRIORITY>(std::move(e), now(), StandardExceptionFormatter()); }
 
     template <Priority PRIORITY = Priority::Error>
     void printException(std::exception_ptr e, ::timeval theTime) const noexcept
     {
         printException<PRIORITY>(std::move(e),
                                  std::move(theTime),
-                                 StandardFormatter());
+                                 StandardExceptionFormatter());
     }
 
     template <Priority PRIORITY = Priority::Error, typename Formatter>
@@ -382,7 +382,7 @@ private: /* Fields: */
 #define LOGHARD_EXTERN(pri) \
     extern template class Logger::LogHelper<Priority::pri>; \
     LOGHARD_ETCN( \
-        void Logger::StandardFormatter::operator()( \
+        void Logger::StandardExceptionFormatter::operator()( \
                 std::size_t const, \
                 std::size_t const, \
                 std::exception_ptr, \
@@ -393,12 +393,12 @@ private: /* Fields: */
     LOGHARD_ETCN(void Logger::printCurrentException<Priority::pri>(::timeval)) \
     LOGHARD_ETCN( \
         void Logger::printCurrentException<Priority::pri, \
-                                           Logger::StandardFormatter>( \
-                StandardFormatter &&)) \
+                                           Logger::StandardExceptionFormatter>(\
+                StandardExceptionFormatter &&)) \
     LOGHARD_ETCN( \
         void Logger::printCurrentException<Priority::pri, \
-                                           Logger::StandardFormatter>( \
-                ::timeval, StandardFormatter &&))
+                                           Logger::StandardExceptionFormatter>(\
+                ::timeval, StandardExceptionFormatter &&))
 
 LOGHARD_EXTERN(Fatal)
 LOGHARD_EXTERN(Error)
