@@ -127,24 +127,22 @@ public: /* Types: */
 
     }; /* struct MessageBuilder { */
 
-    struct StandardExceptionFormatter {
+    class StandardExceptionFormatter {
+
+    public: /* Methods: */
+
+        StandardExceptionFormatter(std::size_t extraIndent = 0u) noexcept
+            : m_extraIndent(extraIndent)
+        {}
 
         void operator()(std::size_t const exceptionNumber,
                         std::size_t const totalExceptions,
                         std::exception_ptr exception,
-                        MessageBuilder mb) const noexcept
-        {
-            assert(exception);
-            mb << "  * Exception " << exceptionNumber << " of "
-               << totalExceptions;
-            try {
-                std::rethrow_exception(std::move(exception));
-            } catch (std::exception const & e) {
-                mb << ": " << e.what();
-            } catch (...) {
-                mb << " is not an std::exception!";
-            }
-        }
+                        MessageBuilder mb) const noexcept;
+
+    private: /* Fields: */
+
+        std::size_t m_extraIndent;
 
     }; /* StandardExceptionFormatter */
 

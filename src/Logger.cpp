@@ -21,6 +21,7 @@
 
 #include <cstring>
 #include <sharemind/DebugOnly.h>
+#include <type_traits>
 
 
 namespace LogHard {
@@ -207,6 +208,26 @@ Logger::MessageBuilder & Logger::MessageBuilder::elide() noexcept {
     std::memcpy(&tl_message[tl_offset], "...", 4u);
     tl_offset = STACK_BUFFER_SIZE;
     return *this;
+}
+
+
+void Logger::StandardExceptionFormatter::operator()(
+                                      std::size_t const exceptionNumber,
+                                      std::size_t const totalExceptions,
+                                      std::exception_ptr exception,
+                                      MessageBuilder mb) const noexcept
+{
+    assert(exception);
+    for (std::size_t i = m_extraIndent; i > 0u; --i)
+        mb << ' ';
+    mb << "  * Exception " << exceptionNumber << " of " << totalExceptions;
+    try {
+        std::rethrow_exception(std::move(exception));
+    } catch (std::exception const & e) {
+        mb << ": " << e.what();
+    } catch (...) {
+        mb << " is not an std::exception!";
+    }
 }
 
 Logger::Logger(std::shared_ptr<Backend> backend) noexcept
