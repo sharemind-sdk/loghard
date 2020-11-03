@@ -26,8 +26,7 @@ INCLUDE("${CMAKE_CURRENT_BINARY_DIR}/config.local" OPTIONAL)
 FIND_PACKAGE(SharemindCMakeHelpers 1.4 REQUIRED)
 
 
-SET(Boost_USE_STATIC_RUNTIME OFF)
-FIND_PACKAGE(Boost COMPONENTS filesystem program_options system REQUIRED)
+FIND_PACKAGE(Boost 1.62 COMPONENTS filesystem program_options system REQUIRED)
 FIND_PACKAGE(SharemindCHeaders 1.1.0 REQUIRED)
 FIND_PACKAGE(SharemindCxxHeaders 0.4.0 REQUIRED)
 
@@ -121,7 +120,7 @@ SharemindAddComponentPackage(dev
     DEB_SECTION "libdevel"
     DEB_DEPENDS
         "libloghard (= ${LogHard_DEB_lib_PACKAGE_VERSION})"
-        "libboost-dev (>= 1.55)"
+        "libboost-dev (>= 1.62)"
         "libsharemind-cheaders-dev (>= 1.1.0)"
         "libsharemind-cxxheaders-dev (>= 0.4.0)"
         "libc6-dev (>= 2.19)"
