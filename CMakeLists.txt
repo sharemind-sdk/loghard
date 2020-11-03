@@ -23,12 +23,12 @@ PROJECT(LogHard VERSION 0.4.0 LANGUAGES CXX)
 INCLUDE("${CMAKE_CURRENT_SOURCE_DIR}/config.local" OPTIONAL)
 INCLUDE("${CMAKE_CURRENT_BINARY_DIR}/config.local" OPTIONAL)
 
-FIND_PACKAGE(SharemindCMakeHelpers 1.4 REQUIRED)
+FIND_PACKAGE(SharemindCMakeHelpers 1.6 REQUIRED)
 
 
 FIND_PACKAGE(Boost 1.62 COMPONENTS filesystem program_options system REQUIRED)
-FIND_PACKAGE(SharemindCHeaders 1.1.0 REQUIRED)
-FIND_PACKAGE(SharemindCxxHeaders 0.4.0 REQUIRED)
+FIND_PACKAGE(SharemindCHeaders 1.3.0 REQUIRED)
+FIND_PACKAGE(SharemindCxxHeaders 0.8.0 REQUIRED)
 
 
 SharemindSetCxx14CompileOptions()
@@ -44,57 +44,39 @@ SharemindAddSharedLibrary(LogHard
     SOURCES
         ${LogHard_SOURCES}
         ${LogHard_HEADERS}
-    INCLUDE_DIRECTORIES
-        ${SharemindCHeaders_INCLUDE_DIRS}
-        ${SharemindCxxHeaders_INCLUDE_DIRS}
-    LEGACY_DEFINITIONS
-        ${SharemindCHeaders_DEFINITIONS}
-        ${SharemindCxxHeaders_DEFINITIONS}
-    LINK_LIBRARIES
-        ${Boost_LIBRARIES}
-        ${SharemindCHeaders_LIBRARIES}
-        ${SharemindCxxHeaders_LIBRARIES}
+    )
+TARGET_INCLUDE_DIRECTORIES(LogHard
+    INTERFACE
+        # $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src> # TODO
+        $<INSTALL_INTERFACE:${CMAKE_INSTALL_PREFIX}/include>
+    )
+TARGET_LINK_LIBRARIES(LogHard
+    PUBLIC
+        Boost::boost
+        Sharemind::CHeaders
+        Sharemind::CxxHeaders
+    PRIVATE
+        Boost::filesystem
+        Boost::program_options
+        Boost::system
 )
+IF(APPLE)
+    TARGET_COMPILE_DEFINITIONS(LogHard PUBLIC "_DARWIN_C_SOURCE")
+ENDIF()
 
 
 # Tests:
-SharemindNewUniqueList(LOGHARD_INSTALL_DEFINITIONS
-    ${SharemindCHeaders_DEFINITIONS}
-    ${SharemindCxxHeaders_DEFINITIONS}
-)
-IF(APPLE)
-    SharemindListAppendUnique(LOGHARD_INSTALL_DEFINITIONS "-D_DARWIN_C_SOURCE")
-ENDIF()
 SharemindAddSimpleTests("${CMAKE_CURRENT_SOURCE_DIR}/tests/Test*.cpp"
-    LEGACY_DEFINITIONS
-        ${LOGHARD_INSTALL_DEFINITIONS}
-    INCLUDE_DIRECTORIES
-        ${Boost_INCLUDE_DIRS}
-        ${SharemindCHeaders_INCLUDE_DIRS}
-        ${SharemindCxxHeaders_INCLUDE_DIRS}
-    LEGACY_DEFINITIONS
-        ${SharemindCHeaders_DEFINITIONS}
-        ${SharemindCxxHeaders_DEFINITIONS}
     LINK_LIBRARIES
-        ${Boost_LIBRARIES}
-        ${SharemindCxxHeaders_LINK_LIBRARIES}
-        "LogHard"
+        LogHard
 )
 
-# Install CMake files:
-SharemindCreateCMakeFindFiles(
-    LIBRARIES
-        ${Boost_LIBRARIES}
-        ${SharemindCxxHeaders_LIBRARIES}
-        "-L${CMAKE_INSTALL_PREFIX}/lib"
-        "-lLogHard"
-    INCLUDE_DIRS
-        "${CMAKE_INSTALL_PREFIX}/include"
-        ${SharemindCHeaders_INCLUDE_DIRS}
-        ${SharemindCxxHeaders_INCLUDE_DIRS}
-    DEFINITIONS
-        ${LOGHARD_INSTALL_DEFINITIONS}
-)
+SharemindCreateCMakeFindFilesForTarget(LogHard NAMESPACE LogHard
+    DEPENDENCIES
+        "Boost 1.62"
+        "SharemindCHeaders 1.3.0"
+        "SharemindCxxHeaders 0.8.0"
+    )
 
 
 # Packaging:
@@ -121,8 +103,8 @@ SharemindAddComponentPackage(dev
     DEB_DEPENDS
         "libloghard (= ${LogHard_DEB_lib_PACKAGE_VERSION})"
         "libboost-dev (>= 1.62)"
-        "libsharemind-cheaders-dev (>= 1.1.0)"
-        "libsharemind-cxxheaders-dev (>= 0.4.0)"
+        "libsharemind-cheaders-dev (>= 1.3.0)"
+        "libsharemind-cxxheaders-dev (>= 0.8.0)"
         "libc6-dev (>= 2.19)"
         "libstdc++-dev"
 )
