@@ -25,7 +25,6 @@ INCLUDE("${CMAKE_CURRENT_BINARY_DIR}/config.local" OPTIONAL)
 
 FIND_PACKAGE(SharemindCMakeHelpers 1.6 REQUIRED)
 
-
 FIND_PACKAGE(Boost 1.62 COMPONENTS filesystem program_options system REQUIRED)
 FIND_PACKAGE(SharemindCHeaders 1.3.0 REQUIRED)
 FIND_PACKAGE(SharemindCxxHeaders 0.8.0 REQUIRED)
@@ -63,14 +62,6 @@ TARGET_LINK_LIBRARIES(LogHard
 IF(APPLE)
     TARGET_COMPILE_DEFINITIONS(LogHard PUBLIC "_DARWIN_C_SOURCE")
 ENDIF()
-
-
-# Tests:
-SharemindAddSimpleTests("${CMAKE_CURRENT_SOURCE_DIR}/tests/Test*.cpp"
-    LINK_LIBRARIES
-        LogHard
-)
-
 SharemindCreateCMakeFindFilesForTarget(LogHard NAMESPACE LogHard
     DEPENDENCIES
         "Boost 1.62"
@@ -79,12 +70,18 @@ SharemindCreateCMakeFindFilesForTarget(LogHard NAMESPACE LogHard
     )
 
 
+# Tests:
+SharemindAddSimpleTests("${CMAKE_CURRENT_SOURCE_DIR}/tests/Test*.cpp"
+    LINK_LIBRARIES
+        LogHard
+)
+
+
 # Packaging:
 SharemindSetupPackaging()
 SET(BV
     "${Boost_MAJOR_VERSION}.${Boost_MINOR_VERSION}.${Boost_SUBMINOR_VERSION}"
 )
-
 SharemindAddComponentPackage(lib
     NAME "libloghard"
     DESCRIPTION "LogHard logging library"
