@@ -65,7 +65,7 @@ SharemindCreateCMakeFindFilesForTarget(LogHard NAMESPACE LogHard
     DEPENDENCIES
         "Boost 1.62"
         "SharemindCHeaders 1.3.0"
-        "SharemindCxxHeaders 0.8.0"
+        "SharemindCxxHeaders 0.9.0"
     )
 
 
@@ -102,7 +102,7 @@ SharemindAddComponentPackage(dev
         "libloghard (= ${LogHard_DEB_lib_PACKAGE_VERSION})"
         "libboost-dev (>= 1.62)"
         "libsharemind-cheaders-dev (>= 1.3.0)"
-        "libsharemind-cxxheaders-dev (>= 0.8.0)"
+        "libsharemind-cxxheaders-dev (>= 0.9.0)"
         "libc6-dev (>= 2.19)"
         "libstdc++-dev"
 )
