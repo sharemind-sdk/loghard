@@ -27,7 +27,7 @@ FIND_PACKAGE(SharemindCMakeHelpers 1.6 REQUIRED)
 
 FIND_PACKAGE(Boost 1.62 COMPONENTS filesystem program_options system REQUIRED)
 FIND_PACKAGE(SharemindCHeaders 1.3.0 REQUIRED)
-FIND_PACKAGE(SharemindCxxHeaders 0.9.0 REQUIRED)
+FIND_PACKAGE(SharemindCxxHeaders 0.10.1 REQUIRED)
 
 
 FILE(GLOB_RECURSE LogHard_HEADERS "${CMAKE_CURRENT_SOURCE_DIR}/src/*.h")
@@ -65,7 +65,7 @@ SharemindCreateCMakeFindFilesForTarget(LogHard NAMESPACE LogHard
     DEPENDENCIES
         "Boost 1.62"
         "SharemindCHeaders 1.3.0"
-        "SharemindCxxHeaders 0.9.0"
+        "SharemindCxxHeaders 0.10.1"
     )
 
 
@@ -102,7 +102,7 @@ SharemindAddComponentPackage(dev
         "libloghard (= ${LogHard_DEB_lib_PACKAGE_VERSION})"
         "libboost-dev (>= 1.62)"
         "libsharemind-cheaders-dev (>= 1.3.0)"
-        "libsharemind-cxxheaders-dev (>= 0.9.0)"
+        "libsharemind-cxxheaders-dev (>= 0.10.1)"
         "libc6-dev (>= 2.19)"
         "libstdc++-dev"
 )
