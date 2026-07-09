@@ -25,7 +25,7 @@ INCLUDE("${CMAKE_CURRENT_BINARY_DIR}/config.local" OPTIONAL)
 
 FIND_PACKAGE(SharemindCMakeHelpers 1.6 REQUIRED)
 
-FIND_PACKAGE(Boost 1.62 COMPONENTS filesystem program_options system REQUIRED)
+FIND_PACKAGE(Boost 1.62 COMPONENTS filesystem program_options REQUIRED)
 FIND_PACKAGE(SharemindCHeaders 1.3.0 REQUIRED)
 FIND_PACKAGE(SharemindCxxHeaders 0.10.1 REQUIRED)
 
@@ -56,7 +56,6 @@ TARGET_LINK_LIBRARIES(LogHard
     PRIVATE
         Boost::filesystem
         Boost::program_options
-        Boost::system
 )
 IF(APPLE)
     TARGET_COMPILE_DEFINITIONS(LogHard PUBLIC "_DARWIN_C_SOURCE")
@@ -90,7 +89,6 @@ SharemindAddComponentPackage(lib
     DEB_DEPENDS
         "libboost-filesystem${BV}"
         "libboost-program-options${BV}"
-        "libboost-system${BV}"
         "libstdc++6 (>= 4.8.0)"
         "libc6 (>= 2.19)"
 )
