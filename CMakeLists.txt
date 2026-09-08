@@ -25,7 +25,7 @@ INCLUDE("${CMAKE_CURRENT_BINARY_DIR}/config.local" OPTIONAL)
 
 FIND_PACKAGE(SharemindCMakeHelpers 1.6 REQUIRED)
 
-FIND_PACKAGE(Boost 1.62 COMPONENTS filesystem program_options REQUIRED)
+FIND_PACKAGE(Boost 1.62 COMPONENTS filesystem program_options CONFIG REQUIRED)
 FIND_PACKAGE(SharemindCHeaders 1.3.0 REQUIRED)
 FIND_PACKAGE(SharemindCxxHeaders 0.10.1 REQUIRED)
 
@@ -62,7 +62,7 @@ IF(APPLE)
 ENDIF()
 SharemindCreateCMakeFindFilesForTarget(LogHard NAMESPACE LogHard
     DEPENDENCIES
-        "Boost 1.62"
+        "Boost 1.62 CONFIG"
         "SharemindCHeaders 1.3.0"
         "SharemindCxxHeaders 0.10.1"
     )
